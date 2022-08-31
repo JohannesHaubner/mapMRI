@@ -1,3 +1,11 @@
+#Fenics
+*.h5
+*.xdmf
+*.pvd
+output/*
+
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
