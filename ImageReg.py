@@ -4,7 +4,7 @@ parameters['ghost_mode'] = 'shared_facet'
 from dolfin_adjoint import *
 from preconditioning_overloaded import preconditioning
 import numpy
-set_log_level(30)
+set_log_level(20)
 
 # read image
 FName = "shuttle_small.png"
@@ -14,9 +14,22 @@ FName_goal = "shuttle_goal.png"
 (mesh_goal, Img_goal, NumData_goal) = Pic2Fenics(FName_goal, mesh)
 
 # output file
-fout = XDMFFile(MPI.comm_world, "output/Result.xdmf")
-fout.parameters["flush_output"] = True
-fout.parameters["rewrite_function_mesh"] = False
+fcont = XDMFFile(MPI.comm_world, "output/Control.xdmf")
+fcont.parameters["flush_output"] = True
+fcont.parameters["rewrite_function_mesh"] = False
+
+writeiter = 0
+
+class myclass():
+    def __init__(self):
+        self.writeiter = 0
+        self.js = []
+    def eval(self, j, control):
+        fcont.write_checkpoint(control, "control", float(self.writeiter), append=True)
+        self.js += [j]
+        print(j)
+        self.writeiter += 1
+mycallback = myclass().eval
 
 # function spaces and definitions
 DG = FunctionSpace(mesh, "DG", 1)
@@ -40,23 +53,9 @@ solve(mylhs == myrhs, Wind_data, BC)
 set_working_tape(Tape())
 
 control = Function(vCG)
-control.vector().set_local(Wind_data.vector())
-control.vector().apply("")
-preconditioning(control)
-
-File("mycontrol.pvd") << control
-
-J = assemble( control**2*dx)
-Jhat = ReducedFunctional(J, Control(control))
-
-h = Function(control.function_space())
-h.vector()[:] = 2.0
-h.vector().apply("")
-#BC.apply(h.vector())
-
-conv_rate = taylor_test(Jhat, control, h)
-print(conv_rate)
-exit()
+#control.vector().set_local(Wind_data.vector())
+#control.vector().apply("")
+BC.apply(control.vector())
 
 #Make form:
 #from IPython import embed; embed()
@@ -104,15 +103,17 @@ for i in range(2):
     Img_old.assign(Img)
 
 J = assemble(0.5 * (Img - Img_goal)**2 * dx)
-Jhat = ReducedFunctional(J, Control(control))
+Jhat = ReducedFunctional(J, Control(control), eval_cb_post=mycallback)
+
+print(minimize(Jhat,  method = 'L-BFGS-B'))
+
 
 #from IPython import embed; embed()
-h = Function(control.function_space())
-h.vector()[:] = 2.0
-h.vector().apply("")
+#h = Function(control.function_space())
+#h.vector()[:] = 2.0
+#h.vector().apply("")
 #BC.apply(h.vector())
 
-conv_rate = taylor_test(Jhat, control, h)
-print(conv_rate)
+#conv_rate = taylor_test(Jhat, control, h)
+#print(conv_rate)
 
-#minimize(Jhat,  method = 'L-BFGS')
