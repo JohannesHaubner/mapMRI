@@ -36,6 +36,11 @@ mylhs = inner(grad(TestFunction(vCG)), grad(TrialFunction(vCG))) * dx
 myrhs = inner(as_vector([sin(x[0]/100), cos(x[1]/100)]), TestFunction(vCG)) * dx
 solve(mylhs == myrhs, Wind_data, BC)
 
+set_working_tape(Tape())
+
+control = Function(vCG)
+control.vector().set_local(Wind_data.vector())
+control.vector().apply("")
 #Make form:
 #from IPython import embed; embed()
 
@@ -53,12 +58,11 @@ def Flux(f, Wind, n):
     upwind = Max0(inner(Wind,n))
     return -f*upwind
 
-def Form(f, v, Wind, source=0):
+def Form(f, v, Wind):
     a = inner(grad(v), outer(f, Wind)) * dx
     a += inner(jump(v), jump(Flux(f, Wind, n))) * dS
     a += inner(v, Flux(f, Wind, n)) * ds
     a += div(Wind) * inner(v, f) * dx
-    a += source * v * dx(domain=mesh)
     return a
 
 # parameters
@@ -67,11 +71,12 @@ DeltaT = 1e-5
 # solve forward and evaluate objective
 source = Function(DG)
 
+Img_t = TrialFunction(Img.function_space())
 Img_old = Function(Img.function_space())
 Img_old.assign(Img)
 
-a = Constant(1.0/DeltaT)*(inner(v, Img) * dx - inner(v, Img_old) * dx) \
-    - 0.5*(Form(Img_old, v, Wind_data, source) + Form(Img, v,  Wind_data, source))
+a = Constant(1.0/DeltaT)*(inner(v, Img_t) * dx - inner(v, Img_old) * dx) \
+    - 0.5*(Form(Img_old, v, control) + Form(Img_t, v,  control))
 
 A = assemble(lhs(a))
 solver = LUSolver(A, "mumps")
@@ -82,10 +87,10 @@ for i in range(2):
     Img_old.assign(Img)
 
 J = assemble(0.5 * (Img - Img_goal)**2 * dx)
-Jhat = ReducedFunctional(J, Control(source))
+Jhat = ReducedFunctional(J, Control(control))
 
 #from IPython import embed; embed()
-h = Function(DG)
-h.vector()[:] = 0.1
-conv_rate = taylor_test(Jhat, source, h)
+h = Function(control.function_space())
+h.vector()[:] = 2.0
+conv_rate = taylor_test(Jhat, control, control)
 print(conv_rate)
