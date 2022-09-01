@@ -27,7 +27,7 @@ v = TestFunction(DG)
 # transform colored image to black-white intensity image
 Img = project(sqrt(inner(Img, Img)), DG)
 Img.rename("img", "")
-Img_deformed = project(sqrt(inner(Img, Img)), DG)
+Img_goal = project(sqrt(inner(Img_goal, Img_goal)), DG)
 
 # define initial velocity field
 BC = DirichletBC(vCG, Constant((0.0,0.0)), "on_boundary")
@@ -81,7 +81,7 @@ for i in range(2):
     solver.solve(Img.vector(), b)
     Img_old.assign(Img)
 
-J = assemble( 0.5*(Img-Img_goal)**2*dx)
+J = assemble(0.5 * (Img - Img_goal)**2 * dx)
 Jhat = ReducedFunctional(J, Control(source))
 
 #from IPython import embed; embed()
