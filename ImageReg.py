@@ -18,18 +18,23 @@ fcont = XDMFFile(MPI.comm_world, "output/Control.xdmf")
 fcont.parameters["flush_output"] = True
 fcont.parameters["rewrite_function_mesh"] = False
 
+fphi = XDMFFile(MPI.comm_world, "output/Phi.xdmf")
+fphi.parameters["flush_output"] = True
+fphi.parameters["rewrite_function_mesh"] = False
+
 writeiter = 0
 
 class myclass():
-    def __init__(self):
+    def __init__(self, phi):
         self.writeiter = 0
         self.js = []
+        self.phi = phi
     def eval(self, j, control):
         fcont.write_checkpoint(control, "control", float(self.writeiter), append=True)
+        fcont.write_checkpoint(self.phi, "phi", float(self.writeiter), append=True)
         self.js += [j]
         print(j)
         self.writeiter += 1
-mycallback = myclass().eval
 
 # function spaces and definitions
 DG = FunctionSpace(mesh, "DG", 1)
@@ -74,6 +79,7 @@ def Flux(f, Wind, n):
     upwind = Max0(inner(Wind,n))
     return -f*upwind
 
+
 def Form(f, v, Wind):
     a = inner(grad(v), outer(f, Wind)) * dx
     a += inner(jump(v), jump(Flux(f, Wind, n))) * dS
@@ -96,16 +102,22 @@ a = Constant(1.0/DeltaT)*(inner(v, Img_t) * dx - inner(v, Img_old) * dx) \
 
 A = assemble(lhs(a))
 solver = LUSolver(A, "mumps")
-for i in range(2):
+for i in range(300):
     b = assemble(rhs(a))
     b.apply("")
     solver.solve(Img.vector(), b)
     Img_old.assign(Img)
+    fphi.write(Img_old, float(i))
 
-J = assemble(0.5 * (Img - Img_goal)**2 * dx)
+
+
+alpha = Constant(1e-4)
+J = assemble(0.5 * (Img - Img_goal)**2 * dx + alpha*grad(control)**2*dx)
+
+mycallback = myclass(Img).eval
 Jhat = ReducedFunctional(J, Control(control), eval_cb_post=mycallback)
 
-print(minimize(Jhat,  method = 'L-BFGS-B'))
+minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True}, tol=1e-08)
 
 
 #from IPython import embed; embed()
