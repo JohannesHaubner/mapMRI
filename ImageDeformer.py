@@ -76,12 +76,10 @@ def Flux(f, Wind, n):
     return f*upwind
 
 def Form(f, v, Wind):
-    a = inner(grad(v), outer(f, Wind))*dx
-    a += -inner(jump(f), jump(Flux(v, Wind, n)))*dS
-    a += inner(f, Flux(v, Wind, n))*ds
-    a += div(Wind)*inner(v, f)*dx
-    #a += inner(jump(Wind*inner(f, v)), n('+'))*dS
-    #a += inner(Wind*inner(f, v), n)*ds
+    a = inner(grad(v), outer(f, Wind)) * dx
+    a += inner(jump(v), jump(Flux(f, Wind, n))) * dS
+    a += inner(v, Flux(f, Wind, n)) * ds
+    a += div(Wind) * inner(v, f) * dx
     return a
 
 Img_next = TrialFunction(Img_deformed.function_space())
