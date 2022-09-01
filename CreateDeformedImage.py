@@ -1,30 +1,15 @@
-#from dolfin import *
 from dolfin import *
+from DGTransport import solve as DGSolve
+
 from Pic2Fen import *
-parameters['ghost_mode'] = 'shared_facet'
-from dolfin_adjoint import *
+
 import numpy
 set_log_level(30)
 import time
 
-#info(parameters, True)
-#exit()
-#parameters["ghost_mode"] = "shared_vertex"
-
-
 FName = "shuttle_small.png"
 (mesh, Img, NumData) = Pic2Fenics(FName)
-"""
 
-
-#read from file
-FIn = HDF5File(MPI.comm_world, FName+".h5", 'r')
-mesh = Mesh()
-FIn.read(mesh, "mesh", False)
-Space = VectorFunctionSpace(mesh, "DG", 0)
-Img = Function(Space)
-FIn.read(Img, "Data1")
-"""
 fout = XDMFFile(MPI.comm_world, "output/Result.xdmf")
 fout.parameters["flush_output"] = True
 fout.parameters["rewrite_function_mesh"] = False

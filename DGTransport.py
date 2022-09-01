@@ -1,12 +1,13 @@
 from dolfin import *
+from dolfin_adjoint import *
 parameters['ghost_mode'] = 'shared_facet'
 from Pic2Fen import *
 
-def solve(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=False, FNameOut=""):
+def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=False, FNameOut=""):
     Space = Img.function_space()
     v = TestFunction(Space)
     if StoreHistory:
-        FOut = XDMFFile("output/"+FNameOut+".xdmf")
+        FOut = XDMFFile(FNameOut)
         FOut.parameters["flush_output"] = True
         FOut.parameters["functions_share_mesh"] = True
         FOut.parameters["rewrite_function_mesh"] = False
@@ -23,7 +24,7 @@ def solve(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=Fals
         return f*upwind
 
     def Form(f):
-        #a = inner(v, div(outer(f, -Wind)))*dx
+        #a = inner(v, div(outer(f, Wind)))*dx
     
         a = -inner(grad(v), outer(f, Wind))*dx
         a += inner(jump(v), jump(Flux(f, Wind, n)))*dS
@@ -67,7 +68,7 @@ if __name__ == "__main__":
     #create on the fly
     FName = "shuttle_small.png"
     (mesh, Img, NumData) = Pic2Fenics(FName)
-    
+
     """
     #read from file
     FIn = HDF5File(MPI.comm_world, FName+".h5", 'r')
@@ -87,18 +88,18 @@ if __name__ == "__main__":
     """
     
     FNameOut = "img"
+    FNameOut = "output/"+FNameOut+".xdmf"
     StoreHistory = True
     MassConservation = False
     MaxIter = 500
     DeltaT = 5e-4
+    
     x = SpatialCoordinate(mesh)
     Wind = as_vector((0.0, x[1]))
-    #Wind = Constant((250.0, 250.0))
-    #Wind = project(Wind, VectorFunctionSpace(mesh, "CG", 1))
-    
+
     #Img = project(sqrt(inner(Img, Img)), FunctionSpace(mesh, "DG", 0))
     #Img = project(Img, VectorFunctionSpace(mesh, "CG", 1, NumData))
     Img = project(Img, VectorFunctionSpace(mesh, "DG", 1, NumData))
     Img.rename("img", "")
 
-    Img = solve(Img, MaxIter, DeltaT, MassConservation, StoreHistory, FNameOut)
+    Img = Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=False, FNameOut="")
