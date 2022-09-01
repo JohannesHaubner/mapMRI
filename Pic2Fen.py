@@ -1,4 +1,5 @@
 from dolfin import *
+from dolfin_adjoint import *
 parameters['ghost_mode'] = 'shared_facet'
 #parameters["ghost_mode"] = "shared_vertex"
 
