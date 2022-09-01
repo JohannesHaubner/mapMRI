@@ -6,7 +6,7 @@ parameters['ghost_mode'] = 'shared_facet'
 from PIL import Image
 import numpy as np
 
-def Pic2Fenics(FName):
+def Pic2Fenics(FName, mesh=None):
     img = Image.open(FName)
     xPixel = np.shape(img)[0]
     yPixel = np.shape(img)[1]
@@ -14,8 +14,8 @@ def Pic2Fenics(FName):
     #which of the color channels to process
     Channels = (0,1,2)
     img.convert("RGB")
-    
-    mesh = RectangleMesh(MPI.comm_world, Point(0.0, 0.0), Point(img.size[0], img.size[1]), int(img.size[0]), int(img.size[1]), "right")
+    if mesh == None:
+        mesh = RectangleMesh(MPI.comm_world, Point(0.0, 0.0), Point(img.size[0], img.size[1]), int(img.size[0]), int(img.size[1]), "right")
     
     #Key mapping between global vertex index (input) and (i,j) pixel coordinate (output)
     #needs to be changed if the diagonal is not "right"

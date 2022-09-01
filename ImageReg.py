@@ -2,6 +2,7 @@ from dolfin import *
 from Pic2Fen import *
 parameters['ghost_mode'] = 'shared_facet'
 from dolfin_adjoint import *
+from preconditioning_overloaded import preconditioning
 import numpy
 set_log_level(30)
 
@@ -10,7 +11,7 @@ FName = "shuttle_small.png"
 (mesh, Img, NumData) = Pic2Fenics(FName)
 
 FName_goal = "shuttle_goal.png"
-(mesh_goal, Img_goal, NumData_goal) = Pic2Fenics(FName_goal)
+(mesh_goal, Img_goal, NumData_goal) = Pic2Fenics(FName_goal, mesh)
 
 # output file
 fout = XDMFFile(MPI.comm_world, "output/Result.xdmf")
@@ -41,6 +42,22 @@ set_working_tape(Tape())
 control = Function(vCG)
 control.vector().set_local(Wind_data.vector())
 control.vector().apply("")
+preconditioning(control)
+
+File("mycontrol.pvd") << control
+
+J = assemble( control**2*dx)
+Jhat = ReducedFunctional(J, Control(control))
+
+h = Function(control.function_space())
+h.vector()[:] = 2.0
+h.vector().apply("")
+#BC.apply(h.vector())
+
+conv_rate = taylor_test(Jhat, control, h)
+print(conv_rate)
+exit()
+
 #Make form:
 #from IPython import embed; embed()
 
@@ -92,5 +109,10 @@ Jhat = ReducedFunctional(J, Control(control))
 #from IPython import embed; embed()
 h = Function(control.function_space())
 h.vector()[:] = 2.0
-conv_rate = taylor_test(Jhat, control, control)
+h.vector().apply("")
+#BC.apply(h.vector())
+
+conv_rate = taylor_test(Jhat, control, h)
 print(conv_rate)
+
+#minimize(Jhat,  method = 'L-BFGS')

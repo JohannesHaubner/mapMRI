@@ -20,25 +20,8 @@ class PreconditioningBlock(Block):
         return 'PreconditioningBlock'
 
     def evaluate_adj_component(self, inputs, adj_inputs, block_variable, idx, prepared=None):
-        breakpoint()
-        c = inputs[0]
-        C = c.function_space()
-        v = TestFunction(C)
-        u = TrialFunction(C)
-        mass_form = v * u * dx
-        mass_action_form = action(mass_form, interpolate(Constant(1.0), C))
-        M_diag = assemble(mass_action_form)
-        M_lumped_m05 = assemble(mass_form)
-        M_lumped_m05.zero()
-        M_diag_m05 = assemble(mass_action_form)
-        M_diag_m05.set_local(np.ma.power(M_diag.get_local(), -0.5))
-        M_lumped_m05.set_diagonal(M_diag_m05)
-
         adj_input = adj_inputs[0]
-        adj = M_lumped_m05 * adj_input
-        adjv = Function(C)
-        adjv.vector().set_local(adj)
-        return adj
+        return backend_preconditioning(adj_input)
 
     def recompute_component(self, inputs, block_variable, idx, prepared):
         return backend_preconditioning(inputs[0])
