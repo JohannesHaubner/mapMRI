@@ -56,7 +56,10 @@ def Pic2FEM(FName, mesh=None):
 def FEM2Pic(Img, NumData, FName):
     mesh = Img.function_space().mesh()
     mesh.init()
-    DG0 = VectorFunctionSpace(mesh, "DG", 0, NumData)
+    if NumData == 1:
+        DG0 = FunctionSpace(mesh, "DG", 0)
+    else:
+        DG0 = VectorFunctionSpace(mesh, "DG", 0, NumData)
     dg0data = project(Img, DG0)
 
     import mpi4py as M4P
@@ -92,6 +95,10 @@ def FEM2Pic(Img, NumData, FName):
         dataarray = dataarray*255
         dataarray2 = dataarray.astype(numpy.uint8)
 
+
+        if NumData == 1:
+            dataarray2 = dataarray2[:,:,0]
+        
         j = Image.fromarray(dataarray2)
         j.save(FName)
 

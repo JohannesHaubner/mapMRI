@@ -37,7 +37,7 @@ class myclass():
             fcont.write_checkpoint(control, "control", float(self.writeiter), append=True)
             fphi.write_checkpoint(self.phi, "phi", float(self.writeiter), append=True)
         if self.png: 
-            FEM2Pic(self.phi, 1, "/output/pics/phi"+str(self.writeiter)+".png")
+            FEM2Pic(self.phi, 1, "output/pics/phi"+str(self.writeiter)+".png")
         self.js += [j]
         print("objective function: ", j)
         self.writeiter += 1
@@ -127,7 +127,7 @@ alpha = Constant(1e-4)
 J = assemble(0.5 * (Img - Img_goal)**2 * dx + alpha*grad(control)**2*dx)
 
 
-mycallback = myclass(Img).eval
+mycallback = myclass(Img, png=True).eval
 Jhat = ReducedFunctional(J, Control(controlfun), eval_cb_post=mycallback)
 
 minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True}, tol=1e-08)
