@@ -27,17 +27,21 @@ fphi.parameters["rewrite_function_mesh"] = False
 writeiter = 0
 
 class myclass():
-    def __init__(self, phi):
+    def __init__(self, phi, png=False):
         self.writeiter = 0
         self.js = []
         self.phi = phi
+        self.png = png
     def eval(self, j, control):
         if self.writeiter % 10 == 0 or self.writeiter < 10:
             fcont.write_checkpoint(control, "control", float(self.writeiter), append=True)
             fphi.write_checkpoint(self.phi, "phi", float(self.writeiter), append=True)
+        if self.png: 
+            FEM2Pic(self.phi, 1, "/output/pics/phi"+str(self.writeiter)+".png")
         self.js += [j]
         print("objective function: ", j)
         self.writeiter += 1
+        
 
 # function spaces and definitions
 DG = FunctionSpace(mesh, "DG", 1)
@@ -61,8 +65,8 @@ solve(mylhs == myrhs, Wind_data, BC)
 set_working_tape(Tape())
 
 controlfun = Function(vCG)
-controlfun.vector().set_local(Wind_data.vector())
-controlfun.vector().apply("")
+#controlfun.vector().set_local(Wind_data.vector())
+#controlfun.vector().apply("")
 
 
 control = preconditioning(controlfun)
@@ -108,8 +112,10 @@ a = Constant(1.0/DeltaT)*(inner(v, Img_t) * dx - inner(v, Img_old) * dx) \
     - 0.5*(Form(Img_old, v, control) + Form(Img_t, v,  control))
 
 A = assemble(lhs(a))
-solver = LUSolver(A, "mumps")
-for i in range(30):
+#solver = LUSolver(A, "mumps")
+solver = KrylovSolver("gmres", "none")
+solver.set_operator(A)
+for i in range(600):
     b = assemble(rhs(a))
     b.apply("")
     solver.solve(Img.vector(), b)
