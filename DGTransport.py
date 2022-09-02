@@ -43,8 +43,9 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
     Img_next = TrialFunction(Img.function_space())
     #Img_next = Function(Img.function_space())
     #Img_next.rename("img", "")
+    Img_deformed = Img.copy(deepcopy=True)
 
-    a = Constant(1.0/DeltaT)*(inner(v,Img_next)*dx - inner(v, Img)*dx) + 0.5*(Form(Img) + Form(Img_next))
+    a = Constant(1.0/DeltaT)*(inner(v,Img_next)*dx - inner(v, Img_deformed)*dx) + 0.5*(Form(Img_deformed) + Form(Img_next))
 
     #a = Constant(1.0/DeltaT)*(inner(v, f_next)*dx - inner(v, Img)*dx) - Form(f_next)
     #a = Constant(1.0/DeltaT)*(inner(v, f_next)*dx - inner(v, Img)*dx) - Form(Img)
@@ -63,11 +64,11 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
 
         b = assemble(rhs(a))
         b.apply("")
-        solver.solve(Img.vector(), b)
+        solver.solve(Img_deformed.vector(), b)
         CurTime = i*DeltaT
         if StoreHistory:
-            FOut.write(Img, CurTime)
-    return Img
+            FOut.write(Img_deformed, CurTime)
+    return Img_deformed
 
 if __name__ == "__main__":
     #create on the fly

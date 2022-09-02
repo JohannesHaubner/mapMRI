@@ -7,7 +7,6 @@ from Pic2Fen import Pic2FEM, FEM2Pic
 import numpy
 
 import time
-import PIL
 FName = "shuttle_small.png"
 (mesh, Img, NumData) = Pic2FEM(FName)
 
