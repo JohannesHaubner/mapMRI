@@ -34,7 +34,9 @@ class AdjointWriter():
         self.png = png
     def eval(self, j, control):
         if self.writeiter % 10 == 0 or self.writeiter < 10:
-            fcont.write_checkpoint(control, "control", float(self.writeiter), append=True)
+            #fcont.write_checkpoint(control, "control", float(self.writeiter), append=True)
+            control.rename("control", "")
+            fcont.write(control, float(self.writeiter))
             fphi.write_checkpoint(self.phi, "phi", float(self.writeiter), append=True)
         if self.png: 
             FEM2Pic(self.phi, 1, "output/phi"+str(self.writeiter)+".png")
@@ -54,37 +56,32 @@ set_working_tape(Tape())
 vCG = VectorFunctionSpace(mesh, "CG", 1)
 
 controlfun = Function(vCG)
-x = SpatialCoordinate(mesh)
-controlfun = project(as_vector((0.0, x[1])), vCG)
-#controlfun.vector().set_local(Wind_data.vector())
-#controlfun.vector().apply("")
+#x = SpatialCoordinate(mesh)
+#controlfun = project(as_vector((0.0, x[1])), vCG)
 
 control = preconditioning(controlfun)
 
 # parameters
-DeltaT = 2e-4
-MaxIter = 500
+DeltaT = 4e-4
+MaxIter = 200
 
-#Img_deformed = Transport(Img, control, MaxIter, DeltaT, MassConservation = False)
-Img_deformed = Transport(Img, controlfun, MaxIter, DeltaT, MassConservation = False)
+Img_deformed = Transport(Img, control, MaxIter, DeltaT, MassConservation = False)
 
-File("output/test.pvd") << Img_deformed
+#File("output/test.pvd") << Img_deformed
 
 # solve forward and evaluate objective
 source = Function(DG)
 
-alpha = Constant(1e-4)
-J = assemble(0.5 * (Img - Img_goal)**2 * dx + alpha*grad(control)**2*dx)
+alpha = Constant(0.0)
+J = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx + alpha*grad(control)**2*dx(domain=mesh))
 
-mycallback = AdjointWriter(Img, png=True).eval
+mycallback = AdjointWriter(Img_deformed, png=True).eval
 Jhat = ReducedFunctional(J, Control(controlfun), eval_cb_post=mycallback)
 
-minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True}, tol=1e-08)
+#minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True}, tol=1e-08)
 
-"""
 h = Function(vCG)
 h.vector()[:] = 0.1
 h.vector().apply("")
 conv_rate = taylor_test(Jhat, control, h)
 print(conv_rate)
-"""

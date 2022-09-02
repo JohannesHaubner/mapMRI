@@ -25,16 +25,29 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
     def Max0(d):
         return 0.5*(d+abs(d))
 
+    #Scheme = "Central" #needed for Taylor-Test
+    Scheme = "Upwind"
+    
     def Flux(f, Wind, n):
-        upwind = Max0(inner(Wind,n))
-        return f*upwind
+        if Scheme == "Central":
+            flux = 0.5*inner(Wind, n)
+        if Scheme == "Upwind":
+            flux = Max0(inner(Wind,n))
+        return f*flux
+        
+    def FluxB(f, Wind, n):
+        if Scheme == "Central":
+            return f*inner(Wind,n)
+        if Scheme == "Upwind":
+            return f*Max0(inner(Wind,n))
 
     def Form(f):
         #a = inner(v, div(outer(f, Wind)))*dx
     
         a = -inner(grad(v), outer(f, Wind))*dx
         a += inner(jump(v), jump(Flux(f, Wind, n)))*dS
-        a += inner(v, Flux(f, Wind, n))*ds
+        #a += inner(v, Flux(f, Wind, n))*ds
+        a += inner(v, FluxB(f, Wind, n))*ds
     
         if MassConservation == False:
             a -= inner(v, div(Wind)*f)*dx
@@ -43,7 +56,9 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
     Img_next = TrialFunction(Img.function_space())
     #Img_next = Function(Img.function_space())
     #Img_next.rename("img", "")
-    Img_deformed = Img.copy(deepcopy=True)
+    Img_deformed = Function(Img.function_space())
+    Img_deformed.assign(Img)
+    Img_deformed.rename("Img", "")
 
     a = Constant(1.0/DeltaT)*(inner(v,Img_next)*dx - inner(v, Img_deformed)*dx) + 0.5*(Form(Img_deformed) + Form(Img_next))
 
@@ -51,20 +66,24 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
     #a = Constant(1.0/DeltaT)*(inner(v, f_next)*dx - inner(v, Img)*dx) - Form(Img)
 
     A = assemble(lhs(a))
-    #solver = LUSolver()
-    solver = KrylovSolver("gmres", "none")
-    solver.set_operator(A)
+    #solver = LUSolver(A) #needed for Taylor-Test
+    solver = KrylovSolver(A, "gmres", "none")
+    #solver.set_operator(A)
 
     CurTime = 0.0
     if StoreHistory:
-        FOut.write(Img, CurTime)
+        FOut.write(Img_deformed, CurTime)
 
     for i in range(MaxIter):
         #solve(a==0, Img_next)
 
         b = assemble(rhs(a))
         b.apply("")
-        solver.solve(Img_deformed.vector(), b)
+        
+        #solver.solve(Img_deformed.vector(), b)
+        solver.solve(Img.vector(), b)
+        Img_deformed.assign(Img)
+        
         CurTime = i*DeltaT
         if StoreHistory:
             FOut.write(Img_deformed, CurTime)
@@ -98,8 +117,8 @@ if __name__ == "__main__":
     FNameOut = "output/"+FNameOut+".xdmf"
     StoreHistory = True
     MassConservation = False
-    MaxIter = 500
-    DeltaT = 1e-4
+    MaxIter = 300
+    DeltaT = 2e-4
     
     x = SpatialCoordinate(mesh)
     Wind = as_vector((0.0, x[1]))
@@ -109,4 +128,5 @@ if __name__ == "__main__":
     Img = project(Img, VectorFunctionSpace(mesh, "DG", 1, NumData))
     Img.rename("img", "")
 
-    Img = Transport(Img, Wind, MaxIter, DeltaT, MassConservation, StoreHistory, FNameOut)
+    Img_deformed = Transport(Img, Wind, MaxIter, DeltaT, MassConservation, StoreHistory, FNameOut)
+    File("output/DGTransportFinal.pvd") << Img_deformed
