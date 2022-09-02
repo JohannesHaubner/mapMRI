@@ -89,10 +89,6 @@ def FEM2Pic(Img, NumData, FName):
         dataarray = numpy.maximum(0,dataarray)
         dataarray = dataarray*255
         dataarray2 = dataarray.astype(numpy.uint8)
-
-
-        if NumData == 1:
-            dataarray2 = dataarray2[:,:,0]
         
         j = Image.fromarray(dataarray2)
         j.save(FName)
