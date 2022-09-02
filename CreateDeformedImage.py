@@ -1,32 +1,22 @@
+#deform a given image and write out a .png in 8 bit
+
 from dolfin import *
-from DGTransport import solve as DGSolve
-
-from Pic2Fen import *
-
+from dolfin_adjoint import *
+from DGTransport import Transport
+from Pic2Fen import Pic2FEM, FEM2Pic
 import numpy
-set_log_level(30)
+
 import time
-
+import PIL
 FName = "shuttle_small.png"
-(mesh, Img, NumData) = Pic2Fenics(FName)
+(mesh, Img, NumData) = Pic2FEM(FName)
 
-fout = XDMFFile(MPI.comm_world, "output/Result.xdmf")
-fout.parameters["flush_output"] = True
-fout.parameters["rewrite_function_mesh"] = False
-
-# some defs
-DG = FunctionSpace(mesh, "DG", 1)
+#Make Deformation Field
+#DG = VectorFunctionSpace(mesh, "DG", 1, NumData)
 vCG = VectorFunctionSpace(mesh, "CG", 1)
-n = FacetNormal(mesh)
+#n = FacetNormal(mesh)
 x = SpatialCoordinate(mesh)
-v = TestFunction(DG)
-
-
-Img = project(sqrt(inner(Img, Img)), DG)
-Img.rename("img", "")
-
-
-Img_deformed = project(sqrt(inner(Img, Img)), DG)
+#v = TestFunction(DG)
 
 #mark boundary edges as 1
 BoundaryMarker = MeshFunction("size_t", mesh, 1)
@@ -40,103 +30,20 @@ Wind_data = Function(vCG)
 mylhs = inner(grad(TestFunction(vCG)), grad(TrialFunction(vCG)))*dx
 myrhs = inner(as_vector([sin(x[0]/100), cos(x[1]/100)]), TestFunction(vCG))*dx
 solve(mylhs == myrhs, Wind_data, BC)
+#v created
 
-
-#Make form:
-
-#from IPython import embed; embed()
-
-def Max0(d):
-    """
-    val = []
-    for i in range(NumData):
-        val.append(0.5*(d[i]+abs(d[i])))
-    return as_vector(val)
-    """
-
-    return 0.5*(d+abs(d))
-
-def Flux(f, Wind, n):
-    upwind = Max0(inner(Wind,n))
-    return -f*upwind
-
-def Form(f, v, Wind, source=0):
-    a = inner(grad(v), outer(f, Wind))*dx
-    a += inner(jump(v), jump(Flux(f, Wind, n)))*dS
-    a += inner(v, Flux(f, Wind, n))*ds
-    a += div(Wind)*inner(v, f)*dx
-    a += source*v*dx(domain=mesh)
-    return a
-
-Img_next = TrialFunction(Img.function_space())
-#Img_next = Function(Img.function_space())
-#Img_next.rename("img", "")
-DeltaT = 1e-5
-a_deformed = Constant(1.0/DeltaT)*(inner(v,Img_next)*dx - inner(v, Img_deformed)*dx) - 0.5*(Form(Img_deformed, v, Wind_data) + Form(Img_next, v,  Wind_data))
-#a = Constant(1.0/DeltaT)*(inner(v, f_next)*dx - inner(v, Img)*dx) - Form(f_next)
-#a = Constant(1.0/DeltaT)*(inner(v, f_next)*dx - inner(v, Img)*dx) - Form(Img)
-
-
-
-A = assemble(lhs(a_deformed))
-solver = LUSolver(A, "mumps")
-#from IPython import embed; embed()
-
-for i in range(500):
-    fout.write(Img_deformed, float(i))
-    b = assemble(rhs(a_deformed))
-    b.apply("")
-    solver.solve(Img.vector(), b)
-
-# opt
-print("finished creating tracking")
-Wind_opt = Function(vCG)
-source = Function(DG)
-source.vector().set_local(numpy.random.rand(source.vector().get_local().size))
-source.vector().apply("")
-
+Order = 1
+Img = project(Img, VectorFunctionSpace(mesh, "DG", Order, NumData))
+Img.rename("img", "")
 
 DeltaT = 1e-5
-a = Constant(1.0/DeltaT)*(inner(v,Img_next)*dx - inner(v, Img)*dx) - 0.5*(Form(Img, v, Wind_opt, source) + Form(Img_next, v,  Wind_opt, source))
+MaxIter = 500
+Img_deformed = Transport(Img, Wind_data, MaxIter, DeltaT, MassConservation = False)
 
-A = assemble(lhs(a))
-solver = LUSolver(A, "mumps")
-for i in range(20):
-    b = assemble(rhs(a_deformed))
-    b.apply("")
-    solver.solve(Img.vector(), b)
-    #solve( lhs(a) == rhs(a), Img)
-    
-# get v = 0 on boundary bound vec
-dofmap = vCG.dofmap()
-boundvec = numpy.ones(Wind_opt.vector().get_local().size)*1e+10
-for e in edges(mesh):
-    if len(e.entities(2) == 1):
-        for v in e.entities(0):
-            for dof in dofmap.entity_dofs(mesh, 0, [v]):
-                if dof < boundvec.size:
-                    boundvec[dof] = 0
+fout = XDMFFile(MPI.comm_world, "output/Img_Transported.xdmf")
+fout.parameters["flush_output"] = True
+fout.parameters["rewrite_function_mesh"] = False
+fout.write(Img_deformed)
 
-
-Boundlowfun = Function(vCG)
-Boundlowfun.vector().set_local(-boundvec)
-Boundlowfun.vector().apply("")
-Boundhighfun = Function(vCG)
-Boundhighfun.vector().set_local(boundvec)
-Boundhighfun.vector().apply("")
-
-
-J = assemble( 0.5*(Img-Img_deformed)**2*dx)
-Jhat = ReducedFunctional(J, Control(source))
-
-#from IPython import embed; embed()
-h = Function(DG)
-h.vector()[:] = 0.1
-conv_rate = taylor_test(Jhat, source, h)
-print(conv_rate)
-
-#m_opt = minimize(Jhat, method = 'L-BFGS-B', bounds=(Boundlowfun, Boundhighfun))
-
-
-
-
+FName = "shuttle_goal.png"
+FEM2Pic(Img_deformed, NumData, FName)

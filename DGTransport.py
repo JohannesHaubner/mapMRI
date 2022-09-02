@@ -1,7 +1,8 @@
+#solver for transporting images
+
 from dolfin import *
 from dolfin_adjoint import *
 parameters['ghost_mode'] = 'shared_facet'
-from Pic2Fen import *
 
 def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=False, FNameOut=""):
     Space = Img.function_space()
@@ -13,6 +14,11 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
         FOut.parameters["rewrite_function_mesh"] = False
 
     mesh = Space.mesh()
+    #compute CFL number
+    h = CellDiameter(mesh)
+    CFL = project(sqrt(inner(Wind, Wind))*Constant(DeltaT)/h, FunctionSpace(mesh, "DG", 0))
+    if(CFL.vector().max() > 1.0):
+        print("DGTransport: WARNING: CFL = %le", CFL)
 
     #Make form:
     n = FacetNormal(mesh)
@@ -53,7 +59,6 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
         FOut.write(Img, CurTime)
 
     for i in range(MaxIter):
-        print(i)
         #solve(a==0, Img_next)
 
         b = assemble(rhs(a))
@@ -67,7 +72,8 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
 if __name__ == "__main__":
     #create on the fly
     FName = "shuttle_small.png"
-    (mesh, Img, NumData) = Pic2Fenics(FName)
+    from Pic2Fen import Pic2FEM
+    (mesh, Img, NumData) = Pic2FEM(FName)
 
     """
     #read from file
@@ -92,7 +98,7 @@ if __name__ == "__main__":
     StoreHistory = True
     MassConservation = False
     MaxIter = 500
-    DeltaT = 5e-4
+    DeltaT = 1e-4
     
     x = SpatialCoordinate(mesh)
     Wind = as_vector((0.0, x[1]))
@@ -102,4 +108,4 @@ if __name__ == "__main__":
     Img = project(Img, VectorFunctionSpace(mesh, "DG", 1, NumData))
     Img.rename("img", "")
 
-    Img = Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=False, FNameOut="")
+    Img = Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=True, FNameOut=FNameOut)

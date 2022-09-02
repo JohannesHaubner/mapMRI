@@ -5,7 +5,7 @@ parameters['ghost_mode'] = 'shared_facet'
 from PIL import Image
 import numpy as np
 
-def Pic2Fenics(FName, mesh=None):
+def Pic2FEM(FName, mesh=None):
     img = Image.open(FName)
     xPixel = np.shape(img)[0]
     yPixel = np.shape(img)[1]
@@ -52,6 +52,31 @@ def Pic2Fenics(FName, mesh=None):
     ImgFunction.vector().apply("")
 
     return mesh, ImgFunction, len(Channels)
+
+def FEM2Pic(Img, NumData, FName):
+    mesh = Img.function_space().mesh()
+    DG0 = VectorFunctionSpace(mesh, "DG", 0, NumData)
+    dg0data = project(Img, DG0)
+
+    num_pixel_x = 196
+    num_pixel_y = 300
+
+    import numpy
+    dataarray = numpy.zeros((num_pixel_y, num_pixel_x, 3))
+    for x in range(num_pixel_x):
+        for y in range(num_pixel_y):
+            val1 = dg0data((x+0.4, num_pixel_y-y-0.5))
+            val2 = dg0data((x+0.6, num_pixel_y-y-0.5))
+            dataarray[y,x, :] = 0.5*(val1+val2)
+            
+    dataarray = dataarray/numpy.max(dataarray)
+    dataarray = numpy.maximum(0,dataarray)
+    dataarray = dataarray*255
+    dataarray2 = dataarray.astype(numpy.uint8)
+
+    if MPI.rank(MPI.comm_world) == 0:
+        j = Image.fromarray(dataarray2)
+        j.save(FName)
 
 if __name__ == "__main__":
     InputFolder = "./"
