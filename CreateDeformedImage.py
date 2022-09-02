@@ -11,6 +11,9 @@ import PIL
 FName = "shuttle_small.png"
 (mesh, Img, NumData) = Pic2FEM(FName)
 
+#Img = project(sqrt(inner(Img, Img)), FunctionSpace(mesh, "DG", 0))
+#NumData = 1
+
 #Make Deformation Field
 #DG = VectorFunctionSpace(mesh, "DG", 1, NumData)
 vCG = VectorFunctionSpace(mesh, "CG", 1)
@@ -32,8 +35,12 @@ myrhs = inner(as_vector([sin(x[0]/100), cos(x[1]/100)]), TestFunction(vCG))*dx
 solve(mylhs == myrhs, Wind_data, BC)
 #v created
 
+#set order of DG solver
 Order = 1
-Img = project(Img, VectorFunctionSpace(mesh, "DG", Order, NumData))
+if NumData == 1:
+    Img = project(Img, FunctionSpace(mesh, "DG", Order))
+else:
+    Img = project(Img, VectorFunctionSpace(mesh, "DG", Order, NumData))
 Img.rename("img", "")
 
 DeltaT = 1e-5
