@@ -58,15 +58,21 @@ def FEM2Pic(Img, NumData, FName):
     DG0 = VectorFunctionSpace(mesh, "DG", 0, NumData)
     dg0data = project(Img, DG0)
 
-    num_pixel_x = 196
-    num_pixel_y = 300
-
+    import mpi4py as M4P
     import numpy
-    dataarray = numpy.zeros((num_pixel_y, num_pixel_x, 3))
-    for x in range(num_pixel_x):
-        for y in range(num_pixel_y):
-            val1 = dg0data((x+0.4, num_pixel_y-y-0.5))
-            val2 = dg0data((x+0.6, num_pixel_y-y-0.5))
+    #get local mesh dimensions
+    x_max = max(mesh.coordinates()[:,0])
+    y_max = max(mesh.coordinates()[:,1])
+    tmp = numpy.array((x_max, y_max), dtype=numpy.uint)
+    MeshSize = numpy.zeros(2, dtype=numpy.uint)
+    #get the actual number of pixels from all procs
+    M4P.MPI.Comm.Allreduce(MPI.comm_world, tmp, MeshSize, op=M4P.MPI.MAX)
+
+    dataarray = numpy.zeros((MeshSize[1], MeshSize[0], NumData))
+    for x in range(MeshSize[0]):
+        for y in range(MeshSize[1]):
+            val1 = dg0data((x+0.4, MeshSize[1]-y-0.5))
+            val2 = dg0data((x+0.6, MeshSize[1]-y-0.5))
             dataarray[y,x, :] = 0.5*(val1+val2)
             
     dataarray = dataarray/numpy.max(dataarray)
