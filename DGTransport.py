@@ -108,4 +108,4 @@ if __name__ == "__main__":
     Img = project(Img, VectorFunctionSpace(mesh, "DG", 1, NumData))
     Img.rename("img", "")
 
-    Img = Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=True, FNameOut=FNameOut)
+    Img = Transport(Img, Wind, MaxIter, DeltaT, MassConservation, StoreHistory, FNameOut)
