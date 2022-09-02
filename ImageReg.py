@@ -10,10 +10,10 @@ set_log_level(20)
 
 # read image
 FName = "shuttle_small.png"
-(mesh, Img, NumData) = Pic2Fenics(FName)
+(mesh, Img, NumData) = Pic2FEM(FName)
 
 FName_goal = "shuttle_goal.png"
-(mesh_goal, Img_goal, NumData_goal) = Pic2Fenics(FName_goal, mesh)
+(mesh_goal, Img_goal, NumData_goal) = Pic2FEM(FName_goal, mesh)
 
 # output file
 fcont = XDMFFile(MPI.comm_world, "output/Control.xdmf")
