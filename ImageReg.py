@@ -3,6 +3,8 @@ from Pic2Fen import *
 parameters['ghost_mode'] = 'shared_facet'
 from dolfin_adjoint import *
 from preconditioning_overloaded import preconditioning
+
+
 import numpy
 set_log_level(20)
 
@@ -31,7 +33,7 @@ class myclass():
         self.phi = phi
     def eval(self, j, control):
         fcont.write_checkpoint(control, "control", float(self.writeiter), append=True)
-        fcont.write_checkpoint(self.phi, "phi", float(self.writeiter), append=True)
+        fphi.write_checkpoint(self.phi, "phi", float(self.writeiter), append=True)
         self.js += [j]
         print(j)
         self.writeiter += 1
@@ -57,10 +59,14 @@ solve(mylhs == myrhs, Wind_data, BC)
 
 set_working_tape(Tape())
 
-control = Function(vCG)
-#control.vector().set_local(Wind_data.vector())
-#control.vector().apply("")
-BC.apply(control.vector())
+controlfun = Function(vCG)
+controlfun.vector().set_local(Wind_data.vector())
+controlfun.vector().apply("")
+
+
+control = preconditioning(controlfun)
+
+#BC.apply(control.vector())
 
 #Make form:
 #from IPython import embed; embed()
@@ -102,30 +108,51 @@ a = Constant(1.0/DeltaT)*(inner(v, Img_t) * dx - inner(v, Img_old) * dx) \
 
 A = assemble(lhs(a))
 solver = LUSolver(A, "mumps")
-for i in range(300):
+for i in range(30):
     b = assemble(rhs(a))
     b.apply("")
     solver.solve(Img.vector(), b)
     Img_old.assign(Img)
-    fphi.write(Img_old, float(i))
 
 
 
 alpha = Constant(1e-4)
 J = assemble(0.5 * (Img - Img_goal)**2 * dx + alpha*grad(control)**2*dx)
 
-mycallback = myclass(Img).eval
-Jhat = ReducedFunctional(J, Control(control), eval_cb_post=mycallback)
 
-minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True}, tol=1e-08)
+mycallback = myclass(Img).eval
+Jhat = ReducedFunctional(J, Control(controlfun), eval_cb_post=mycallback)
+
+#minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True}, tol=1e-08)
 
 
 #from IPython import embed; embed()
-#h = Function(control.function_space())
-#h.vector()[:] = 2.0
-#h.vector().apply("")
-#BC.apply(h.vector())
+h = Function(control.function_space())
+h.vector().set_local(numpy.random.rand(h.vector().get_local().size))
+h.vector().apply("")
 
-#conv_rate = taylor_test(Jhat, control, h)
+conv_rate = taylor_test(Jhat, control, h)
+exit()
+eps = 1e-2
+res = []
+
+
+funbase = Jhat(control)
+mygrad = Jhat.derivative()
+File("output/mygrad.pvd") << mygrad
+print(numpy.inner(mygrad.vector().get_local(), h2.vector().get_local()-h.vector().get_local()))
+
+gradd = numpy.inner(mygrad.vector().get_local(), h2.vector().get_local())
+
+while len(res) <= 5:
+    controlnew = Function(control.function_space())
+    controlnew.vector().set_local(control.vector().get_local()+eps*h.vector().get_local())
+    funnew = Jhat(controlnew)
+    res += [funnew - funbase - eps*gradd ]
+    eps = eps/10
+    print(res)
+
+
+
 #print(conv_rate)
 
