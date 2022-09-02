@@ -55,6 +55,7 @@ def Pic2FEM(FName, mesh=None):
 
 def FEM2Pic(Img, NumData, FName):
     mesh = Img.function_space().mesh()
+    mesh.init()
     DG0 = VectorFunctionSpace(mesh, "DG", 0, NumData)
     dg0data = project(Img, DG0)
 
@@ -67,20 +68,30 @@ def FEM2Pic(Img, NumData, FName):
     MeshSize = numpy.zeros(2, dtype=numpy.uint)
     #get the actual number of pixels from all procs
     M4P.MPI.Comm.Allreduce(MPI.comm_world, tmp, MeshSize, op=M4P.MPI.MAX)
-
-    dataarray = numpy.zeros((MeshSize[1], MeshSize[0], NumData))
+    
+    tmp_array = numpy.zeros((MeshSize[1], MeshSize[0], NumData))
+    for c in cells(mesh):
+        P = c.midpoint()
+        value = dg0data(P)
+        PixelX = numpy.floor(P.array()[0]).astype(numpy.uint16)
+        PixelY = numpy.floor(MeshSize[1] - P.array()[1]).astype(numpy.uint16)
+        tmp_array[PixelY, PixelX, :] += 0.5*value
+    """
     for x in range(MeshSize[0]):
         for y in range(MeshSize[1]):
             val1 = dg0data((x+0.4, MeshSize[1]-y-0.5))
             val2 = dg0data((x+0.6, MeshSize[1]-y-0.5))
             dataarray[y,x, :] = 0.5*(val1+val2)
-            
-    dataarray = dataarray/numpy.max(dataarray)
-    dataarray = numpy.maximum(0,dataarray)
-    dataarray = dataarray*255
-    dataarray2 = dataarray.astype(numpy.uint8)
+    """
+    dataarray = numpy.zeros((MeshSize[1], MeshSize[0], NumData))
+    M4P.MPI.Comm.Allreduce(MPI.comm_world, tmp_array, dataarray, op=M4P.MPI.SUM)
 
     if MPI.rank(MPI.comm_world) == 0:
+        dataarray = dataarray/numpy.max(dataarray)
+        dataarray = numpy.maximum(0,dataarray)
+        dataarray = dataarray*255
+        dataarray2 = dataarray.astype(numpy.uint8)
+
         j = Image.fromarray(dataarray2)
         j.save(FName)
 
