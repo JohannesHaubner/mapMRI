@@ -1,8 +1,8 @@
 #solver for transporting images
 
 from dolfin import *
-from dolfin_adjoint import *
-parameters['ghost_mode'] = 'shared_facet'
+#from dolfin_adjoint import *
+#parameters['ghost_mode'] = 'shared_facet'
 
 def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=False, FNameOut=""):
     Space = Img.function_space()
@@ -22,34 +22,19 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
 
     #Make form:
     n = FacetNormal(mesh)
-    def Max0(d):
-        return 0.5*(d+abs(d))
 
-    #Scheme = "Central" #needed for Taylor-Test
-    Scheme = "Upwind"
-    
-    def Flux(u, Wind, n):
-        if Scheme == "Central":
-            flux = 0.5*inner(Wind, n)
-        if Scheme == "Upwind":
-            flux = Max0(inner(Wind,n))
-        return u*flux
+    def Form(u):
+        from numpy import zeros as npzeros
+        #weak form
+        re = Constant(0.0) #physical diffusion
+        f = Constant(npzeros(NumData)) #source term
+        a = inner(v, dot(grad(u), Wind))*dx + re*inner(grad(v), grad(u))*dx
         
-    def FluxB(u, Wind, n):
-        if Scheme == "Central":
-            return u*inner(Wind,n)
-        if Scheme == "Upwind":
-            return u*Max0(inner(Wind,n))
-
-    def Form(f):
-        #a = inner(v, div(outer(f, Wind)))*dx
-    
-        a = -inner(grad(v), outer(f, Wind))*dx
-        a += inner(jump(v), jump(Flux(f, Wind, n)))*dS
-        a += inner(v, FluxB(f, Wind, n))*ds
-    
-        if MassConservation == False:
-            a -= inner(v, div(Wind)*f)*dx
+        # Add SUPG stabilisation terms
+        # Residual
+        r = dot(grad(u), Wind) - re*div(grad(u))# - f
+        vnorm = sqrt(dot(Wind, Wind))
+        a += Constant(0.01)*(h/(2.0*vnorm))*inner(dot(grad(v), Wind), r)*dx
         return a
 
     Img_next = TrialFunction(Img.function_space())
@@ -59,14 +44,10 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
     Img_deformed.assign(Img)
     Img_deformed.rename("Img", "")
 
-    a = Constant(1.0/DeltaT)*(inner(v,Img_next)*dx - inner(v, Img_deformed)*dx) + 0.5*(Form(Img_deformed) + Form(Img_next))
-
-    #a = Constant(1.0/DeltaT)*(inner(v, f_next)*dx - inner(v, Img)*dx) - Form(f_next)
-    #a = Constant(1.0/DeltaT)*(inner(v, f_next)*dx - inner(v, Img)*dx) - Form(Img)
-
+    a = Constant(1.0/DeltaT)*(inner(v,Img_next) - inner(v,Img_deformed))*dx + Form(0.5*(Img_deformed + Img_next))
     A = assemble(lhs(a))
-    #solver = LUSolver(A) #needed for Taylor-Test
-    solver = KrylovSolver(A, "gmres", "none")
+    solver = LUSolver(A) #needed for Taylor-Test
+    #solver = KrylovSolver(A, "gmres", "none")
     #solver.set_operator(A)
 
     CurTime = 0.0
@@ -75,7 +56,6 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
 
     for i in range(MaxIter):
         #solve(a==0, Img_next)
-
         b = assemble(rhs(a))
         b.apply("")
         
@@ -93,7 +73,13 @@ if __name__ == "__main__":
     FName = "shuttle_small.png"
     from Pic2Fen import Pic2FEM
     (mesh, Img, NumData) = Pic2FEM(FName)
-
+    
+    Img = project(Img, VectorFunctionSpace(mesh, "CG", 2, NumData))
+    #Make BW
+    #Img = project(sqrt(inner(Img, Img)), FunctionSpace(mesh, "CG", 1))
+    #Img.rename("img_SUPG", "")
+    #NumData = 1
+    
     """
     #read from file
     FIn = HDF5File(MPI.comm_world, FName+".h5", 'r')
@@ -112,7 +98,7 @@ if __name__ == "__main__":
     NumData = 1
     """
     
-    FNameOut = "img_DG"
+    FNameOut = "img_SUPG"
     FNameOut = "output/"+FNameOut+".xdmf"
     StoreHistory = True
     MassConservation = False
@@ -121,11 +107,6 @@ if __name__ == "__main__":
     
     x = SpatialCoordinate(mesh)
     Wind = as_vector((0.0, x[1]))
-
-    #Img = project(sqrt(inner(Img, Img)), FunctionSpace(mesh, "DG", 0))
-    #Img = project(Img, VectorFunctionSpace(mesh, "CG", 1, NumData))
-    Img = project(Img, VectorFunctionSpace(mesh, "DG", 1, NumData))
-    Img.rename("img", "")
 
     Img_deformed = Transport(Img, Wind, MaxIter, DeltaT, MassConservation, StoreHistory, FNameOut)
     File("output/DGTransportFinal.pvd") << Img_deformed
