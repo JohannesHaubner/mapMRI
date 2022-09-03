@@ -48,8 +48,7 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
     A = assemble(lhs(a))
     solver = LUSolver(A) #needed for Taylor-Test
     #solver = KrylovSolver(A, "gmres", "none")
-    #solver.set_operator(A)
-
+    
     CurTime = 0.0
     if StoreHistory:
         FOut.write(Img_deformed, CurTime)
@@ -71,7 +70,7 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
 if __name__ == "__main__":
     #create on the fly
     FName = "shuttle_small.png"
-    from Pic2Fen import Pic2FEM
+    from Pic2Fen import Pic2FEM, FEM2Pic
     (mesh, Img, NumData) = Pic2FEM(FName)
     
     Img = project(Img, VectorFunctionSpace(mesh, "CG", 2, NumData))
@@ -109,4 +108,5 @@ if __name__ == "__main__":
     Wind = as_vector((0.0, x[1]))
 
     Img_deformed = Transport(Img, Wind, MaxIter, DeltaT, MassConservation, StoreHistory, FNameOut)
-    File("output/DGTransportFinal.pvd") << Img_deformed
+    File("output/SUPGTransportFinal.pvd") << Img_deformed
+    FEM2Pic(Img_deformed, NumData, "output/SUPGTransportFinal.png")

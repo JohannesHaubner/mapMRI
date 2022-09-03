@@ -1,5 +1,5 @@
 from dolfin import *
-from dolfin_adjoint import *
+#from dolfin_adjoint import *
 parameters['ghost_mode'] = 'shared_facet'
 
 from PIL import Image

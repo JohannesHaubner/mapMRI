@@ -1,7 +1,7 @@
 #solver for transporting images
 
 from dolfin import *
-from dolfin_adjoint import *
+#from dolfin_adjoint import *
 parameters['ghost_mode'] = 'shared_facet'
 
 def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=False, FNameOut=""):
@@ -67,8 +67,7 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
     A = assemble(lhs(a))
     #solver = LUSolver(A) #needed for Taylor-Test
     solver = KrylovSolver(A, "gmres", "none")
-    #solver.set_operator(A)
-
+    
     CurTime = 0.0
     if StoreHistory:
         FOut.write(Img_deformed, CurTime)
@@ -91,7 +90,7 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
 if __name__ == "__main__":
     #create on the fly
     FName = "shuttle_small.png"
-    from Pic2Fen import Pic2FEM
+    from Pic2Fen import Pic2FEM, FEM2Pic
     (mesh, Img, NumData) = Pic2FEM(FName)
 
     """
@@ -129,3 +128,4 @@ if __name__ == "__main__":
 
     Img_deformed = Transport(Img, Wind, MaxIter, DeltaT, MassConservation, StoreHistory, FNameOut)
     File("output/DGTransportFinal.pvd") << Img_deformed
+    FEM2Pic(Img_deformed, NumData, "output/DGTransportFinal.png")
