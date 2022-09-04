@@ -24,6 +24,9 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
     n = FacetNormal(mesh)
     def Max0(d):
         return 0.5*(d+abs(d))
+    
+    def Max0smoothed(d, k=100):
+        return d/(1+exp(-k*x))
 
     #Scheme = "Central" #needed for Taylor-Test
     Scheme = "smoothedUpwind"
