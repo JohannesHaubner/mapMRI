@@ -17,16 +17,16 @@ FName_goal = "shuttle_goal.png"
 (mesh_goal, Img_goal, NumData_goal) = Pic2FEM(FName_goal, mesh)
 
 # output file
-fcont = XDMFFile(MPI.comm_world, "output/Control.xdmf")
-fcont.parameters["flush_output"] = True
-fcont.parameters["rewrite_function_mesh"] = False
+fCont = XDMFFile(MPI.comm_world, "output/Control.xdmf")
+fCont.parameters["flush_output"] = True
+fCont.parameters["rewrite_function_mesh"] = False
 
-fphi = XDMFFile(MPI.comm_world, "output/Phi.xdmf")
-fphi.parameters["flush_output"] = True
-fphi.parameters["rewrite_function_mesh"] = False
+fState = XDMFFile(MPI.comm_world, "output/State.xdmf")
+fState.parameters["flush_output"] = True
+fState.parameters["rewrite_function_mesh"] = False
 
+"""
 writeiter = 0
-
 class AdjointWriter():
     def __init__(self, phi, png=False):
         self.writeiter = 0
@@ -35,15 +35,16 @@ class AdjointWriter():
         self.png = png
     def eval(self, j, control):
         if self.writeiter % 10 == 0 or self.writeiter < 10:
-            #fcont.write_checkpoint(control, "control", float(self.writeiter), append=True)
+            #fCont.write_checkpoint(control, "control", float(self.writeiter), append=True)
             control.rename("control", "")
-            fcont.write(control, float(self.writeiter))
-            fphi.write_checkpoint(self.phi, "phi", float(self.writeiter), append=True)
+            fCont.write(control, float(self.writeiter))
+            fState.write_checkpoint(self.phi, "phi", float(self.writeiter), append=True)
         if self.png: 
             FEM2Pic(self.phi, 1, "output/phi"+str(self.writeiter)+".png")
         self.js += [j]
         print("objective function: ", j)
         self.writeiter += 1
+"""
 
 # transform colored image to black-white intensity image
 #Space = FunctionSpace(mesh, "DG", 1)
@@ -73,13 +74,32 @@ Img_deformed = Transport(Img, control, MaxIter, DeltaT, MassConservation = False
 #File("output/test.pvd") << Img_deformed
 
 # solve forward and evaluate objective
-alpha = Constant(0.0)
+alpha = Constant(1e-3) #regularization
+
+state = Control(Img_deformed)  # The Control type enables easy access to tape values after replays.
+cont = Control(controlfun)
 J = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx + alpha*grad(control)**2*dx(domain=mesh))
 
-mycallback = AdjointWriter(Img_deformed, png=True).eval
-Jhat = ReducedFunctional(J, Control(controlfun), eval_cb_post=mycallback)
+Jhat = ReducedFunctional(J, cont)
 
-minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True}, tol=1e-08)
+optimization_iterations = 0
+def cb(*args, **kwargs):
+    global optimization_iterations
+    optimization_iterations += 1
+    current_pde_solution = state.tape_value()
+    current_pde_solution.rename("Img", "")
+    current_control = cont.tape_value()
+    current_control.rename("control", "")
+    
+    #File("output/control_iter{}.pvd".format(optimization_iterations)) << current_contro
+    fCont.write(current_control, float(optimization_iterations))
+    #File("output/state_iter{}.pvd".format(optimization_iterations)) << current_pde_solution
+    fState.write(current_pde_solution, float(optimization_iterations))
+  
+fState.write(Img_deformed, float(0))
+fCont.write(control, float(0))
+    
+minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True}, tol=1e-08, callback = cb)
 
 File("output/OptControl.pvd") << controlfun
 
