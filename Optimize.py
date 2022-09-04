@@ -1,6 +1,7 @@
 from dolfin import *
 from dolfin_adjoint import *
-from DGTransport import Transport
+#from DGTransport import Transport
+from SUPGTransport import Transport
 from Pic2Fen import *
 
 from preconditioning_overloaded import preconditioning
@@ -45,16 +46,18 @@ class AdjointWriter():
         self.writeiter += 1
 
 # transform colored image to black-white intensity image
-DG = FunctionSpace(mesh, "DG", 1)
-Img = project(sqrt(inner(Img, Img)), DG)
+#Space = FunctionSpace(mesh, "DG", 1)
+Space = FunctionSpace(mesh, "CG", 1)
+Img = project(sqrt(inner(Img, Img)), Space)
 Img.rename("img", "")
-Img_goal = project(sqrt(inner(Img_goal, Img_goal)), DG)
+Img_goal = project(sqrt(inner(Img_goal, Img_goal)), Space)
 
 set_working_tape(Tape())
 
 # function spaces and definitions
 vCG = VectorFunctionSpace(mesh, "CG", 1)
 
+#initialize control
 controlfun = Function(vCG)
 #x = SpatialCoordinate(mesh)
 #controlfun = project(as_vector((0.0, x[1])), vCG)
@@ -70,8 +73,6 @@ Img_deformed = Transport(Img, control, MaxIter, DeltaT, MassConservation = False
 #File("output/test.pvd") << Img_deformed
 
 # solve forward and evaluate objective
-source = Function(DG)
-
 alpha = Constant(0.0)
 J = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx + alpha*grad(control)**2*dx(domain=mesh))
 

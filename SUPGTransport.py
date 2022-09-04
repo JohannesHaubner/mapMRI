@@ -1,8 +1,7 @@
 #solver for transporting images
 
 from dolfin import *
-#from dolfin_adjoint import *
-#parameters['ghost_mode'] = 'shared_facet'
+from dolfin_adjoint import *
 
 def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=False, FNameOut=""):
     Space = Img.function_space()
@@ -21,20 +20,20 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
         print("DGTransport: WARNING: CFL = %le", CFL)
 
     #Make form:
-    n = FacetNormal(mesh)
-
+    #n = FacetNormal(mesh)
     def Form(u):
-        from numpy import zeros as npzeros
+        #from numpy import zeros as npzeros
         #weak form
         re = Constant(0.0) #physical diffusion
-        f = Constant(npzeros(NumData)) #source term
+        #f = Constant(npzeros(NumData)) #source term
         a = inner(v, dot(grad(u), Wind))*dx + re*inner(grad(v), grad(u))*dx
         
         # Add SUPG stabilisation terms
         # Residual
         r = dot(grad(u), Wind) - re*div(grad(u))# - f
-        vnorm = sqrt(dot(Wind, Wind))
-        a += Constant(0.01)*(h/(2.0*vnorm))*inner(dot(grad(v), Wind), r)*dx
+        #smooth sqrt:
+        vnorm = sqrt(dot(Wind, Wind)+Constant(1e-8))
+        a += Constant(0.05)*(h/(2.0*vnorm))*inner(dot(grad(v), Wind), r)*dx
         return a
 
     Img_next = TrialFunction(Img.function_space())
@@ -73,7 +72,7 @@ if __name__ == "__main__":
     from Pic2Fen import Pic2FEM, FEM2Pic
     (mesh, Img, NumData) = Pic2FEM(FName)
     
-    Img = project(Img, VectorFunctionSpace(mesh, "CG", 2, NumData))
+    Img = project(Img, VectorFunctionSpace(mesh, "CG", 1, NumData))
     #Make BW
     #Img = project(sqrt(inner(Img, Img)), FunctionSpace(mesh, "CG", 1))
     #Img.rename("img_SUPG", "")
@@ -106,6 +105,7 @@ if __name__ == "__main__":
     
     x = SpatialCoordinate(mesh)
     Wind = as_vector((0.0, x[1]))
+    #Wind = Constant((0.0, 0.0))
 
     Img_deformed = Transport(Img, Wind, MaxIter, DeltaT, MassConservation, StoreHistory, FNameOut)
     File("output/SUPGTransportFinal.pvd") << Img_deformed
