@@ -79,10 +79,14 @@ J = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx + alpha*grad(control)**2*dx
 mycallback = AdjointWriter(Img_deformed, png=True).eval
 Jhat = ReducedFunctional(J, Control(controlfun), eval_cb_post=mycallback)
 
-#minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True}, tol=1e-08)
+minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True}, tol=1e-08)
 
+File("output/OptControl.pvd") << controlfun
+
+"""
 h = Function(vCG)
 h.vector()[:] = 0.1
 h.vector().apply("")
 conv_rate = taylor_test(Jhat, control, h)
 print(conv_rate)
+"""
