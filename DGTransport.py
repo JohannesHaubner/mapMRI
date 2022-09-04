@@ -26,7 +26,7 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
         return 0.5*(d+abs(d))
     
     def Max0smoothed(d, k=100):
-        return d/(1+exp(-k*x))
+        return d/(1+exp(-k*d))
 
     #Scheme = "Central" #needed for Taylor-Test
     Scheme = "smoothedUpwind"
