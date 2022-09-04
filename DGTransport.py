@@ -26,20 +26,25 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
         return 0.5*(d+abs(d))
 
     #Scheme = "Central" #needed for Taylor-Test
-    Scheme = "Upwind"
+    Scheme = "smoothedUpwind"
     
-    def Flux(u, Wind, n):
+    def Flux(f, Wind, n):
         if Scheme == "Central":
             flux = 0.5*inner(Wind, n)
         if Scheme == "Upwind":
             flux = Max0(inner(Wind,n))
-        return u*flux
+        if Scheme == "smoothedUpwind":
+            flux = Max0smoothed(inner(Wind, n))
+        return f*flux
         
-    def FluxB(u, Wind, n):
+    def FluxB(f, Wind, n):
         if Scheme == "Central":
-            return u*inner(Wind,n)
+            return f*inner(Wind,n)
         if Scheme == "Upwind":
-            return u*Max0(inner(Wind,n))
+            return f*Max0(inner(Wind,n))
+        if Scheme == "smoothedUpwind":
+            return f*Max0smoothed(inner(Wind, n))
+
 
     def Form(f):
         #a = inner(v, div(outer(f, Wind)))*dx
