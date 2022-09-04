@@ -64,6 +64,7 @@ controlfun = Function(vCG)
 #controlfun = project(as_vector((0.0, x[1])), vCG)
 
 control = preconditioning(controlfun)
+control.rename("control", "")
 
 # parameters
 DeltaT = 4e-4
