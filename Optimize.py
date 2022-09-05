@@ -1,7 +1,7 @@
 from dolfin import *
 from dolfin_adjoint import *
-#from DGTransport import Transport
-from SUPGTransport import Transport
+from DGTransport import Transport
+#from SUPGTransport import Transport
 from Pic2Fen import *
 
 from preconditioning_overloaded import preconditioning
@@ -26,39 +26,21 @@ fState.parameters["flush_output"] = True
 fState.parameters["rewrite_function_mesh"] = False
 
 """
-writeiter = 0
-class AdjointWriter():
-    def __init__(self, phi, png=False):
-        self.writeiter = 0
-        self.js = []
-        self.phi = phi
-        self.png = png
-    def eval(self, j, control):
-        if self.writeiter % 10 == 0 or self.writeiter < 10:
-            #fCont.write_checkpoint(control, "control", float(self.writeiter), append=True)
-            control.rename("control", "")
-            fCont.write(control, float(self.writeiter))
-            fState.write_checkpoint(self.phi, "phi", float(self.writeiter), append=True)
-        if self.png: 
-            FEM2Pic(self.phi, 1, "output/phi"+str(self.writeiter)+".png")
-        self.js += [j]
-        print("objective function: ", j)
-        self.writeiter += 1
+Space = VectorFunctionSpace(mesh, "DG", 1, 3)
+Img = project(Img, Space)
 """
 
 # transform colored image to black-white intensity image
-#Space = FunctionSpace(mesh, "DG", 1)
-Space = FunctionSpace(mesh, "CG", 1)
+Space = FunctionSpace(mesh, "DG", 1)
 Img = project(sqrt(inner(Img, Img)), Space)
 Img.rename("img", "")
 Img_goal = project(sqrt(inner(Img_goal, Img_goal)), Space)
 
+
 set_working_tape(Tape())
 
-# function spaces and definitions
-vCG = VectorFunctionSpace(mesh, "CG", 1)
-
 #initialize control
+vCG = VectorFunctionSpace(mesh, "CG", 1)
 controlfun = Function(vCG)
 #x = SpatialCoordinate(mesh)
 #controlfun = project(as_vector((0.0, x[1])), vCG)
@@ -67,8 +49,8 @@ control = preconditioning(controlfun)
 control.rename("control", "")
 
 # parameters
-DeltaT = 4e-4
-MaxIter = 200
+DeltaT = 1e-3
+MaxIter = 50
 
 Img_deformed = Transport(Img, control, MaxIter, DeltaT, MassConservation = False)
 

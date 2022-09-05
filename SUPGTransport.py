@@ -33,7 +33,7 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
         r = dot(grad(u), Wind) - re*div(grad(u))# - f
         #smooth sqrt:
         vnorm = sqrt(dot(Wind, Wind)+Constant(1e-8))
-        a += Constant(0.05)*(h/(2.0*vnorm))*inner(dot(grad(v), Wind), r)*dx
+        a += Constant(0.08)*(h/(2.0*vnorm))*inner(dot(grad(v), Wind), r)*dx
         return a
 
     Img_next = TrialFunction(Img.function_space())
