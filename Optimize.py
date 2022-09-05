@@ -35,7 +35,7 @@ Space = FunctionSpace(mesh, "DG", 1)
 Img = project(sqrt(inner(Img, Img)), Space)
 Img.rename("img", "")
 Img_goal = project(sqrt(inner(Img_goal, Img_goal)), Space)
-
+NumData = 1
 
 set_working_tape(Tape())
 
@@ -73,11 +73,12 @@ def cb(*args, **kwargs):
     current_pde_solution.rename("Img", "")
     current_control = cont.tape_value()
     current_control.rename("control", "")
-    
-    #File("output/control_iter{}.pvd".format(optimization_iterations)) << current_contro
+
     fCont.write(current_control, float(optimization_iterations))
-    #File("output/state_iter{}.pvd".format(optimization_iterations)) << current_pde_solution
     fState.write(current_pde_solution, float(optimization_iterations))
+    
+    FName = "output/optimize_%5d.png"%optimization_iterations
+    FEM2Pic(current_pde_solution, NumData, FName)
   
 fState.write(Img_deformed, float(0))
 fCont.write(control, float(0))
