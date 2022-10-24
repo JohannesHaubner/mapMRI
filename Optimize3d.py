@@ -35,12 +35,12 @@ Space = VectorFunctionSpace(mesh, "DG", 1, 3)
 Img = project(Img, Space)
 """
 
-# # transform colored image to black-white intensity image
-# Space = FunctionSpace(mesh, "DG", 1)
-# Img = project(sqrt(inner(Img, Img)), Space)
-# Img.rename("img", "")
-# Img_goal = project(sqrt(inner(Img_goal, Img_goal)), Space)
-# NumData = 1
+# transform colored image to black-white intensity image
+Space = FunctionSpace(mesh, "DG", 1)
+Img = project(Img, Space)
+Img.rename("img", "")
+Img_goal = project(Img_goal, Space)
+NumData = 1
 
 set_working_tape(Tape())
 
@@ -71,6 +71,7 @@ print(type(Img_goal))
 print(type(control))
 print(type(mesh))
 
+# breakpoint()
 J = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx + alpha*grad(control)**2*dx(domain=mesh))
 
 Jhat = ReducedFunctional(J, cont)
