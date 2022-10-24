@@ -4,8 +4,9 @@
 *.pvd
 output/*
 
-
-
+braindata*
+outputmask_only/
+testdata_3d/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

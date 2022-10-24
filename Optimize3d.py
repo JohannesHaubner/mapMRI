@@ -2,7 +2,8 @@ from dolfin import *
 from dolfin_adjoint import *
 from DGTransport import Transport
 #from SUPGTransport import Transport
-from Pic2Fen import *
+# from Pic2Fen import *
+from MRI2FEM import read_image
 
 from preconditioning_overloaded import preconditioning
 
@@ -10,24 +11,22 @@ import numpy
 set_log_level(20)
 
 # read image
-filename = "mask_only"
 # FName = "shuttle_small.png"
-FName = "./braindata_2d/slice205" + filename +".png"
+FName = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/testdata_3d/input.mgz"
 
-maxiter = 1000
+maxiter = 5
 
-(mesh, Img, NumData) = Pic2FEM(FName)
+(mesh, Img, NumData) = read_image(FName)
 
-# FName_goal = "shuttle_goal.png"
-FName_goal = "./braindata_2d/slice091" + filename +".png"
-(mesh_goal, Img_goal, NumData_goal) = Pic2FEM(FName_goal, mesh)
+FName_goal = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/testdata_3d/target.mgz"
+(mesh_goal, Img_goal, NumData_goal) = read_image(FName_goal, mesh)
 
 # output file
-fCont = XDMFFile(MPI.comm_world, "output" + filename + "/Control.xdmf")
+fCont = XDMFFile(MPI.comm_world, "output/Control.xdmf")
 fCont.parameters["flush_output"] = True
 fCont.parameters["rewrite_function_mesh"] = False
 
-fState = XDMFFile(MPI.comm_world, "output" + filename + "/State.xdmf")
+fState = XDMFFile(MPI.comm_world, "output/State.xdmf")
 fState.parameters["flush_output"] = True
 fState.parameters["rewrite_function_mesh"] = False
 
@@ -36,12 +35,12 @@ Space = VectorFunctionSpace(mesh, "DG", 1, 3)
 Img = project(Img, Space)
 """
 
-# transform colored image to black-white intensity image
-Space = FunctionSpace(mesh, "DG", 1)
-Img = project(sqrt(inner(Img, Img)), Space)
-Img.rename("img", "")
-Img_goal = project(sqrt(inner(Img_goal, Img_goal)), Space)
-NumData = 1
+# # transform colored image to black-white intensity image
+# Space = FunctionSpace(mesh, "DG", 1)
+# Img = project(sqrt(inner(Img, Img)), Space)
+# Img.rename("img", "")
+# Img_goal = project(sqrt(inner(Img_goal, Img_goal)), Space)
+# NumData = 1
 
 set_working_tape(Tape())
 
@@ -60,7 +59,7 @@ MaxIter = 50
 
 Img_deformed = Transport(Img, control, MaxIter, DeltaT, MassConservation = False)
 
-#File("output" + filename + "/test.pvd") << Img_deformed
+#File("output/test.pvd") << Img_deformed
 
 # solve forward and evaluate objective
 alpha = Constant(1e-3) #regularization
@@ -71,6 +70,7 @@ print(type(Img_deformed))
 print(type(Img_goal))
 print(type(control))
 print(type(mesh))
+
 J = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx + alpha*grad(control)**2*dx(domain=mesh))
 
 Jhat = ReducedFunctional(J, cont)
@@ -87,15 +87,15 @@ def cb(*args, **kwargs):
     fCont.write(current_control, float(optimization_iterations))
     fState.write(current_pde_solution, float(optimization_iterations))
     
-    FName = "output" + filename + "/optimize_%5d.png"%optimization_iterations
-    FEM2Pic(current_pde_solution, NumData, FName)
+    # FName = "output/optimize_%5d.png"%optimization_iterations
+    # FEM2Pic(current_pde_solution, NumData, FName)
   
 fState.write(Img_deformed, float(0))
 fCont.write(control, float(0))
     
 minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True, "maxiter": maxiter}, tol=1e-08, callback = cb)
 
-File("output" + filename + "/OptControl.pvd") << controlfun
+File("output/OptControl.pvd") << controlfun
 
 """
 h = Function(vCG)
