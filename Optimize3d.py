@@ -3,7 +3,7 @@ from dolfin_adjoint import *
 from DGTransport import Transport
 #from SUPGTransport import Transport
 # from Pic2Fen import *
-from MRI2FEM import read_image
+from mri_utils.MRI2FEM import read_image
 
 from preconditioning_overloaded import preconditioning
 
