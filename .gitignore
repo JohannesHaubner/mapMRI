@@ -4,6 +4,8 @@
 *.pvd
 output/*
 
+slurm*
+mridata_3d/
 braindata*
 outputmask_only/
 testdata_3d/

@@ -4,7 +4,7 @@ from fenics_adjoint import *
 import numpy as np
 from nibabel.affines import apply_affine
 
-def read_image(filename, data_filter=None):
+def read_image(filename, data_filter=None, storepath=None):
     
     print("Loading", filename)
     
@@ -37,7 +37,7 @@ def read_image(filename, data_filter=None):
 
     mesh.coordinates()[:] *= (nx - 1)
 
-    File("/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/testdata_3d/mesh.pvd") << mesh
+    # File("/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/testdata_3d/mesh.pvd") << mesh
 
     print(len(range(int(mesh.coordinates()[:].min()), int(mesh.coordinates()[:].max()))))
 
@@ -85,7 +85,7 @@ def read_image(filename, data_filter=None):
     #     data[i, j, k] = np.where(np.isnan(data[i, j, k]), 0, data[i, j, k])
     #     u_data.vector()[:] = data[i, j, k]
 
-    File("/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/testdata_3d/u_data.pvd") << u_data
+    # File("/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/testdata_3d/u_data.pvd") << u_data
 
     return mesh, u_data, 1
 

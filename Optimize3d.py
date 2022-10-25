@@ -3,6 +3,7 @@ from dolfin_adjoint import *
 from DGTransport import Transport
 #from SUPGTransport import Transport
 # from Pic2Fen import *
+import os
 from mri_utils.MRI2FEM import read_image
 
 from preconditioning_overloaded import preconditioning
@@ -10,16 +11,21 @@ from preconditioning_overloaded import preconditioning
 import numpy
 set_log_level(20)
 
+if "home/bastian/" in os.getcwd():
+    path = "/home/bastian/Oscar-Image-Registration-via-Transport-Equation/"
+
 # read image
 # FName = "shuttle_small.png"
-FName = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/testdata_3d/input.mgz"
+FName = path + "testdata_3d/input.mgz"
 
-maxiter = 5
+maxiter = 200
 
 (mesh, Img, NumData) = read_image(FName)
 
-FName_goal = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/testdata_3d/target.mgz"
+FName_goal = path + "testdata_3d/target.mgz"
 (mesh_goal, Img_goal, NumData_goal) = read_image(FName_goal, mesh)
+
+#  breakpoint()
 
 # output file
 fCont = XDMFFile(MPI.comm_world, "output/Control.xdmf")
@@ -77,6 +83,9 @@ J = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx + alpha*grad(control)**2*dx
 Jhat = ReducedFunctional(J, cont)
 
 optimization_iterations = 0
+
+f = File("output/State_during_optim.pvd")
+
 def cb(*args, **kwargs):
     global optimization_iterations
     optimization_iterations += 1
@@ -84,6 +93,8 @@ def cb(*args, **kwargs):
     current_pde_solution.rename("Img", "")
     current_control = cont.tape_value()
     current_control.rename("control", "")
+
+    f << state
 
     fCont.write(current_control, float(optimization_iterations))
     fState.write(current_pde_solution, float(optimization_iterations))
