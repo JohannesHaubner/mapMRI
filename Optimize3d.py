@@ -14,25 +14,33 @@ set_log_level(20)
 if "home/bastian/" in os.getcwd():
     path = "/home/bastian/Oscar-Image-Registration-via-Transport-Equation/"
 
-# read image
-# FName = "shuttle_small.png"
-FName = path + "testdata_3d/input.mgz"
+
+FName = path + "mridata_3d/091_cropped.mgz"
+FName_goal = path + "mridata_3d/091registeredto205.mgz"
+outputfolder = path + "outputs/output_cropped_mri"
+
+# FName = path + "testdata_3d/input.mgz"
+# FName_goal = path + "testdata_3d/target.mgz"
+# outputfolder = path + "outputs/output_cube"
+
+if not os.path.isdir(outputfolder):
+    os.makedirs(outputfolder, exist_ok=True)
 
 maxiter = 200
 
 (mesh, Img, NumData) = read_image(FName)
 
-FName_goal = path + "testdata_3d/target.mgz"
+
 (mesh_goal, Img_goal, NumData_goal) = read_image(FName_goal, mesh)
 
 #  breakpoint()
 
 # output file
-fCont = XDMFFile(MPI.comm_world, "output/Control.xdmf")
+fCont = XDMFFile(MPI.comm_world, outputfolder + "/Control.xdmf")
 fCont.parameters["flush_output"] = True
 fCont.parameters["rewrite_function_mesh"] = False
 
-fState = XDMFFile(MPI.comm_world, "output/State.xdmf")
+fState = XDMFFile(MPI.comm_world, outputfolder + "/State.xdmf")
 fState.parameters["flush_output"] = True
 fState.parameters["rewrite_function_mesh"] = False
 
@@ -47,6 +55,9 @@ Img = project(Img, Space)
 Img.rename("img", "")
 Img_goal = project(Img_goal, Space)
 NumData = 1
+
+File(outputfolder + "/input.pvd") << Img
+File(outputfolder + "/target.pvd") << Img_goal
 
 set_working_tape(Tape())
 
@@ -65,7 +76,7 @@ MaxIter = 50
 
 Img_deformed = Transport(Img, control, MaxIter, DeltaT, MassConservation = False)
 
-#File("output/test.pvd") << Img_deformed
+#File( outputfolder + "/test.pvd") << Img_deformed
 
 # solve forward and evaluate objective
 alpha = Constant(1e-3) #regularization
@@ -84,7 +95,7 @@ Jhat = ReducedFunctional(J, cont)
 
 optimization_iterations = 0
 
-f = File("output/State_during_optim.pvd")
+f = File( outputfolder + "/State_during_optim.pvd")
 
 def cb(*args, **kwargs):
     global optimization_iterations
@@ -99,7 +110,7 @@ def cb(*args, **kwargs):
     fCont.write(current_control, float(optimization_iterations))
     fState.write(current_pde_solution, float(optimization_iterations))
     
-    # FName = "output/optimize_%5d.png"%optimization_iterations
+    # FName =  outputfolder + "/optimize_%5d.png"%optimization_iterations
     # FEM2Pic(current_pde_solution, NumData, FName)
   
 fState.write(Img_deformed, float(0))
@@ -107,7 +118,7 @@ fCont.write(control, float(0))
     
 minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True, "maxiter": maxiter}, tol=1e-08, callback = cb)
 
-File("output/OptControl.pvd") << controlfun
+File( outputfolder + "/OptControl.pvd") << controlfun
 
 """
 h = Function(vCG)

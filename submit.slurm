@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=register
-#SBATCH --cpus-per-task=1 --nodes=1
+#SBATCH --cpus-per-task=1 --nodes=4
 ## SBATCH --partition=milanq
 #SBATCH --partition=defq
 ## defq also possible
@@ -28,5 +28,8 @@ set -o nounset # Treat any unset variables as an error
 
 outfolder=${SPATH}/slurm/${SLURM_JOB_ID}
 
-srun -n 1 python3 ${SPATH}/Optimize3d.py > ${outfolder}_log_python_srun.txt
+echo "starting to run"
+
+srun -n 1 python3 -u ${SPATH}/Optimize3d.py > ${outfolder}_log_python_srun.txt
  
+echo "success"

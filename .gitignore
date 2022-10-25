@@ -4,6 +4,7 @@
 *.pvd
 output/*
 
+outputs/*
 slurm*
 mridata_3d/
 braindata*
