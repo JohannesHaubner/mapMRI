@@ -15,13 +15,13 @@ if "home/bastian/" in os.getcwd():
     path = "/home/bastian/Oscar-Image-Registration-via-Transport-Equation/"
 
 
-FName = path + "mridata_3d/091_cropped.mgz"
-FName_goal = path + "mridata_3d/091registeredto205.mgz"
-outputfolder = path + "outputs/output_cropped_mri"
+# FName = path + "mridata_3d/091_cropped.mgz"
+# FName_goal = path + "mridata_3d/091registeredto205.mgz"
+# outputfolder = path + "outputs/output_cropped_mri"
 
-# FName = path + "testdata_3d/input.mgz"
-# FName_goal = path + "testdata_3d/target.mgz"
-# outputfolder = path + "outputs/output_cube"
+FName = path + "testdata_3d/input.mgz"
+FName_goal = path + "testdata_3d/target.mgz"
+outputfolder = path + "outputs/output_cube"
 
 if not os.path.isdir(outputfolder):
     os.makedirs(outputfolder, exist_ok=True)
@@ -88,14 +88,14 @@ print(type(Img_goal))
 print(type(control))
 print(type(mesh))
 
-# breakpoint()
+breakpoint()
 J = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx + alpha*grad(control)**2*dx(domain=mesh))
 
 Jhat = ReducedFunctional(J, cont)
 
 optimization_iterations = 0
 
-f = File( outputfolder + "/State_during_optim.pvd")
+# f = File( outputfolder + "/State_during_optim.pvd")
 
 def cb(*args, **kwargs):
     global optimization_iterations
@@ -105,7 +105,7 @@ def cb(*args, **kwargs):
     current_control = cont.tape_value()
     current_control.rename("control", "")
 
-    f << state
+    # f << state
 
     fCont.write(current_control, float(optimization_iterations))
     fState.write(current_pde_solution, float(optimization_iterations))
@@ -118,7 +118,7 @@ fCont.write(control, float(0))
     
 minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True, "maxiter": maxiter}, tol=1e-08, callback = cb)
 
-File( outputfolder + "/OptControl.pvd") << controlfun
+# File( outputfolder + "/OptControl.pvd") << controlfun
 
 """
 h = Function(vCG)

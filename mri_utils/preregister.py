@@ -82,7 +82,7 @@ def mismatch(a_ij, *args):
 
     input_transformed = register(aff=None, rot=rot, b=b)
 
-    return np.mean(np.abs(input_transformed - target_image))
+    return np.mean(np.abs(input_transformed - target_image) ** 2)
 
 # x0 = np.concatenate((np.eye(3).flatten(), np.zeros(3)))
 
