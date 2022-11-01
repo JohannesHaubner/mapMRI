@@ -1,6 +1,8 @@
 from dolfin import *
 from dolfin_adjoint import *
 from DGTransport import Transport
+from ipopt_solver import IPOPTProblem as IpoptProblem
+from ipopt_solver import IPOPTSolver as IpoptSolver
 #from SUPGTransport import Transport
 from Pic2Fen import *
 
@@ -11,15 +13,15 @@ set_log_level(20)
 
 # read image
 filename = "mask_only"
-# FName = "shuttle_small.png"
-FName = "./braindata_2d/slice205" + filename +".png"
+FName = "shuttle_small.png"
+#FName = "./braindata_2d/slice205" + filename +".png"
 
 maxiter = 1000
 
 (mesh, Img, NumData) = Pic2FEM(FName)
 
-# FName_goal = "shuttle_goal.png"
-FName_goal = "./braindata_2d/slice091" + filename +".png"
+FName_goal = "shuttle_goal.png"
+#FName_goal = "./braindata_2d/slice091" + filename +".png"
 (mesh_goal, Img_goal, NumData_goal) = Pic2FEM(FName_goal, mesh)
 
 # output file
@@ -43,6 +45,9 @@ Img.rename("img", "")
 Img_goal = project(sqrt(inner(Img_goal, Img_goal)), Space)
 NumData = 1
 
+# set option
+smoothen = True
+
 set_working_tape(Tape())
 
 #initialize control
@@ -51,7 +56,7 @@ controlfun = Function(vCG)
 #x = SpatialCoordinate(mesh)
 #controlfun = project(as_vector((0.0, x[1])), vCG)
 
-control = preconditioning(controlfun)
+control = preconditioning(controlfun, smoothen=smoothen)
 control.rename("control", "")
 
 # parameters
@@ -71,7 +76,10 @@ print(type(Img_deformed))
 print(type(Img_goal))
 print(type(control))
 print(type(mesh))
-J = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx + alpha*grad(control)**2*dx(domain=mesh))
+if not smoothen:
+    J = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx + alpha*grad(control)**2*dx(domain=mesh))
+else:
+    J = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx)
 
 Jhat = ReducedFunctional(J, cont)
 
@@ -92,10 +100,25 @@ def cb(*args, **kwargs):
   
 fState.write(Img_deformed, float(0))
 fCont.write(control, float(0))
-    
-minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True, "maxiter": maxiter}, tol=1e-08, callback = cb)
 
-File("output" + filename + "/OptControl.pvd") << controlfun
+if smoothen:
+    # IPOPT
+    s1 = TrialFunction(vCG)
+    s2 = TestFunction(vCG)
+    form = inner(s1, s2) * dx
+    mass_action_form = action(form, Constant((1., 1.)))
+    mass_action = assemble(mass_action_form)
+    ndof = mass_action.size()
+    diag_entries = mass_action.gather(range(ndof))
+    problem = IpoptProblem([Jhat], [1.0], [], [], [], [], diag_entries, alpha.values()[0])
+    ipopt = IpoptSolver(problem, callback = cb)
+    controlfun = ipopt.solve(cont.vector()[:])
+else:
+    minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True, "maxiter": maxiter}, tol=1e-08, callback = cb)
+
+confun = Function(vCG)
+confun.vector().set_local(controlfun)
+File("output" + filename + "/OptControl.pvd") << confun
 
 """
 h = Function(vCG)
