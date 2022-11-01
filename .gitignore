@@ -6,6 +6,7 @@ output/*
 
 outputs/*
 slurm*
+*.mgz
 mridata_3d/
 braindata*
 outputmask_only/
