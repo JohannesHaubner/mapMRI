@@ -26,6 +26,10 @@ FName_goal = "shuttle_goal.png"
 (mesh_goal, Img_goal, NumData_goal) = Pic2FEM(FName_goal, mesh)
 
 # output file
+fTrafo = XDMFFile(MPI.comm_world, "output" + filename + "/Trafo.xdmf")
+fTrafo.parameters["flush_output"] = True
+fTrafo.parameters["rewrite_function_mesh"] = False
+
 fCont = XDMFFile(MPI.comm_world, "output" + filename + "/Control.xdmf")
 fCont.parameters["flush_output"] = True
 fCont.parameters["rewrite_function_mesh"] = False
@@ -101,8 +105,12 @@ def cb(*args, **kwargs):
     current_pde_solution.rename("Img", "")
     current_control = cont.tape_value()
     current_control.rename("control", "")
+    current_trafo = transformation(current_control, M_lumped)
+    current_trafo = preconditioning(current_trafo, smoothen=True)
+    current_trafo.rename("transformation", "")
 
     fCont.write(current_control, float(optimization_iterations))
+    fTrafo.write(current_trafo, float(optimization_iterations))
     fState.write(current_pde_solution, float(optimization_iterations))
     
     FName = "output" + filename + "/optimize_%5d.png"%optimization_iterations
