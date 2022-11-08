@@ -6,6 +6,7 @@ from ipopt_solver import IPOPTSolver as IpoptSolver
 #from SUPGTransport import Transport
 from Pic2Fen import *
 
+from transformation_overloaded import transformation
 from preconditioning_overloaded import preconditioning
 
 import numpy
@@ -45,30 +46,41 @@ Img.rename("img", "")
 Img_goal = project(sqrt(inner(Img_goal, Img_goal)), Space)
 NumData = 1
 
-# set option
-smoothen = True
+# initialize trafo
+vCG = VectorFunctionSpace(mesh, "CG", 1)
+s1 = TrialFunction(vCG)
+s2 = TestFunction(vCG)
+form = inner(s1, s2) * dx
+mass_action_form = action(form, Constant((1., 1.)))
+M_lumped = assemble(form)
+M_lumped_inv = assemble(form)
+M_lumped.zero()
+M_lumped_inv.zero()
+diag = assemble(mass_action_form)
+diag[:] = np.sqrt(diag[:])
+diaginv = assemble(mass_action_form)
+diaginv[:] = 1.0/np.sqrt(diag[:])
+M_lumped.set_diagonal(diag)
+M_lumped_inv.set_diagonal(diaginv)
 
 set_working_tape(Tape())
 
-#initialize control
-vCG = VectorFunctionSpace(mesh, "CG", 1)
+# initialize control
 controlfun = Function(vCG)
-#x = SpatialCoordinate(mesh)
-#controlfun = project(as_vector((0.0, x[1])), vCG)
-
-control = preconditioning(controlfun, smoothen=smoothen)
+controlf = transformation(controlfun, M_lumped)
+control = preconditioning(controlf, smoothen=True)
 control.rename("control", "")
 
 # parameters
 DeltaT = 1e-3
-MaxIter = 50
+MaxIter = 5
 
 Img_deformed = Transport(Img, control, MaxIter, DeltaT, MassConservation = False)
 
 #File("output" + filename + "/test.pvd") << Img_deformed
 
 # solve forward and evaluate objective
-alpha = Constant(1e-3) #regularization
+alpha = Constant(1e-6) #regularization
 
 state = Control(Img_deformed)  # The Control type enables easy access to tape values after replays.
 cont = Control(controlfun)
@@ -76,10 +88,8 @@ print(type(Img_deformed))
 print(type(Img_goal))
 print(type(control))
 print(type(mesh))
-if not smoothen:
-    J = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx + alpha*grad(control)**2*dx(domain=mesh))
-else:
-    J = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx)
+
+J = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx + alpha*control**2*dx(domain=mesh))
 
 Jhat = ReducedFunctional(J, cont)
 
@@ -101,23 +111,11 @@ def cb(*args, **kwargs):
 fState.write(Img_deformed, float(0))
 fCont.write(control, float(0))
 
-if smoothen:
-    # IPOPT
-    s1 = TrialFunction(vCG)
-    s2 = TestFunction(vCG)
-    form = inner(s1, s2) * dx
-    mass_action_form = action(form, Constant((1., 1.)))
-    mass_action = assemble(mass_action_form)
-    ndof = mass_action.size()
-    diag_entries = mass_action.gather(range(ndof))
-    problem = IpoptProblem([Jhat], [1.0], [], [], [], [], diag_entries, alpha.values()[0])
-    ipopt = IpoptSolver(problem, callback = cb)
-    controlfun = ipopt.solve(cont.vector()[:])
-else:
-    minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True, "maxiter": maxiter}, tol=1e-08, callback = cb)
+minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True, "maxiter": maxiter}, tol=1e-08, callback = cb)
 
 confun = Function(vCG)
 confun.vector().set_local(controlfun)
+confun = transformation(confun, M_lumped_inv)
 File("output" + filename + "/OptControl.pvd") << confun
 
 """
