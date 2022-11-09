@@ -123,7 +123,8 @@ minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True, "maxiter": maxiter
 
 confun = Function(vCG)
 confun.vector().set_local(controlfun)
-confun = transformation(confun, M_lumped_inv)
+confun = transformation(confun, M_lumped)
+confun = preconditioning(confun, smoothen=True)
 File("output" + filename + "/OptControl.pvd") << confun
 
 """
