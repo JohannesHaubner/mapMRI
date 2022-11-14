@@ -60,14 +60,16 @@ def get_largest_box(pats):
 
 
 
+
+
 def cut_to_box(image, box):
 
     box_boundary = get_bounding_box(box)
-    xlim = [box_boundary[0].start, box_boundary[0].stop]
-    ylim = [box_boundary[1].start, box_boundary[1].stop]
-    zlim = [box_boundary[2].start, box_boundary[2].stop]
+    xlim_box = [box_boundary[0].start, box_boundary[0].stop]
+    ylim_box = [box_boundary[1].start, box_boundary[1].stop]
+    zlim_box = [box_boundary[2].start, box_boundary[2].stop]
     
-    size = [xlim[1] - xlim[0], ylim[1] - ylim[0], zlim[1] - zlim[0]]
+    size = [xlim_box[1] - xlim_box[0], ylim_box[1] - ylim_box[0], zlim_box[1] - zlim_box[0]]
     size = [np.ceil(x).astype(int) for x in size]
 
 
@@ -102,13 +104,6 @@ datapath = "/home/basti/Dropbox (UiO)/Sleep/"
 filename = "masked"
 
 pats = ["091", "205"]
-
-ax = 2
-slice_index = 120
-
-slices = []
-
-
 
 largest_box = get_largest_box(pats)
 

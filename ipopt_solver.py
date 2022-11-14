@@ -324,6 +324,8 @@ class IPOPTSolver(OptimizationSolver):
         nlp.add_option('limited_memory_max_history', 50)
         nlp.add_option('point_perturbation_radius', 0.0)
 
+        nlp.add_option("linear_solver", "ma86")
+
         # a benefitial option for starts close to solution:
         nlp.add_option('bound_mult_init_method', 'mu-based')
 

@@ -2,7 +2,8 @@
 #SBATCH --job-name=register
 #SBATCH --cpus-per-task=1 --nodes=4
 ## SBATCH --partition=milanq
-#SBATCH --partition=defq
+#SBATCH --partition=fpgaq
+## SBATCH --partition=defq
 ## defq also possible
 
 #SBATCH --time 5-24 ##--time=99:00:00
@@ -15,7 +16,9 @@
 # conda init bash
 
 eval "$(conda shell.bash hook)"
-conda activate mri_inverse
+conda activate mripypot # mri_inverse
+
+module load ipopt-3.13.3
 
 SPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation
 
@@ -30,6 +33,8 @@ outfolder=${SPATH}/slurm/${SLURM_JOB_ID}
 
 echo "starting to run"
 
-srun -n 4 python3 -u ${SPATH}/Optimize3d.py > ${outfolder}_log_python_srun.txt
+srun -n 4 python3 -u ${SPATH}/Optimize.py > ${outfolder}_log_python_srun.txt
+
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder output_coarsened_mri_ipopt > ${outfolder}_log_python_srun.txt
  
 echo "success"

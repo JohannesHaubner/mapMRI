@@ -8,6 +8,16 @@ import nibabel
 # from nibabel.affines import apply_affine
 #from scipy.spatial.transform import Rotation as R
 
+"""
+
+An attempt to implement to implement the image registration (via affine transfrom) in PyTorch.
+The transformation would be differentiable and hence the gradients would be obtained easily.
+
+TODO
+FIXME 
+
+"""
+
 
 path = "/home/bastian/Oscar-Image-Registration-via-Transport-Equation/mridata_3d/"
 
