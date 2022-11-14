@@ -4,7 +4,7 @@ from dolfin import *
 from dolfin_adjoint import *
 parameters['ghost_mode'] = 'shared_facet'
 
-def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=False, FNameOut=""):
+def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=False, FNameOut="", timestepping="explicitEuler"):
     Space = Img.function_space()
     v = TestFunction(Space)
     if StoreHistory:
@@ -68,7 +68,12 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
     Img_deformed.assign(Img)
     Img_deformed.rename("Img", "")
 
-    a = Constant(1.0/DeltaT)*(inner(v,Img_next)*dx - inner(v, Img_deformed)*dx) + 0.5*(Form(Img_deformed) + Form(Img_next))
+    a = Constant(1.0/DeltaT)*(inner(v,Img_next)*dx - inner(v, Img_deformed)*dx)
+    
+    if timestepping == "explicitEuler":
+        a = a + Form(Img_deformed)
+    else:
+        a = a + 0.5*(Form(Img_deformed) + Form(Img_next))
 
     #a = Constant(1.0/DeltaT)*(inner(v, f_next)*dx - inner(v, Img)*dx) - Form(f_next)
     #a = Constant(1.0/DeltaT)*(inner(v, f_next)*dx - inner(v, Img)*dx) - Form(Img)

@@ -119,6 +119,14 @@ def cb(*args, **kwargs):
 fState.write(Img_deformed, float(0))
 fCont.write(control, float(0))
 
+h = Function(vCG)
+h.vector()[:] = 0.1
+h.vector().apply("")
+conv_rate = taylor_test(Jhat, control, h)
+print(conv_rate)
+
+exit()
+
 minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True, "maxiter": maxiter}, tol=1e-08, callback = cb)
 
 confun = Function(vCG)
