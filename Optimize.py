@@ -10,6 +10,16 @@ from transformation_overloaded import transformation
 from preconditioning_overloaded import preconditioning
 
 import numpy
+import time
+import argparse
+
+t0 = time.time()
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--timestepping", default="Crank-Nicolson", choices=["CrankNicolson", "explicitEuler"])
+parser.add_argument("--use_krylov_solver", default=False, action="store_true")
+args = vars(parser.parse_args())
+
 set_log_level(20)
 
 # read image
@@ -79,7 +89,9 @@ control.rename("control", "")
 DeltaT = 1e-3
 MaxIter = 5
 
-Img_deformed = Transport(Img, control, MaxIter, DeltaT, MassConservation = False)
+Img_deformed = Transport(Img, control, MaxIter, DeltaT, 
+                            timestepping=args["timestepping"], 
+                           use_krylov_solver=args["use_krylov_solver"], MassConservation=False)
 
 #File("output" + filename + "/test.pvd") << Img_deformed
 
@@ -119,21 +131,31 @@ def cb(*args, **kwargs):
 fState.write(Img_deformed, float(0))
 fCont.write(control, float(0))
 
-h = Function(vCG)
-h.vector()[:] = 0.1
-h.vector().apply("")
-conv_rate = taylor_test(Jhat, control, h)
-print(conv_rate)
+# h = Function(vCG)
+# h.vector()[:] = 0.1
+# h.vector().apply("")
+# conv_rate = taylor_test(Jhat, control, h)
+# print(conv_rate)
 
-exit()
+# exit()
 
-minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True, "maxiter": maxiter}, tol=1e-08, callback = cb)
+minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True, "maxiter": 10}, tol=1e-08, callback = cb)
 
-confun = Function(vCG)
-confun.vector().set_local(controlfun)
-confun = transformation(confun, M_lumped)
-confun = preconditioning(confun, smoothen=True)
-File("output" + filename + "/OptControl.pvd") << confun
+tf = time.time()
+
+dt = tf - t0
+
+print("Running with settings")
+print(args)
+print("took", format(dt, ".0f"), "seconds.")
+
+
+# confun = Function(vCG)
+# confun.vector().set_local(controlfun)
+# confun = transformation(confun, M_lumped)
+# confun = preconditioning(confun, smoothen=True)
+
+# File("output" + filename + "/OptControl.pvd") << confun
 
 """
 h = Function(vCG)

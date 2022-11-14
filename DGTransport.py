@@ -4,7 +4,18 @@ from dolfin import *
 from dolfin_adjoint import *
 parameters['ghost_mode'] = 'shared_facet'
 
-def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=False, FNameOut="", timestepping="explicitEuler"):
+def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=False, FNameOut="", 
+                use_krylov_solver=True, timestepping="explicitEuler"):
+    
+    assert timestepping in ["CrankNicolson", "explicitEuler"]
+
+    print("......................................")
+    print("Settings in Transport()")
+    print("--- use_krylov_solver =", use_krylov_solver)
+    print("--- timestepping =", timestepping)
+    print("......................................")
+
+    
     Space = Img.function_space()
     v = TestFunction(Space)
     if StoreHistory:
@@ -75,12 +86,18 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
     else:
         a = a + 0.5*(Form(Img_deformed) + Form(Img_next))
 
-    #a = Constant(1.0/DeltaT)*(inner(v, f_next)*dx - inner(v, Img)*dx) - Form(f_next)
-    #a = Constant(1.0/DeltaT)*(inner(v, f_next)*dx - inner(v, Img)*dx) - Form(Img)
+        #a = Constant(1.0/DeltaT)*(inner(v, f_next)*dx - inner(v, Img)*dx) - Form(f_next)
+        #a = Constant(1.0/DeltaT)*(inner(v, f_next)*dx - inner(v, Img)*dx) - Form(Img)
 
-    A = assemble(lhs(a))
-    #solver = LUSolver(A) #needed for Taylor-Test
-    solver = KrylovSolver(A, "gmres", "none")
+    # breakpoint()
+    if use_krylov_solver:
+        A = assemble(lhs(a))
+        #solver = LUSolver(A) #needed for Taylor-Test
+        solver = KrylovSolver(A, "gmres", "none")
+    else:
+        A = assemble(lhs(a))
+        solver = LUSolver()
+        solver.set_operator(A)
     
     CurTime = 0.0
     if StoreHistory:
@@ -89,12 +106,14 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
     for i in range(MaxIter):
         #solve(a==0, Img_next)
 
+
         b = assemble(rhs(a))
         b.apply("")
         
         #solver.solve(Img_deformed.vector(), b)
         solver.solve(Img.vector(), b)
         Img_deformed.assign(Img)
+
         
         CurTime = i*DeltaT
         if StoreHistory:
