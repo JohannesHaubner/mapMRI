@@ -15,13 +15,15 @@ import numpy
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--outfolder", required=True, type=str, help=""" name of folder to store to under "path + "outputs/" """)
-parserargs = vars(parser.parse_args())
+parser.add_argument("--use_krylov_solver", default=False, action="store_true")
+parser.add_argument("--timestepping", default="Crank-Nicolson", choices=["CrankNicolson", "explicitEuler"])
+parser.add_argument("--smoothen", default=False, action="store_true", help="Use proper scalar product")
 
-assert "/" not in parserargs["outfolder"]
+hyperparameters = vars(parser.parse_args())
+
+assert "/" not in hyperparameters["outfolder"]
 
 set_log_level(20)
-
-hyperparameters = {}
 
 if "home/bastian/" in os.getcwd():
     path = "/home/bastian/Oscar-Image-Registration-via-Transport-Equation/"
@@ -29,15 +31,13 @@ if "home/bastian/" in os.getcwd():
 
 hyperparameters["Input"] = path + "mridata_3d/091registeredto205_padded_coarsened.mgz"
 hyperparameters["Target"] = path + "mridata_3d/205_cropped_padded_coarsened.mgz"
-hyperparameters["outputfolder"] = path + "outputs/" + parserargs["outfolder"] # "output_coarsened_mri_ipopt"
+hyperparameters["outputfolder"] = path + "outputs/" + hyperparameters["outfolder"] # "output_coarsened_mri_ipopt"
 hyperparameters["lbfgs_max_iterations"] = 400
 hyperparameters["DeltaT"] = 1e-3
 hyperparameters["MaxIter"] = 50
 hyperparameters["MassConservation"] = False
-hyperparameters["alpha"] = 1e-3
+hyperparameters["alpha"] = 1e-4
 
-smoothen = True
-hyperparameters["smoothen"] = smoothen
 
 if not os.path.isdir(hyperparameters["outputfolder"]):
     os.makedirs(hyperparameters["outputfolder"], exist_ok=True)
@@ -80,12 +80,13 @@ controlfun = Function(vCG)
 #x = SpatialCoordinate(mesh)
 #controlfun = project(as_vector((0.0, x[1])), vCG)
 
-control = preconditioning(controlfun, smoothen=smoothen)
+control = preconditioning(controlfun, smoothen=hyperparameters["smoothen"])
 control.rename("control", "")
 
 
-Img_deformed = Transport(Img, control, hyperparameters["MaxIter"], hyperparameters["DeltaT"], MassConservation=hyperparameters["MassConservation"])
-
+Img_deformed = Transport(Img, control, hyperparameters["MaxIter"], hyperparameters["DeltaT"], 
+                            timestepping=hyperparameters["timestepping"], 
+                           use_krylov_solver=hyperparameters["use_krylov_solver"], MassConservation=False)
 #File( outputfolder + "/test.pvd") << Img_deformed
 
 # solve forward and evaluate objective
@@ -94,7 +95,7 @@ alpha = Constant(hyperparameters["alpha"]) #regularization
 state = Control(Img_deformed)  # The Control type enables easy access to tape values after replays.
 cont = Control(controlfun)
 
-if not smoothen:
+if not hyperparameters["smoothen"]:
     J = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx + alpha*grad(control)**2*dx(domain=mesh))
 else:
     J = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx)
@@ -127,7 +128,7 @@ fCont.write(control, float(0))
 t0 = time.time()
 
 
-if smoothen:
+if hyperparameters["smoothen"]:
     # IPOPT
     s1 = TrialFunction(vCG)
     s2 = TestFunction(vCG)
