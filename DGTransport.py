@@ -4,6 +4,15 @@ from dolfin import *
 from dolfin_adjoint import *
 parameters['ghost_mode'] = 'shared_facet'
 
+PETScOptions.set("mat_mumps_use_omp_threads", 8)
+PETScOptions.set("mat_mumps_icntl_35", True) # set use of BLR (Block Low-Rank) feature (0:off, 1:optimal)
+PETScOptions.set("mat_mumps_cntl_7", 1e-8) # set BLR relaxation
+PETScOptions.set("mat_mumps_icntl_4", 3)   # verbosity
+PETScOptions.set("mat_mumps_icntl_24", 1)  # detect null pivot rows
+PETScOptions.set("mat_mumps_icntl_22", 0)  # out of core
+#PETScOptions.set("mat_mumps_icntl_14", 250) # max memory increase in %
+
+
 def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=False, FNameOut="", 
                 use_krylov_solver=True, timestepping="explicitEuler"):
     
@@ -28,8 +37,9 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
     #compute CFL number
     h = CellDiameter(mesh)
     CFL = project(sqrt(inner(Wind, Wind))*Constant(DeltaT)/h, FunctionSpace(mesh, "DG", 0))
+    
     if(CFL.vector().max() > 1.0):
-        print("DGTransport: WARNING: CFL = %le", CFL)
+        raise ValueError("DGTransport: WARNING: CFL = %le", CFL)
 
     #Make form:
     n = FacetNormal(mesh)
@@ -96,8 +106,9 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
         solver = KrylovSolver(A, "gmres", "none")
     else:
         A = assemble(lhs(a))
-        solver = LUSolver()
-        solver.set_operator(A)
+        # solver = LUSolver()
+        solver = PETScLUSolver(A, "mumps")
+        # solver.set_operator(A)
     
     CurTime = 0.0
     if StoreHistory:

@@ -13,6 +13,16 @@ import argparse
 from preconditioning_overloaded import preconditioning
 import numpy
 
+
+PETScOptions.set("mat_mumps_use_omp_threads", 8)
+PETScOptions.set("mat_mumps_icntl_35", True) # set use of BLR (Block Low-Rank) feature (0:off, 1:optimal)
+PETScOptions.set("mat_mumps_cntl_7", 1e-8) # set BLR relaxation
+PETScOptions.set("mat_mumps_icntl_4", 3)   # verbosity
+PETScOptions.set("mat_mumps_icntl_24", 1)  # detect null pivot rows
+PETScOptions.set("mat_mumps_icntl_22", 0)  # out of core
+#PETScOptions.set("mat_mumps_icntl_14", 250) # max memory increase in %
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--outfolder", required=True, type=str, help=""" name of folder to store to under "path + "outputs/" """)
 parser.add_argument("--use_krylov_solver", default=False, action="store_true")
