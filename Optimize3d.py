@@ -119,16 +119,34 @@ controlfun = Function(vCG)
 if hyperparameters["starting_guess"] is not None:
 
     print("Will try to read starting guess")
+    
+    print("max before loading", controlfun.vector()[:].max())
+
     assert os.path.isfile(hyperparameters["starting_guess"])
 
     h5file = h5py.File(hyperparameters["starting_guess"])
 
+    print(list(h5file.keys()))
+    
+    print("keys of visualization vector", list(h5file["VisualisationVector"].keys()))
+    content = h5file["VisualisationVector"]["0"]
+    print("type" ,type(content))
+    print("shape", content.shape)
+    print("controlfun shape", controlfun.vector()[:].shape)
+    print("name", content.name)
+    print("content", content)
+    # breakpoint()
+
     # mesh = Mesh()
     hdf = HDF5File(mesh.mpi_comm(), hyperparameters["starting_guess"], "r")
 
-    hdf.read(controlfun, "VisualisationVector")
+    # hdf.read(controlfun, "/0")
+    hdf.read(controlfun, "/VisualisationVector/0")
 
-    breakpoint()
+    print("max after loading", controlfun.vector()[:].max())
+    print("Succesfully read starting guess, will exit")
+    exit()
+    # breakpoint()
 
 if hyperparameters["smoothen"]:
     controlf = transformation(controlfun, M_lumped)
@@ -195,7 +213,6 @@ fCont.write(control, float(0))
     
 t0 = time.time()
 
-
 optimization_iterations = 0
 
 def cb(*args, **kwargs):
@@ -220,8 +237,6 @@ def cb(*args, **kwargs):
     # FName = "output" + filename + "/optimize_%5d.png"%optimization_iterations
     # FEM2Pic(current_pde_solution, NumData, FName)
   
-fState.write(Img_deformed, float(0))
-fCont.write(control, float(0))
 
 
 minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True, "maxiter": hyperparameters["lbfgs_max_iterations"]}, tol=1e-08, callback = cb)

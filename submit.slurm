@@ -32,13 +32,16 @@ set -o nounset # Treat any unset variables as an error
 outfolder=${SPATH}/slurm/${SLURM_JOB_ID}
 solver=lu
 
-OUTFOLDERNAME=nosmoothen
+OUTFOLDERNAME=readtest # nosmoothen
+startingGuess=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/outputs/explicitEuler/Control.h5
 
 echo "starting to run"
 
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --timestepping explicitEuler --solver ${solver} \
 # --smoothen > ${outfolder}_log_python_srun.txt 
 
-srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --timestepping explicitEuler --solver ${solver} > ${outfolder}_log_python_srun.txt 
+srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --timestepping explicitEuler \
+--starting_guess ${startingGuess} --solver ${solver} > ${outfolder}_log_python_srun.txt 
+ 
  
 echo "success"
