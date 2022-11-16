@@ -4,23 +4,23 @@ from dolfin import *
 from dolfin_adjoint import *
 parameters['ghost_mode'] = 'shared_facet'
 
-PETScOptions.set("mat_mumps_use_omp_threads", 8)
-PETScOptions.set("mat_mumps_icntl_35", True) # set use of BLR (Block Low-Rank) feature (0:off, 1:optimal)
-PETScOptions.set("mat_mumps_cntl_7", 1e-8) # set BLR relaxation
-PETScOptions.set("mat_mumps_icntl_4", 3)   # verbosity
-PETScOptions.set("mat_mumps_icntl_24", 1)  # detect null pivot rows
-PETScOptions.set("mat_mumps_icntl_22", 0)  # out of core
-#PETScOptions.set("mat_mumps_icntl_14", 250) # max memory increase in %
+# PETScOptions.set("mat_mumps_use_omp_threads", 8)
+# PETScOptions.set("mat_mumps_icntl_35", True) # set use of BLR (Block Low-Rank) feature (0:off, 1:optimal)
+# PETScOptions.set("mat_mumps_cntl_7", 1e-8) # set BLR relaxation
+# PETScOptions.set("mat_mumps_icntl_4", 3)   # verbosity
+# PETScOptions.set("mat_mumps_icntl_24", 1)  # detect null pivot rows
+# PETScOptions.set("mat_mumps_icntl_22", 0)  # out of core
+# #PETScOptions.set("mat_mumps_icntl_14", 250) # max memory increase in %
 
 
 def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=False, FNameOut="", 
-                use_krylov_solver=True, timestepping="explicitEuler"):
+                solver=None, timestepping="explicitEuler"):
     
     assert timestepping in ["CrankNicolson", "explicitEuler"]
 
     print("......................................")
     print("Settings in Transport()")
-    print("--- use_krylov_solver =", use_krylov_solver)
+    print("--- solver =", solver)
     print("--- timestepping =", timestepping)
     print("......................................")
 
@@ -100,15 +100,18 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
         #a = Constant(1.0/DeltaT)*(inner(v, f_next)*dx - inner(v, Img)*dx) - Form(Img)
 
     # breakpoint()
-    if use_krylov_solver:
+    if solver == "krylov":
         A = assemble(lhs(a))
         #solver = LUSolver(A) #needed for Taylor-Test
         solver = KrylovSolver(A, "gmres", "none")
     else:
+        assert solver == "lu"
         A = assemble(lhs(a))
-        # solver = LUSolver()
-        solver = PETScLUSolver(A, "mumps")
-        # solver.set_operator(A)
+        solver = LUSolver()
+        solver.set_operator(A)
+        
+        # solver = PETScLUSolver(A, "mumps")
+        
     
     CurTime = 0.0
     if StoreHistory:

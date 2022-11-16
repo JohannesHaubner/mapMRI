@@ -100,6 +100,9 @@ alpha = Constant(1e-6) #regularization
 
 state = Control(Img_deformed)  # The Control type enables easy access to tape values after replays.
 cont = Control(controlfun)
+# BZ I think there is a bug here, it should be
+# cont = Control(control)
+raise NotImplementedError
 print(type(Img_deformed))
 print(type(Img_goal))
 print(type(control))

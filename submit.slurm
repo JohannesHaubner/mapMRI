@@ -30,14 +30,15 @@ set -o nounset # Treat any unset variables as an error
 
 
 outfolder=${SPATH}/slurm/${SLURM_JOB_ID}
+solver=lu
 
-OUTFOLDERNAME=tests
+OUTFOLDERNAME=nosmoothen
 
 echo "starting to run"
 
-srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --timestepping explicitEuler \ # --use_krylov_solver \ 
-> ${outfolder}_log_python_srun.txt
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --timestepping explicitEuler --solver ${solver} \
+# --smoothen > ${outfolder}_log_python_srun.txt 
 
-# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder output_coarsened_mri_ipopt > ${outfolder}_log_python_srun.txt
+srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --timestepping explicitEuler --solver ${solver} > ${outfolder}_log_python_srun.txt 
  
 echo "success"
