@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=register
 #SBATCH --cpus-per-task=1 --nodes=4
-## SBATCH --partition=milanq
-#SBATCH --partition=fpgaq
+#SBATCH --partition=milanq
+## SBATCH --partition=fpgaq
 ## SBATCH --partition=defq
 ## defq also possible
 
@@ -32,16 +32,20 @@ set -o nounset # Treat any unset variables as an error
 outfolder=${SPATH}/slurm/${SLURM_JOB_ID}
 solver=lu
 
-OUTFOLDERNAME=readtest # nosmoothen
-startingGuess=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/outputs/explicitEuler/Control.h5
+OUTFOLDERNAME=interpolateTest
+startingGuess=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/outputs/exportVtest/Control.hdf
 
 echo "starting to run"
 
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --timestepping explicitEuler --solver ${solver} \
-# --smoothen > ${outfolder}_log_python_srun.txt 
+# --lbfgs_max_iterations 1 > ${outfolder}_log_python_srun.txt 
+
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --timestepping explicitEuler \
+# --solver ${solver} > ${outfolder}_log_python_srun.txt 
 
 srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --timestepping explicitEuler \
---starting_guess ${startingGuess} --solver ${solver} > ${outfolder}_log_python_srun.txt 
+--input mridata_3d/091registeredto205_padded.mgz --target mridata_3d/205_cropped_padded.mgz \
+--readname 0 --starting_guess ${startingGuess} --solver ${solver} > ${outfolder}_log_python_srun.txt 
  
  
 echo "success"

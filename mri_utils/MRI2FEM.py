@@ -4,13 +4,17 @@ from fenics_adjoint import *
 import numpy as np
 from nibabel.affines import apply_affine
 
-def read_image(filename, mesh=None, storepath=None):
+def read_image(hyperparameters, name, mesh=None, storepath=None):
     
-    print("Loading", filename)
+    print("Loading", hyperparameters[name])
     
-    image2 = nibabel.load(filename)
+    image2 = nibabel.load(hyperparameters[name])
     data = image2.get_fdata()
 
+
+    hyperparameters[name + ".shape"] = list(data.shape)
+
+    print("dimension of image:", data.shape, "(", sum(data.shape), "voxels)")
 
     # x0 = Point(0.0, 0.0, 0.0)
     # y0 = x0
@@ -44,7 +48,7 @@ def read_image(filename, mesh=None, storepath=None):
 
     # File("/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/testdata_3d/mesh.pvd") << mesh
 
-    print(len(range(int(mesh.coordinates()[:].min()), int(mesh.coordinates()[:].max()))))
+    # print(len(range(int(mesh.coordinates()[:].min()), int(mesh.coordinates()[:].max()))))
 
     # space = VectorFunctionSpace(mesh, "DG", 0, 1)
     space = FunctionSpace(mesh, "DG", 1)
