@@ -14,7 +14,7 @@ def read_image(hyperparameters, name, mesh=None, storepath=None):
 
     hyperparameters[name + ".shape"] = list(data.shape)
 
-    print("dimension of image:", data.shape, "(", sum(data.shape), "voxels)")
+    print("dimension of image:", data.shape, "(", data.size, "voxels)")
 
     # x0 = Point(0.0, 0.0, 0.0)
     # y0 = x0
@@ -36,9 +36,9 @@ def read_image(hyperparameters, name, mesh=None, storepath=None):
     if mesh is None:
         mesh = UnitCubeMesh(MPI.comm_world, nx, nx, nx)
         # breakpoint()
-        mesh.coordinates()[:, 0] *= (nx - 1)
-        mesh.coordinates()[:, 1] *= (ny - 1)
-        mesh.coordinates()[:, 2] *= (nz - 1)
+        # mesh.coordinates()[:, 0] *= (nx - 1)
+        # mesh.coordinates()[:, 1] *= (ny - 1)
+        # mesh.coordinates()[:, 2] *= (nz - 1)
 
     # xyzm = mesh.coordinates()[:]
 
@@ -72,6 +72,10 @@ def read_image(hyperparameters, name, mesh=None, storepath=None):
         del ras2vox
 
     xyz = space.tabulate_dof_coordinates().transpose()
+
+    xyz[0, :] *= (nx - 1)
+    xyz[1, :] *= (ny - 1)
+    xyz[2, :] *= (nz - 1)
 
     i, j, k = np.rint(xyz).astype("int")
 

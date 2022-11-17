@@ -1,6 +1,7 @@
 from dolfin import *
 from dolfin_adjoint import *
-from helpers import load_velocity
+
+from mri_utils.helpers import load_velocity
 from DGTransport import Transport
 from transformation_overloaded import transformation
 from preconditioning_overloaded import preconditioning

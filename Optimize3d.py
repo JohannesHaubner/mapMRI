@@ -20,7 +20,7 @@ parser.add_argument("--solver", default="lu", choices=["lu", "krylov"])
 parser.add_argument("--timestepping", default="Crank-Nicolson", choices=["CrankNicolson", "explicitEuler"])
 parser.add_argument("--smoothen", default=False, action="store_true", help="Use proper scalar product")
 parser.add_argument("--alpha", type=float, default=1e-4)
-parser.add_argument("--lbfgs_max_iterations", type=float, default=100)
+parser.add_argument("--lbfgs_max_iterations", type=float, default=400)
 parser.add_argument("--readname", type=str)
 parser.add_argument("--starting_guess", type=str, default=None)
 parser.add_argument("--interpolate", default=False, action="store_true", help="Interpolate coarse v to fine mesh; required if the images for --starting_guess and --input are not the same")
@@ -48,19 +48,21 @@ hyperparameters["MassConservation"] = False
 if not os.path.isdir(hyperparameters["outputfolder"]):
     os.makedirs(hyperparameters["outputfolder"], exist_ok=True)
 
-with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as outfile:
-    json.dump(hyperparameters, outfile, sort_keys=True, indent=4)
+
 
 (mesh, Img, NumData) = read_image(hyperparameters, name="input")
 
 
 h = CellDiameter(mesh)
+
 hyperparameters["expected_distance_covered"] = 15 # max. 15 voxels
 v_needed = hyperparameters["expected_distance_covered"] / 1 
-hyperparameters["DeltaT"] = h / v_needed #1e-3
+hyperparameters["DeltaT"] = float(h) / v_needed #1e-3
 print("calculated initial time step size to", hyperparameters["DeltaT"])
 hyperparameters["DeltaT_init"] = hyperparameters["DeltaT"]
 
+with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as outfile:
+    json.dump(hyperparameters, outfile, sort_keys=True, indent=4)
 
 (mesh_goal, Img_goal, NumData_goal) = read_image(hyperparameters, name="target", mesh=mesh)
 
@@ -104,12 +106,15 @@ print("Projected data")
 # initialize trafo
 vCG = VectorFunctionSpace(mesh, "CG", 1)
 
+
 if hyperparameters["smoothen"]:
     M_lumped = get_lumped_mass_matrix(vCG=vCG)
+else:
+    M_lumped = None
 
 t0 = time.time()
 
-for n in range(2):
+for n in range(4):
     
     try:
         find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files)
