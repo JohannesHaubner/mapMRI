@@ -54,6 +54,7 @@ if not os.path.isdir(hyperparameters["outputfolder"]):
 
 
 h = CellDiameter(mesh)
+h = float(assemble(h*dx))
 
 hyperparameters["expected_distance_covered"] = 15 # max. 15 voxels
 v_needed = hyperparameters["expected_distance_covered"] / 1 

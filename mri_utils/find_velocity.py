@@ -35,7 +35,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files):
 
     print("Running Transport() with dt = ", hyperparameters["DeltaT"])
 
-    Img_deformed = Transport(Img, control, MaxIter=int(1 / hyperparameters["MaxIter"]), DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
+    Img_deformed = Transport(Img, control, MaxIter=int(1 / hyperparameters["DeltaT"]), DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
                             solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
 
     # solve forward and evaluate objective
