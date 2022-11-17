@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=register
 #SBATCH --cpus-per-task=1 --nodes=4
-#SBATCH --partition=milanq
-## SBATCH --partition=fpgaq
+## SBATCH --partition=milanq
+#SBATCH --partition=fpgaq
 ## SBATCH --partition=defq
 ## defq also possible
 
@@ -44,7 +44,7 @@ echo "starting to run"
 # --solver ${solver} > ${outfolder}_log_python_srun.txt 
 
 srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --timestepping explicitEuler \
---input mridata_3d/091registeredto205_padded.mgz --target mridata_3d/205_cropped_padded.mgz \
+--input mridata_3d/091registeredto205_padded.mgz --target mridata_3d/205_cropped_padded.mgz --interpolate \
 --readname 0 --starting_guess ${startingGuess} --solver ${solver} > ${outfolder}_log_python_srun.txt 
  
  

@@ -1,15 +1,15 @@
 from dolfin import *
 from dolfin_adjoint import *
-from DGTransport import Transport
 import os
 import json
 import time
 import argparse
 import numpy as np
-from transformation_overloaded import transformation
-from preconditioning_overloaded import preconditioning
+
 from mri_utils.helpers import load_velocity, get_lumped_mass_matrix
 from mri_utils.MRI2FEM import read_image
+from mri_utils.find_velocity import find_velocity, CFLerror
+
 
 
 parser = argparse.ArgumentParser()
@@ -42,8 +42,6 @@ set_log_level(20)
 
 hyperparameters["outputfolder"] = "outputs/" + hyperparameters["outfolder"]
 hyperparameters["lbfgs_max_iterations"] = int(hyperparameters["lbfgs_max_iterations"])
-hyperparameters["DeltaT"] = 1e-3
-hyperparameters["MaxIter"] = 50
 hyperparameters["MassConservation"] = False
 
 
@@ -54,6 +52,15 @@ with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as out
     json.dump(hyperparameters, outfile, sort_keys=True, indent=4)
 
 (mesh, Img, NumData) = read_image(hyperparameters, name="input")
+
+
+h = CellDiameter(mesh)
+hyperparameters["expected_distance_covered"] = 15 # max. 15 voxels
+v_needed = hyperparameters["expected_distance_covered"] / 1 
+hyperparameters["DeltaT"] = h / v_needed #1e-3
+print("calculated initial time step size to", hyperparameters["DeltaT"])
+hyperparameters["DeltaT_init"] = hyperparameters["DeltaT"]
+
 
 (mesh_goal, Img_goal, NumData_goal) = read_image(hyperparameters, name="target", mesh=mesh)
 
@@ -72,12 +79,18 @@ stateFile = HDF5File(MPI.comm_world, hyperparameters["outputfolder"] + "/State.h
 stateFile.write(mesh, "mesh")
 # stateFile.parameters["flush_output"] = True
 # stateFile.parameters["rewrite_function_mesh"] = False
-
+# FOut.parameters["functions_share_mesh"] = True
 
 velocityFile = HDF5File(MPI.comm_world, hyperparameters["outputfolder"] + "/VelocityField.hdf", "w")
 velocityFile.write(mesh, "mesh")
 # velocityFile.parameters["flush_output"] = True
 # # velocityFile.parameters["rewrite_function_mesh"] = False
+
+files = {
+    "velocityFile": velocityFile,
+    "stateFile": stateFile,
+    "controlFile":controlFile
+}
 
 # transform colored image to black-white intensity image
 Space = FunctionSpace(mesh, "DG", 1)
@@ -94,80 +107,17 @@ vCG = VectorFunctionSpace(mesh, "CG", 1)
 if hyperparameters["smoothen"]:
     M_lumped = get_lumped_mass_matrix(vCG=vCG)
 
-set_working_tape(Tape())
-
-# initialize control
-controlfun = Function(vCG)
-
-if hyperparameters["starting_guess"] is not None:
-    load_velocity(hyperparameters, controlfun=controlfun)
-
-
-if hyperparameters["smoothen"]:
-    controlf = transformation(controlfun, M_lumped)
-else:
-    controlf = controlfun
-
-control = preconditioning(controlf, smoothen=hyperparameters["smoothen"])
-
-control.rename("control", "")
-
-File(hyperparameters["outputfolder"] + "/input.pvd") << Img
-File(hyperparameters["outputfolder"] + "/target.pvd") << Img_goal
-
-print("Running Transport()")
-
-Img_deformed = Transport(Img, control, hyperparameters["MaxIter"], hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
-                           solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
-
-# solve forward and evaluate objective
-alpha = Constant(hyperparameters["alpha"]) #regularization
-
-state = Control(Img_deformed)  # The Control type enables easy access to tape values after replays.
-cont = Control(controlfun)
-
-J = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx + alpha*grad(control)**2*dx(domain=mesh))
-
-Jhat = ReducedFunctional(J, cont)
-
-current_iteration = 0
-
-stateFile.write(Img_deformed, str(current_iteration))
-
-controlFile.write(control, str(current_iteration))
-
-# controlFile.close()
-# print("Wrote fCont, close and exit")
-# exit()
-
-print("Wrote fCont0")
-
 t0 = time.time()
 
-def cb(*args, **kwargs):
-    global current_iteration
-    current_iteration += 1
+for n in range(2):
     
-    current_pde_solution = state.tape_value()
-    current_pde_solution.rename("Img", "")
-    
-    current_control = cont.tape_value()
-    current_control.rename("control", "")
-    
-    if hyperparameters["smoothen"]:
-        scaledControl = transformation(current_control, M_lumped)
+    try:
+        find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files)
+    except CFLerror:
+        hyperparameters["DeltaT"] *= 1 / 2
+        print("CFL condition violated, reducing time step size and retry")
+        pass
 
-    else:
-        scaledControl = current_control
-
-    velocityField = preconditioning(scaledControl, smoothen=hyperparameters["smoothen"])
-    velocityField.rename("velocity", "")
-    
-    velocityFile.write(velocityField, str(current_iteration))
-    controlFile.write(current_control, str(current_iteration))
-    stateFile.write(current_pde_solution, str(current_iteration))
-
-minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True, "maxiter": hyperparameters["lbfgs_max_iterations"]}, tol=1e-08, callback = cb)
 
 tcomp = (time.time()-t0) / 3600
 

@@ -13,6 +13,9 @@ parameters['ghost_mode'] = 'shared_facet'
 # #PETScOptions.set("mat_mumps_icntl_14", 250) # max memory increase in %
 
 
+
+
+
 def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=False, FNameOut="", 
                 solver=None, timestepping="explicitEuler"):
     
