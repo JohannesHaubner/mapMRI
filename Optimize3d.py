@@ -24,6 +24,8 @@ parser.add_argument("--lbfgs_max_iterations", type=float, default=400)
 parser.add_argument("--readname", type=str)
 parser.add_argument("--starting_guess", type=str, default=None)
 parser.add_argument("--interpolate", default=False, action="store_true", help="Interpolate coarse v to fine mesh; required if the images for --starting_guess and --input are not the same")
+parser.add_argument("--create_guess_only", default=False, action="store_true")
+
 
 parser.add_argument("--input", default="mridata_3d/091registeredto205_padded_coarsened.mgz")
 parser.add_argument("--target", default="mridata_3d/205_cropped_padded_coarsened.mgz")
@@ -50,10 +52,10 @@ if not os.path.isdir(hyperparameters["outputfolder"]):
 
 
 
-(mesh, Img, NumData) = read_image(hyperparameters, name="input")
+(domainmesh, Img, NumData) = read_image(hyperparameters, name="input")
 
 
-h = CellDiameter(mesh)
+h = CellDiameter(domainmesh)
 h = float(assemble(h*dx))
 
 hyperparameters["expected_distance_covered"] = 15 # max. 15 voxels
@@ -65,7 +67,7 @@ hyperparameters["DeltaT_init"] = hyperparameters["DeltaT"]
 with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as outfile:
     json.dump(hyperparameters, outfile, sort_keys=True, indent=4)
 
-(mesh_goal, Img_goal, NumData_goal) = read_image(hyperparameters, name="target", mesh=mesh)
+(mesh_goal, Img_goal, NumData_goal) = read_image(hyperparameters, name="target", mesh=domainmesh)
 
 #  breakpoint()
 
@@ -75,17 +77,17 @@ with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as out
 # fCont.parameters["flush_output"] = True
 # fCont.parameters["rewrite_function_mesh"] = False
 
-controlFile = HDF5File(mesh.mpi_comm(), hyperparameters["outputfolder"] + "/Control.hdf", "w")
-controlFile.write(mesh, "mesh")
+controlFile = HDF5File(domainmesh.mpi_comm(), hyperparameters["outputfolder"] + "/Control.hdf", "w")
+controlFile.write(domainmesh, "mesh")
 
 stateFile = HDF5File(MPI.comm_world, hyperparameters["outputfolder"] + "/State.hdf", "w")
-stateFile.write(mesh, "mesh")
+stateFile.write(domainmesh, "mesh")
 # stateFile.parameters["flush_output"] = True
 # stateFile.parameters["rewrite_function_mesh"] = False
 # FOut.parameters["functions_share_mesh"] = True
 
 velocityFile = HDF5File(MPI.comm_world, hyperparameters["outputfolder"] + "/VelocityField.hdf", "w")
-velocityFile.write(mesh, "mesh")
+velocityFile.write(domainmesh, "mesh")
 # velocityFile.parameters["flush_output"] = True
 # # velocityFile.parameters["rewrite_function_mesh"] = False
 
@@ -96,7 +98,7 @@ files = {
 }
 
 # transform colored image to black-white intensity image
-Space = FunctionSpace(mesh, "DG", 1)
+Space = FunctionSpace(domainmesh, "DG", 1)
 Img = project(Img, Space)
 Img.rename("img", "")
 Img_goal = project(Img_goal, Space)
@@ -105,7 +107,7 @@ NumData = 1
 print("Projected data")
 
 # initialize trafo
-vCG = VectorFunctionSpace(mesh, "CG", 1)
+vCG = VectorFunctionSpace(domainmesh, "CG", 1)
 
 
 if hyperparameters["smoothen"]:

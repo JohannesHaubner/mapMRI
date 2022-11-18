@@ -44,46 +44,52 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files):
     state = Control(Img_deformed)  # The Control type enables easy access to tape values after replays.
     cont = Control(controlfun)
 
-    J = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx + alpha*grad(control)**2*dx(domain=mesh))
+    J = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx(domain=Img.function_space().mesh()))
+    print("Assembled L2 error between image and target")
+    J = J + assemble(alpha*grad(control)**2*dx(domain=Img.function_space().mesh()))
+    print("Assembled regularization")
 
     Jhat = ReducedFunctional(J, cont)
+
+    print("created reduced functional")
 
     current_iteration = 0
 
     files["stateFile"].write(Img_deformed, str(current_iteration))
 
+    if hyperparameters["create_guess_only"]:
+        try:
+            control.vector()[:] = 42
+        except:
+            pass
     
     files["controlFile"].write(control, str(current_iteration))
 
-    # controlFile.close()
-    # print("Wrote fCont, close and exit")
-    # exit()
+    if hyperparameters["create_guess_only"]:
+
+        files["controlFile"].close()
+        print("Wrote fCont, close and exit")
+        exit()
 
     print("Wrote fCont0 to file")    
 
     def cb(*args, **kwargs):
         global current_iteration
         current_iteration += 1
-        
-
-
-
         current_pde_solution = state.tape_value()
         current_pde_solution.rename("Img", "")
         current_control = cont.tape_value()
         current_control.rename("control", "")
 
-        mesh = current_pde_solution.mesh()
+        domainmesh = current_pde_solution.function_space().mesh()
         #compute CFL number
-        h = CellDiameter(mesh)
-        CFL = project(sqrt(inner(current_control, current_control))*Constant(hyperparameters["DeltaT"]) / h, FunctionSpace(mesh, "DG", 0))
+        h = CellDiameter(domainmesh)
+        CFL = project(sqrt(inner(current_control, current_control))*Constant(hyperparameters["DeltaT"]) / h, FunctionSpace(domainmesh, "DG", 0))
 
         if(CFL.vector().max() > 1.0):
             
             raise CFLerror("DGTransport: WARNING: CFL = %le", CFL)
-        
-
-        
+                
         if hyperparameters["smoothen"]:
             scaledControl = transformation(current_control, M_lumped)
 
