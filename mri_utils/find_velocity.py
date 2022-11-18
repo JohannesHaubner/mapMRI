@@ -46,7 +46,10 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files):
 
     J = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx(domain=Img.function_space().mesh()))
     print("Assembled L2 error between image and target")
-    J = J + assemble(alpha*grad(control)**2*dx(domain=Img.function_space().mesh()))
+    print("Control type=", type(control))
+    print(control)
+    # J = J + assemble(alpha*grad(control)**2*dx(domain=Img.function_space().mesh()))
+    J = J + assemble(alpha*(controlf)**2*dx(domain=Img.function_space().mesh()))
     print("Assembled regularization")
 
     Jhat = ReducedFunctional(J, cont)
