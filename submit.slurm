@@ -32,16 +32,16 @@ echo "starting to run"
 outfolder=${SPATH}/slurm/${SLURM_JOB_ID}
 solver=lu
 
-# OUTFOLDERNAME=interpolateTest #createStartingGuess
-# startingGuess=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/outputs/exportVtest/Control.hdf
-# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --timestepping explicitEuler \
-# --input mridata_3d/091registeredto205_padded.mgz --target mridata_3d/205_cropped_padded.mgz --interpolate \
-# --readname 0 --starting_guess ${startingGuess} --solver ${solver} > ${outfolder}_log_python_srun.txt 
-
-OUTFOLDERNAME=createStartingGuess
+OUTFOLDERNAME=interpolateTest #createStartingGuess
 startingGuess=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/outputs/exportVtest/Control.hdf
 srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --timestepping explicitEuler \
---solver ${solver} > ${outfolder}_log_python_srun.txt 
+--input mridata_3d/091registeredto205_padded.mgz --target mridata_3d/205_cropped_padded.mgz --interpolate \
+--readname 0 --starting_guess ${startingGuess} --solver ${solver} > ${outfolder}_log_python_srun.txt 
+
+# OUTFOLDERNAME=createStartingGuess
+# startingGuess=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/outputs/exportVtest/Control.hdf
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --timestepping explicitEuler \
+# --solver ${solver} > ${outfolder}_log_python_srun.txt 
 
 
  

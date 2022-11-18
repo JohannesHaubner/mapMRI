@@ -28,6 +28,7 @@ class Preconditioning():
             if not hasattr(self, "solver"):
                 a = inner(grad(c), grad(psi)) * dx
                 A = assemble(a)
+                print("Assembled A in Preconditioning()")
             
             L = inner(func, psi) * dx
 
@@ -38,12 +39,15 @@ class Preconditioning():
 
             if not hasattr(self, "solver"):
 
+                
+
                 self.solver = LUSolver()
                 self.solver.set_operator(A)
-                
+                print("Created LU solver in Preconditioning()")
+            
+            BC.apply(A)
             self.solver.solve(c.vector(), tmp)
 
         return c
 
 
-preconditioning = Preconditioning()

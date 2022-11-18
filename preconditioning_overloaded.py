@@ -6,7 +6,9 @@ from pyadjoint.overloaded_function import overload_function
 
 import numpy as np
 
-from preconditioning import preconditioning
+from preconditioning import Preconditioning
+
+preconditioning = Preconditioning()
 
 backend_preconditioning = preconditioning
 
@@ -41,11 +43,14 @@ class PreconditioningBlock(Block):
             if not hasattr(self, "solver"):
                 a = inner(grad(c), grad(psi)) * dx
                 A = assemble(a)
-                BC.apply(A)
+                print("Assembled A in PreconditioningBlock()")
+                
 
                 self.solver = LUSolver()
                 self.solver.set_operator(A)
+                print("Created LU solver in PreconditioningBlock()")
             
+            BC.apply(A)
             self.solver.solve(c.vector(), tmp)
 
             # solve(A, c.vector(), tmp)

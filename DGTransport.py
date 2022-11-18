@@ -107,12 +107,14 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
         A = assemble(lhs(a))
         #solver = LUSolver(A) #needed for Taylor-Test
         solver = KrylovSolver(A, "gmres", "none")
+        print("Assembled A, using Krylov solver")
     else:
+        
         assert solver == "lu"
         A = assemble(lhs(a))
         solver = LUSolver()
         solver.set_operator(A)
-        
+        print("Assembled A, using LU solver")
         # solver = PETScLUSolver(A, "mumps")
         
     
@@ -122,6 +124,8 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
 
     for i in range(MaxIter):
         #solve(a==0, Img_next)
+
+        print("Iteration ", i + 1, "/", MaxIter + 1, "in Transport()")
 
 
         b = assemble(rhs(a))
@@ -135,6 +139,8 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
         CurTime = i*DeltaT
         if StoreHistory:
             FOut.write(Img_deformed, CurTime)
+
+    print("i == MaxIter, Transport() finished")
     return Img_deformed
 
 if __name__ == "__main__":
