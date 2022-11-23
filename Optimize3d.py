@@ -146,7 +146,7 @@ t0 = time.time()
 for n in range(4):
     
     try:
-        find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting_guess)
+        find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting_guess=controlfun)
     except CFLerror:
         hyperparameters["DeltaT"] *= 1 / 2
         print("CFL condition violated, reducing time step size and retry")

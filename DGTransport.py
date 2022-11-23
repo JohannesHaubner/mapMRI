@@ -18,7 +18,7 @@ parameters['ghost_mode'] = 'shared_facet'
 
 
 def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=False, FNameOut="", 
-                solver=None, timestepping="explicitEuler"):
+                solver=None, timestepping=None):
     
     # assert timestepping in ["CrankNicolson", "explicitEuler"]
 
@@ -27,6 +27,8 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
     print("--- solver =", solver)
     print("--- timestepping =", timestepping)
     print("......................................")
+
+    print("parameters['ghost_mode']", parameters['ghost_mode'])
 
     
     Space = Img.function_space()
@@ -90,7 +92,6 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
     #Img_next = Function(Img.function_space())
     #Img_next.rename("img", "")
     Img_deformed = Function(Img.function_space())
-    dImg = Function(Img.function_space())
     Img_deformed.assign(Img)
     Img_deformed.rename("Img", "")
 
@@ -146,7 +147,16 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
         print("Iteration ", i + 1, "/", MaxIter + 1, "in Transport()")
 
         if timestepping == "RungeKutta":
-            da = ValueError
+            dImg = TrialFunction(Img_deformed.function_space())
+            dI = Function(Img_deformed.function_space())
+            
+            solve(inner(dImg, v)*dx == Form(Img_deformed), dI)
+            # A = assemble(lhs(tempA))
+            # b = assemble()
+            # solve(A, x, b)
+
+            da = Form(Img_deformed  + dI)
+            
             system_rhs = rhs(a + da)
         else:
             system_rhs = rhs(a)

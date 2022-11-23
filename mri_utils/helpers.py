@@ -78,10 +78,10 @@ def interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun):
 
     # controlfun.set_allow_extrapolation(True)
     # controlfun.rename("controlfun_coarse", "")
-    controlfun.vector().update_ghost_values()
+    # controlfun.vector().update_ghost_values()
 
     controlfun = interpolate(controlfun, vCG)
-    controlfun.vector().update_ghost_values()
+    # controlfun.vector().update_ghost_values()
 
 
 
