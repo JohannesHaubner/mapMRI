@@ -1,12 +1,12 @@
 #!/bin/bash
 #SBATCH --job-name=register
 #SBATCH --cpus-per-task=1 --nodes=4
-## SBATCH --partition=milanq
-#SBATCH --partition=fpgaq
+#SBATCH --partition=milanq
+## SBATCH --partition=fpgaq
 ## SBATCH --partition=defq
-## defq also possible
+#defq also possible
 
-#SBATCH --time 5-24 ##--time=99:00:00
+#SBATCH --time 6-24 ##--time=99:00:00
 #SBATCH -o /home/bastian/Oscar-Image-Registration-via-Transport-Equation/slurm/%j.out
 #SBATCH --export=ALL
 #SBATCH --mail-user=bastian@simula.no
@@ -32,22 +32,51 @@ echo "starting to run"
 outfolder=${SPATH}/slurm/${SLURM_JOB_ID}
 solver=lu
 
-# OUTFOLDERNAME=interpolateTest #createStartingGuess
-# startingGuess=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/outputs/exportVtest/Control.hdf
+
+OUTFOLDERNAME=interpolateTest
+# # Read and interpolate sequentally
+startingGuess=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/outputs/readStartingGuess/Control.hdf
+srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --timestepping explicitEuler \
+--input mridata_3d/091registeredto205_padded.mgz --target mridata_3d/205_cropped_padded.mgz --interpolate \
+--readname 400 --starting_guess ${startingGuess} --solver ${solver} > ${outfolder}_log_python_srun.txt 
+# # run in parallel
+# startingGuess=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/outputs/interpolateTest/Interpolated_Control.hdf
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --timestepping explicitEuler \
-# --input mridata_3d/091registeredto205_padded.mgz --target mridata_3d/205_cropped_padded.mgz --interpolate \
-# --readname 0 --starting_guess ${startingGuess} --solver ${solver} > ${outfolder}_log_python_srun.txt 
+# --input mridata_3d/091registeredto205_padded.mgz --target mridata_3d/205_cropped_padded.mgz \
+# --readname control --starting_guess ${startingGuess} --solver ${solver} > ${outfolder}_log_python_srun.txt 
+
+
+
+# OUTFOLDERNAME=fullResolutionRegister
+# startingGuess=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/outputs/createTestStartingGuess/Control.hdf
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --timestepping explicitEuler \
+# --input mridata_3d/091registeredto205_padded.mgz --target mridata_3d/205_cropped_padded.mgz \
+# --solver ${solver} > ${outfolder}_log_python_srun.txt 
+
+
+
+
+# OUTFOLDERNAME=restartWlowerAlpha
+# startingGuess=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/outputs/readStartingGuess/Control.hdf
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --timestepping explicitEuler \
+# --readname 400 --alpha 1e-5 --starting_guess ${startingGuess} --solver ${solver} > ${outfolder}_log_python_srun.txt
+
+
+# OUTFOLDERNAME=readStartingGuess
+# startingGuess=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/outputs/createTestStartingGuess/Control.hdf
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --timestepping explicitEuler \
+# --readname 1 --starting_guess ${startingGuess} --solver ${solver} > ${outfolder}_log_python_srun.txt
 
 # OUTFOLDERNAME=createStartingGuess
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --timestepping explicitEuler \
 # --solver ${solver} --create_guess_only > ${outfolder}_log_python_srun.txt 
 
-# OUTFOLDERNAME=createStartingGuessOnly
-# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --timestepping explicitEuler \
-# --solver ${solver} > ${outfolder}_log_python_srun.txt 
 
-# OUTFOLDERNAME=createStartingGuessOneIter
+# OUTFOLDERNAME=createTestStartingGuess
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --timestepping explicitEuler \
-# --solver ${solver} --lbfgs_max_iterations 1 > ${outfolder}_log_python_srun.txt 
+# --solver ${solver} --lbfgs_max_iterations 2 > ${outfolder}_log_python_srun.txt 
  
+OUTPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/outputs/${OUTFOLDERNAME}/
+cp -v /home/bastian/Oscar-Image-Registration-via-Transport-Equation/slurm/${SLURM_JOB_ID}_log_python_srun.txt ${OUTPATH}
+
 echo "success"

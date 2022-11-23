@@ -1,7 +1,7 @@
 from dolfin import *
 from dolfin_adjoint import *
 
-from mri_utils.helpers import load_velocity
+from mri_utils.helpers import load_velocity, interpolate_velocity
 from DGTransport import Transport
 from transformation_overloaded import transformation
 from preconditioning_overloaded import preconditioning
@@ -10,12 +10,18 @@ class CFLerror(ValueError):
     '''raise this when CFL is violated'''
 
 
+current_iteration = 0
+
 def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files):
     
     set_working_tape(Tape())
 
     # initialize control
     controlfun = Function(vCG)
+
+    if hyperparameters["interpolate"]:
+        interpolate_velocity(hyperparameters, controlfun)
+        exit()
 
     if hyperparameters["starting_guess"] is not None:
         load_velocity(hyperparameters, controlfun=controlfun)
@@ -60,11 +66,11 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files):
 
     files["stateFile"].write(Img_deformed, str(current_iteration))
 
-    if hyperparameters["create_guess_only"]:
-        try:
-            control.vector()[:] = 42
-        except:
-            pass
+    # if hyperparameters["create_guess_only"]:
+    #     try:
+    #         control.vector()[:] = 42
+    #     except:
+    #         pass
     
     files["controlFile"].write(control, str(current_iteration))
 
@@ -75,6 +81,8 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files):
         exit()
 
     print("Wrote fCont0 to file")    
+
+    
 
     def cb(*args, **kwargs):
         global current_iteration

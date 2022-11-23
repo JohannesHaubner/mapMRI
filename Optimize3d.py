@@ -40,6 +40,9 @@ print("Setting pwd to", hyperparameters["code_dir"])
 
 assert "/" not in hyperparameters["outfolder"]
 
+if hyperparameters["starting_guess"] is not None:
+    assert os.path.isfile(hyperparameters["starting_guess"])
+
 set_log_level(20)
 
 hyperparameters["outputfolder"] = "outputs/" + hyperparameters["outfolder"]
@@ -58,7 +61,11 @@ if not os.path.isdir(hyperparameters["outputfolder"]):
 h = CellDiameter(domainmesh)
 h = float(assemble(h*dx))
 
-hyperparameters["expected_distance_covered"] = 15 # max. 15 voxels
+hyperparameters["mehsh"] = h
+hyperparameters["maxMeshCoordinate"] = np.max(domainmesh.coordinates())
+
+
+hyperparameters["expected_distance_covered"] = 25 / 200 # max. 25 voxels
 v_needed = hyperparameters["expected_distance_covered"] / 1 
 hyperparameters["DeltaT"] = float(h) / v_needed #1e-3
 print("calculated initial time step size to", hyperparameters["DeltaT"])
