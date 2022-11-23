@@ -1,5 +1,5 @@
-from dolfin import *
-from dolfin_adjoint import *
+from fenics import *
+from fenics_adjoint import *
 
 import numpy as np
 

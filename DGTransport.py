@@ -1,7 +1,8 @@
 #solver for transporting images
+from fenics import *
+from fenics_adjoint import *
 
-from dolfin import *
-from dolfin_adjoint import *
+print("Setting parameters parameters['ghost_mode'] = 'shared_facet'")
 parameters['ghost_mode'] = 'shared_facet'
 
 # PETScOptions.set("mat_mumps_use_omp_threads", 8)
@@ -19,7 +20,7 @@ parameters['ghost_mode'] = 'shared_facet'
 def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=False, FNameOut="", 
                 solver=None, timestepping="explicitEuler"):
     
-    assert timestepping in ["CrankNicolson", "explicitEuler"]
+    # assert timestepping in ["CrankNicolson", "explicitEuler"]
 
     print("......................................")
     print("Settings in Transport()")
@@ -89,6 +90,7 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
     #Img_next = Function(Img.function_space())
     #Img_next.rename("img", "")
     Img_deformed = Function(Img.function_space())
+    dImg = Function(Img.function_space())
     Img_deformed.assign(Img)
     Img_deformed.rename("Img", "")
 
@@ -96,8 +98,24 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
     
     if timestepping == "explicitEuler":
         a = a + Form(Img_deformed)
-    else:
+    elif timestepping == "RungeKutta":
+
+        pass 
+        # k1 = Form(Img_deformed)
+        
+        # # dImg.assign(k1 * Constant(DeltaT / 2))
+        
+        # # solve()
+
+
+        # Img_intermediate = Img_deformed + k1 * Constant(DeltaT / 2)#  dI # 
+        
+        # k2 = Form(Img_intermediate)
+        # a = a + k2
+    elif timestepping == "CrankNicolson":
         a = a + 0.5*(Form(Img_deformed) + Form(Img_next))
+    else:
+        raise NotImplementedError
 
         #a = Constant(1.0/DeltaT)*(inner(v, f_next)*dx - inner(v, Img)*dx) - Form(f_next)
         #a = Constant(1.0/DeltaT)*(inner(v, f_next)*dx - inner(v, Img)*dx) - Form(Img)
@@ -127,8 +145,13 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
 
         print("Iteration ", i + 1, "/", MaxIter + 1, "in Transport()")
 
+        if timestepping == "RungeKutta":
+            da = ValueError
+            system_rhs = rhs(a + da)
+        else:
+            system_rhs = rhs(a)
 
-        b = assemble(rhs(a))
+        b = assemble(system_rhs)
         b.apply("")
         
         #solver.solve(Img_deformed.vector(), b)

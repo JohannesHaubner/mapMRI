@@ -1,8 +1,8 @@
-from dolfin import *
-from dolfin_adjoint import *
+from fenics import *
+from fenics_adjoint import *
 
 from mri_utils.helpers import load_velocity, interpolate_velocity
-from DGTransport import Transport
+
 from transformation_overloaded import transformation
 from preconditioning_overloaded import preconditioning
 
@@ -12,19 +12,24 @@ class CFLerror(ValueError):
 
 current_iteration = 0
 
-def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files):
+def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting_guess):
     
+    from DGTransport import Transport
+
     set_working_tape(Tape())
 
     # initialize control
     controlfun = Function(vCG)
 
-    if hyperparameters["interpolate"]:
-        interpolate_velocity(hyperparameters, controlfun)
-        exit()
+    # if hyperparameters["interpolate"]:
+    #     interpolate_velocity(hyperparameters, controlfun)
+    #     exit()
 
     if hyperparameters["starting_guess"] is not None:
-        load_velocity(hyperparameters, controlfun=controlfun)
+        # load_velocity(hyperparameters, controlfun=controlfun)
+        controlfun.assign(starting_guess)
+
+    # raise NotImplementedError()
 
 
     if hyperparameters["smoothen"]:

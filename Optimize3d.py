@@ -1,12 +1,12 @@
-from dolfin import *
-from dolfin_adjoint import *
+from fenics import *
+from fenics_adjoint import *
 import os
 import json
 import time
 import argparse
 import numpy as np
 
-from mri_utils.helpers import load_velocity, get_lumped_mass_matrix
+from mri_utils.helpers import load_velocity, interpolate_velocity, get_lumped_mass_matrix
 from mri_utils.MRI2FEM import read_image
 from mri_utils.find_velocity import find_velocity, CFLerror
 
@@ -17,7 +17,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--outfolder", required=True, type=str, help=""" name of folder to store to under "path + "outputs/" """)
 parser.add_argument("--code_dir", type=str, default="/home/bastian/Oscar-Image-Registration-via-Transport-Equation/")
 parser.add_argument("--solver", default="lu", choices=["lu", "krylov"])
-parser.add_argument("--timestepping", default="Crank-Nicolson", choices=["CrankNicolson", "explicitEuler"])
+parser.add_argument("--timestepping", default="RungeKutta", choices=["RungeKutta", "CrankNicolson", "explicitEuler"])
 parser.add_argument("--smoothen", default=False, action="store_true", help="Use proper scalar product")
 parser.add_argument("--alpha", type=float, default=1e-4)
 parser.add_argument("--lbfgs_max_iterations", type=float, default=400)
@@ -48,14 +48,33 @@ set_log_level(20)
 hyperparameters["outputfolder"] = "outputs/" + hyperparameters["outfolder"]
 hyperparameters["lbfgs_max_iterations"] = int(hyperparameters["lbfgs_max_iterations"])
 hyperparameters["MassConservation"] = False
-
+hyperparameters["functiondegree"] = 1
+hyperparameters["functionspace"] = "CG"
 
 if not os.path.isdir(hyperparameters["outputfolder"]):
     os.makedirs(hyperparameters["outputfolder"], exist_ok=True)
 
+if hyperparameters["starting_guess"] is not None:
+    domainmesh, vCG, controlfun = load_velocity(hyperparameters, controlfun=None)
+    
+    if hyperparameters["interpolate"]:
+        domainmesh, vCG, controlfun = interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun)
+
+    print("-------------------------------------------------------------------")
+    print("Testing script, EXITING")
+    print("-------------------------------------------------------------------")
+    exit()
+else:
+    # mesh will be created from first image
+    domainmesh = None
+    controlfun = None
+
+(domainmesh, Img, NumData) = read_image(hyperparameters, name="input", mesh=domainmesh)
 
 
-(domainmesh, Img, NumData) = read_image(hyperparameters, name="input")
+if hyperparameters["starting_guess"] is None:
+    # Can now create function space after mesh is created from image
+    vCG = VectorFunctionSpace(domainmesh, hyperparameters["functionspace"], hyperparameters["functiondegree"])
 
 
 h = CellDiameter(domainmesh)
@@ -114,7 +133,7 @@ NumData = 1
 print("Projected data")
 
 # initialize trafo
-vCG = VectorFunctionSpace(domainmesh, "CG", 1)
+
 
 
 if hyperparameters["smoothen"]:
@@ -127,7 +146,7 @@ t0 = time.time()
 for n in range(4):
     
     try:
-        find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files)
+        find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting_guess)
     except CFLerror:
         hyperparameters["DeltaT"] *= 1 / 2
         print("CFL condition violated, reducing time step size and retry")

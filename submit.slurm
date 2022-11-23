@@ -33,17 +33,16 @@ outfolder=${SPATH}/slurm/${SLURM_JOB_ID}
 solver=lu
 
 
-OUTFOLDERNAME=interpolateTest
-# # Read and interpolate sequentally
+OUTFOLDERNAME=interpolateTest2
 startingGuess=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/outputs/readStartingGuess/Control.hdf
 srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --timestepping explicitEuler \
 --input mridata_3d/091registeredto205_padded.mgz --target mridata_3d/205_cropped_padded.mgz --interpolate \
 --readname 400 --starting_guess ${startingGuess} --solver ${solver} > ${outfolder}_log_python_srun.txt 
-# # run in parallel
-# startingGuess=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/outputs/interpolateTest/Interpolated_Control.hdf
-# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --timestepping explicitEuler \
-# --input mridata_3d/091registeredto205_padded.mgz --target mridata_3d/205_cropped_padded.mgz \
-# --readname control --starting_guess ${startingGuess} --solver ${solver} > ${outfolder}_log_python_srun.txt 
+# # # run in parallel
+# # startingGuess=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/outputs/interpolateTest/Interpolated_Control.hdf
+# # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --timestepping explicitEuler \
+# # --input mridata_3d/091registeredto205_padded.mgz --target mridata_3d/205_cropped_padded.mgz \
+# # --readname control --starting_guess ${startingGuess} --solver ${solver} > ${outfolder}_log_python_srun.txt 
 
 
 
@@ -53,6 +52,10 @@ srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --times
 # --input mridata_3d/091registeredto205_padded.mgz --target mridata_3d/205_cropped_padded.mgz \
 # --solver ${solver} > ${outfolder}_log_python_srun.txt 
 
+
+# OUTFOLDERNAME=rungeKuttaTest
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} \
+# --solver ${solver} > ${outfolder}_log_python_srun.txt 
 
 
 

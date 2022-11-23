@@ -1,6 +1,6 @@
-import nibabel
 from fenics import *
 from fenics_adjoint import *
+import nibabel
 import numpy as np
 from nibabel.affines import apply_affine
 
