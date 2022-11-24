@@ -80,7 +80,15 @@ def interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun):
     # controlfun.rename("controlfun_coarse", "")
     # controlfun.vector().update_ghost_values()
 
-    controlfun = interpolate(controlfun, vCG)
+    controlfun_fine = interpolate(controlfun, vCG)
+    
+    l2 = assemble((controlfun_fine - controlfun) ** 2 * dx(domain=controlfun.function_space().mesh()) )
+    l2norm = assemble((controlfun) ** 2 * dx(domain=controlfun.function_space().mesh()) )
+
+    print("L2 error", l2)
+    print("rel L2 error", l2 / l2norm)
+    print("L2 norm of control", l2norm)
+
     # controlfun.vector().update_ghost_values()
 
 
@@ -88,14 +96,14 @@ def interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun):
     print("Interpolated expression, writing...")
 
     with XDMFFile(hyperparameters["outputfolder"] + "/Interpolated_Control.xdmf") as xdmf:
-        xdmf.write_checkpoint(controlfun, "fine", 0.)
+        xdmf.write_checkpoint(controlfun_fine, "fine", 0.)
 
     controlFileInterpolated = HDF5File(domainmesh.mpi_comm(), hyperparameters["outputfolder"] + "/Interpolated_Control.hdf", "w")
     controlFileInterpolated.write(domainmesh, "mesh")
-    controlFileInterpolated.write(controlfun, "refined_control")
+    controlFileInterpolated.write(controlfun_fine, "refined_control")
     controlFileInterpolated.close()
 
-    return domainmesh, vCG, controlfun
+    return domainmesh, vCG, controlfun_fine
 
     
 # def load_velocity(hyperparameters, controlfun):

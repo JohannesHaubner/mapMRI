@@ -100,19 +100,9 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
     if timestepping == "explicitEuler":
         a = a + Form(Img_deformed)
     elif timestepping == "RungeKutta":
-
+        # in this case we assemble the RHS during the loop
         pass 
-        # k1 = Form(Img_deformed)
-        
-        # # dImg.assign(k1 * Constant(DeltaT / 2))
-        
-        # # solve()
 
-
-        # Img_intermediate = Img_deformed + k1 * Constant(DeltaT / 2)#  dI # 
-        
-        # k2 = Form(Img_intermediate)
-        # a = a + k2
     elif timestepping == "CrankNicolson":
         a = a + 0.5*(Form(Img_deformed) + Form(Img_next))
     else:

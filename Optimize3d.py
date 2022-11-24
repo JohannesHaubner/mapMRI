@@ -24,7 +24,6 @@ parser.add_argument("--lbfgs_max_iterations", type=float, default=400)
 parser.add_argument("--readname", type=str)
 parser.add_argument("--starting_guess", type=str, default=None)
 parser.add_argument("--interpolate", default=False, action="store_true", help="Interpolate coarse v to fine mesh; required if the images for --starting_guess and --input are not the same")
-parser.add_argument("--create_guess_only", default=False, action="store_true")
 
 
 parser.add_argument("--input", default="mridata_3d/091registeredto205_padded_coarsened.mgz")
@@ -60,10 +59,10 @@ if hyperparameters["starting_guess"] is not None:
     if hyperparameters["interpolate"]:
         domainmesh, vCG, controlfun = interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun)
 
-    print("-------------------------------------------------------------------")
-    print("Testing script, EXITING")
-    print("-------------------------------------------------------------------")
-    exit()
+    # print("-------------------------------------------------------------------")
+    # print("Testing script, EXITING")
+    # print("-------------------------------------------------------------------")
+    # exit()
 else:
     # mesh will be created from first image
     domainmesh = None
@@ -105,9 +104,11 @@ with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as out
 
 controlFile = HDF5File(domainmesh.mpi_comm(), hyperparameters["outputfolder"] + "/Control.hdf", "w")
 controlFile.write(domainmesh, "mesh")
+# controlFile.parameters["rewrite_function_mesh"] = False
 
 stateFile = HDF5File(MPI.comm_world, hyperparameters["outputfolder"] + "/State.hdf", "w")
 stateFile.write(domainmesh, "mesh")
+# stateFile.parameters["rewrite_function_mesh"] = False
 # stateFile.parameters["flush_output"] = True
 # stateFile.parameters["rewrite_function_mesh"] = False
 # FOut.parameters["functions_share_mesh"] = True
@@ -115,7 +116,7 @@ stateFile.write(domainmesh, "mesh")
 velocityFile = HDF5File(MPI.comm_world, hyperparameters["outputfolder"] + "/VelocityField.hdf", "w")
 velocityFile.write(domainmesh, "mesh")
 # velocityFile.parameters["flush_output"] = True
-# # velocityFile.parameters["rewrite_function_mesh"] = False
+# velocityFile.parameters["rewrite_function_mesh"] = False
 
 files = {
     "velocityFile": velocityFile,
@@ -134,7 +135,10 @@ print("Projected data")
 
 # initialize trafo
 
+File(hyperparameters["outputfolder"] + "/input.pvd") << Img
+File(hyperparameters["outputfolder"] + "/target.pvd") << Img_goal
 
+print("Wrote input and target to pvd files")
 
 if hyperparameters["smoothen"]:
     M_lumped = get_lumped_mass_matrix(vCG=vCG)

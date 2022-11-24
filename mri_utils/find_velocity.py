@@ -1,8 +1,8 @@
 from fenics import *
 from fenics_adjoint import *
 
-from mri_utils.helpers import load_velocity, interpolate_velocity
-
+# from mri_utils.helpers import load_velocity, interpolate_velocity
+from DGTransport import Transport
 from transformation_overloaded import transformation
 from preconditioning_overloaded import preconditioning
 
@@ -14,7 +14,6 @@ current_iteration = 0
 
 def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting_guess):
     
-    from DGTransport import Transport
 
     set_working_tape(Tape())
 
@@ -40,9 +39,6 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
     control = preconditioning(controlf, smoothen=hyperparameters["smoothen"])
 
     control.rename("control", "")
-
-    File(hyperparameters["outputfolder"] + "/input.pvd") << Img
-    File(hyperparameters["outputfolder"] + "/target.pvd") << Img_goal
 
     print("Running Transport() with dt = ", hyperparameters["DeltaT"])
 
@@ -70,20 +66,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
     current_iteration = 0
 
     files["stateFile"].write(Img_deformed, str(current_iteration))
-
-    # if hyperparameters["create_guess_only"]:
-    #     try:
-    #         control.vector()[:] = 42
-    #     except:
-    #         pass
-    
     files["controlFile"].write(control, str(current_iteration))
-
-    if hyperparameters["create_guess_only"]:
-
-        files["controlFile"].close()
-        print("Wrote fCont, close and exit")
-        exit()
 
     print("Wrote fCont0 to file")    
 
@@ -92,6 +75,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
     def cb(*args, **kwargs):
         global current_iteration
         current_iteration += 1
+
         current_pde_solution = state.tape_value()
         current_pde_solution.rename("Img", "")
         current_control = cont.tape_value()
@@ -115,8 +99,32 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
         velocityField = preconditioning(scaledControl, smoothen=hyperparameters["smoothen"])
         velocityField.rename("velocity", "")
         
-        files["velocityFile"].write(velocityField, str(current_iteration))
-        files["controlFile"].write(current_control, str(current_iteration))
-        files["stateFile"].write(current_pde_solution, str(current_iteration))
+        files["velocityFile"].write(velocityField, "-1") # str(current_iteration))
+        files["controlFile"].write(current_control, "-1") #str(current_iteration))
+        files["stateFile"].write(current_pde_solution, "-1") # str(current_iteration))
 
     minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True, "maxiter": hyperparameters["lbfgs_max_iterations"]}, tol=1e-08, callback = cb)
+
+    # Store final values in pvd format for visualization
+
+    current_pde_solution = state.tape_value()
+    current_pde_solution.rename("finalstate", "")
+
+    File(hyperparameters["outputfolder"] + '/Finalstate.pvd') << current_pde_solution
+
+    current_control = cont.tape_value()
+    current_control.rename("control", "")
+
+    if hyperparameters["smoothen"]:
+        scaledControl = transformation(current_control, M_lumped)
+
+    else:
+        scaledControl = current_control
+
+    velocityField = preconditioning(scaledControl, smoothen=hyperparameters["smoothen"])
+    velocityField.rename("velocity", "")
+
+    File(hyperparameters["outputfolder"] + '/Finalvelocity.pvd') << velocityField
+    File(hyperparameters["outputfolder"] + '/Finalcontrol.pvd') << current_control
+
+    print("Stored final State, Control, Velocity to .pvd files")
