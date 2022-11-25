@@ -116,6 +116,10 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
         files["controlFile"].write(current_control, "-1") #str(current_iteration))
         files["stateFile"].write(current_pde_solution, "-1") # str(current_iteration))
 
+        File(hyperparameters["outputfolder"] + '/Currentstate.pvd') << current_pde_solution
+
+        print_overloaded("Wrote files in callback")
+
     minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True, "maxiter": hyperparameters["lbfgs_max_iterations"]}, tol=1e-08, callback = cb)
 
     # Store final values in pvd format for visualization

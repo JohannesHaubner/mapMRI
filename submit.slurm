@@ -20,75 +20,41 @@ conda activate mri_inverse
 
 # module load ipopt-3.13.3
 
-SPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation
-
-
-
 set -o errexit # Exit the script on any error
 set -o nounset # Treat any unset variables as an error
 
 echo "starting to run"
 
-outfolder=${SPATH}/slurm/${SLURM_JOB_ID}
-solver=lu
-
-
-# OUTFOLDERNAME=interpolateTest4_sequential
-# startingGuess=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/outputs/readStartingGuess/Control.hdf
-# srun -n 1 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} \
-# --input mridata_3d/091registeredto205_padded.mgz --target mridata_3d/205_cropped_padded.mgz --interpolate \
-# --readname 400 --starting_guess ${startingGuess} --solver ${solver} > ${outfolder}_log_python_srun.txt 
-# # # run in parallel
-# # startingGuess=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/outputs/interpolateTest/Interpolated_Control.hdf
-# # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} \
-# # --input mridata_3d/091registeredto205_padded.mgz --target mridata_3d/205_cropped_padded.mgz \
-# # --readname control --starting_guess ${startingGuess} --solver ${solver} > ${outfolder}_log_python_srun.txt 
-
-
-
-# OUTFOLDERNAME=fullResolutionRegister
-# startingGuess=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/outputs/createTestStartingGuess/Control.hdf
-# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} \
-# --input mridata_3d/091registeredto205_padded.mgz --target mridata_3d/205_cropped_padded.mgz \
-# --solver ${solver} > ${outfolder}_log_python_srun.txt 
-
-
-# OUTFOLDERNAME=rungeKuttaTest
-# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} \
-# --solver ${solver} > ${outfolder}_log_python_srun.txt 
+SPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation
+LOGOUTFILE=${SPATH}/slurm/${SLURM_JOB_ID}_log_python_srun.txt
+OUTPUTDIR=/home/bastian/D1/imageregistration_outputs/
 
 
 OUTFOLDERNAME=testKrylov
-srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} \
---lbfgs_max_iterations 1 --smoothen --solver krylov > ${outfolder}_log_python_srun.txt
+srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+--lbfgs_max_iterations 1 --solver krylov > ${LOGOUTFILE}
 
-
-
-# OUTFOLDERNAME=outputTestWStartingGuess0
-# startingGuess=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/outputs/readStartingGuess/Control.hdf
+# OUTFOLDERNAME=test
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} \
-# --readname 400 --alpha 1e-5 --debug --lbfgs_max_iterations 2 --starting_guess ${startingGuess} --solver ${solver} > ${outfolder}_log_python_srun.txt
+# --lbfgs_max_iterations 1 --smoothen --solver krylov > ${LOGOUTFILE}
 
-# OUTFOLDERNAME=outputTest
-# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --lbfgs_max_iterations 2 \
-# --alpha 1e-5 --solver ${solver} --lbfgs_max_iterations 2 > ${outfolder}_log_python_srun.txt
-
-# OUTFOLDERNAME=readStartingGuess
-# startingGuess=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/outputs/createTestStartingGuess/Control.hdf
+# OUTFOLDERNAME=testLu
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} \
-# --readname 1 --starting_guess ${startingGuess} --solver ${solver} > ${outfolder}_log_python_srun.txt
-
-
-# OUTFOLDERNAME=createTestStartingGuessEuler
-# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} \
-# --solver ${solver} --timestepping explicitEuler --lbfgs_max_iterations 40 > ${outfolder}_log_python_srun.txt 
-
-
-# OUTFOLDERNAME=createTestStartingGuess
-# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} \
-# --solver ${solver} --lbfgs_max_iterations 2 > ${outfolder}_log_python_srun.txt 
+# --lbfgs_max_iterations 1 --smoothen --solver lu > ${LOGOUTFILE}
  
-OUTPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/outputs/${OUTFOLDERNAME}/
-cp -v /home/bastian/Oscar-Image-Registration-via-Transport-Equation/slurm/${SLURM_JOB_ID}_log_python_srun.txt ${OUTPATH}
+OUTPATH=${OUTPUTDIR}${OUTFOLDERNAME}/
+cp -v ${LOGOUTFILE} ${OUTPATH}
+
+# Assembled A in Preconditioning()
+# type of A <class 'dolfin.cpp.la.Matrix'> <dolfin.cpp.la.Matrix object at 0x155541f7f4a0>
+# type of self.solver <class 'fenics_adjoint.petsc_krylov_solver.PETScKrylovSolver'>
+# Created Krylov solver in Preconditioning()
+
+
+# Assembled A in PreconditioningBlock()
+# type of A <class 'dolfin.cpp.la.Vector'> <dolfin.cpp.la.Vector object at 0x15552f81dea0>
+# type of self.solver <class 'fenics_adjoint.petsc_krylov_solver.PETScKrylovSolver'>
+# Created Krylov solver in PreconditioningBlock()
+
 
 echo "success"

@@ -25,10 +25,12 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("--outfoldername", required=True, type=str, help=""" name of folder to store to under "path + "output_dir" """)
 parser.add_argument("--code_dir", type=str, default="/home/bastian/Oscar-Image-Registration-via-Transport-Equation/")
-parser.add_argument("--output_dir", type=str, default="/home/bastian/D1/imageregistration_outputs/")
+parser.add_argument("--output_dir", type=str, default=None)
 parser.add_argument("--solver", default="lu", choices=["lu", "krylov"])
 parser.add_argument("--timestepping", default="RungeKutta", choices=["RungeKutta", "CrankNicolson", "explicitEuler"])
-parser.add_argument("--smoothen", default=False, action="store_true", help="Use proper scalar product")
+parser.add_argument("--smoothen", default=True, action="store_true", help="Obsolete flag. Use proper scalar product")
+parser.add_argument("--nosmoothen", default=False, action="store_true", help="Sets smoothen=False")
+
 parser.add_argument("--alpha", type=float, default=1e-4)
 parser.add_argument("--lbfgs_max_iterations", type=float, default=400)
 parser.add_argument("--readname", type=str)
@@ -53,6 +55,12 @@ if hyperparameters["starting_guess"] is not None:
     assert os.path.isfile(hyperparameters["starting_guess"])
 
 set_log_level(20)
+
+if hyperparameters["nosmoothen"]:
+    print_overloaded(".................................................................................................................................")
+    print_overloaded("--nosmoothen is set, will not use transform and preconditioning!")
+    print_overloaded(".................................................................................................................................")
+    hyperparameters["smoothen"] = False
 
 hyperparameters["preconditioner"] = "amg"
 hyperparameters["outputfolder"] = hyperparameters["output_dir"] + hyperparameters["outfoldername"]
@@ -107,6 +115,30 @@ with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as out
     json.dump(hyperparameters, outfile, sort_keys=True, indent=4)
 
 (mesh_goal, Img_goal, NumData_goal) = read_image(hyperparameters, name="target", mesh=domainmesh)
+
+print_overloaded("Normalizing input and target with")
+print_overloaded("Img.vector()[:].max()", Img.vector()[:].max())
+print_overloaded("Img_goal.vector()[:].max()", Img_goal.vector()[:].max())
+
+Img.vector()[:] *= 1 / Img.vector()[:].max()
+Img_goal.vector()[:] *= 1 / Img_goal.vector()[:].max()
+
+
+print_overloaded("Applying ReLU() to images")
+Img.vector()[:] = np.where(Img.vector()[:] < 0, 0, Img.vector()[:])
+Img_goal.vector()[:] = np.where(Img_goal.vector()[:] < 0, 0, Img_goal.vector()[:])
+
+# print_overloaded("Normalized:")
+print_overloaded("Img.vector()[:].min()", Img.vector()[:].min())
+print_overloaded("Img_goal.vector()[:].min()", Img_goal.vector()[:].min())
+
+# inp=Img.vector()[:]
+# tar=Img_goal.vector()[:]
+# print_overloaded(np.sum(np.where(inp < 0, 1, 0)) / inp.size)
+# print_overloaded(np.sum(np.where(tar < 0, 1, 0)) / tar.size)
+
+# print_overloaded(np.sum(inp), np.sum(np.abs(inp)))
+# print_overloaded(np.sum(tar), np.sum(np.abs(tar)))
 
 #  breakpoint()
 

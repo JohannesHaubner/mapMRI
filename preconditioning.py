@@ -38,7 +38,8 @@ class Preconditioning():
 
             if not hasattr(self, "solver"):
                 a = inner(grad(c), grad(psi)) * dx
-                A = assemble(a)
+                # a = inner(grad(c), grad(psi)) * dx
+                self.A = assemble(a)
                 print_overloaded("Assembled A in Preconditioning()")
             
             L = inner(func, psi) * dx
@@ -51,19 +52,23 @@ class Preconditioning():
             if not hasattr(self, "solver"):
 
                 if self.hyperparameters["solver"] == "lu":
-
+                    
                     self.solver = LUSolver()
-                    self.solver.set_operator(A)
+                    self.solver.set_operator(self.A)
 
                     print_overloaded("Created LU solver in Preconditioning()")
 
                 elif self.hyperparameters["solver"] == "krylov":
-                    self.solver = KrylovSolver(A, "gmres", self.hyperparameters["preconditioner"])
-                    self.solver.set_operators(A, A)
-                    print_overloaded("Assembled A, using Krylov solver")
+                    # self.solver = PETScKrylovSolver(method="gmres", preconditioner=self.hyperparameters["preconditioner"])
+                    self.solver = PETScKrylovSolver("gmres", self.hyperparameters["preconditioner"])
+                    print_overloaded("type of A", type(self.A), self.A)
+                    print_overloaded("type of self.solver", type(self.solver))
+                    self.solver.set_operators(self.A, self.A)
+
+                    print_overloaded("Created Krylov solver in Preconditioning()")
 
 
-            BC.apply(A)
+            BC.apply(self.A)
             self.solver.solve(c.vector(), tmp)
 
         return c
