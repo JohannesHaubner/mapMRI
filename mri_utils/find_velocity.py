@@ -44,7 +44,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
     else:
         controlf = controlfun
 
-    control = preconditioning(controlf, smoothen=hyperparameters["smoothen"])
+    control = preconditioning(controlf)
 
     control.rename("control", "")
 
@@ -109,7 +109,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
         else:
             scaledControl = current_control
 
-        velocityField = preconditioning(scaledControl, smoothen=hyperparameters["smoothen"])
+        velocityField = preconditioning(scaledControl)
         velocityField.rename("velocity", "")
         
         files["velocityFile"].write(velocityField, "-1") # str(current_iteration))

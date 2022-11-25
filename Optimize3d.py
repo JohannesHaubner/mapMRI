@@ -41,9 +41,6 @@ parser.add_argument("--target", default="mridata_3d/205_cropped_padded_coarsened
 
 hyperparameters = vars(parser.parse_args())
 
-if hyperparameters["solver"] != "lu":
-    raise NotImplementedError("Use Krylov also in preconditioning")
-
 for key, item in hyperparameters.items():
     print_overloaded(key, ":", item)
 

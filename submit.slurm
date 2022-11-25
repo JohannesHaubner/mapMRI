@@ -58,10 +58,9 @@ solver=lu
 # --solver ${solver} > ${outfolder}_log_python_srun.txt 
 
 
-OUTFOLDERNAME=testStdOUt
-startingGuess=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/outputs/readStartingGuess/Control.hdf
+OUTFOLDERNAME=testKrylov
 srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} \
---readname 400 --alpha 1e-5 --debug --lbfgs_max_iterations 2 --starting_guess ${startingGuess} --solver ${solver} > ${outfolder}_log_python_srun.txt
+--lbfgs_max_iterations 1 --smoothen --solver krylov > ${outfolder}_log_python_srun.txt
 
 
 

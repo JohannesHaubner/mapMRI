@@ -58,12 +58,10 @@ class Preconditioning():
                     print_overloaded("Created LU solver in Preconditioning()")
 
                 elif self.hyperparameters["solver"] == "krylov":
-        
-                    solver = KrylovSolver(A, "gmres", self.hyperparameters["preconditioner"])
-                    solver.set_operators(A, A)
+                    self.solver = KrylovSolver(A, "gmres", self.hyperparameters["preconditioner"])
+                    self.solver.set_operators(A, A)
                     print_overloaded("Assembled A, using Krylov solver")
 
-                    self.solver = solver
 
             BC.apply(A)
             self.solver.solve(c.vector(), tmp)
