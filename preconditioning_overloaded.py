@@ -16,7 +16,7 @@ class Overloaded_Preconditioning():
         self.hyperparameters = hyperparameters
 
 
-    def __call__(self, func):
+    def __call__(self):
                 
         forward_preconditioning = Preconditioning(self.hyperparameters)
 
