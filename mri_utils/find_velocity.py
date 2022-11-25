@@ -4,7 +4,7 @@ from fenics_adjoint import *
 # from mri_utils.helpers import load_velocity, interpolate_velocity
 from DGTransport import Transport
 from transformation_overloaded import transformation
-from preconditioning_overloaded import preconditioning
+from preconditioning_overloaded import Overloaded_Preconditioning # preconditioning
 
 class CFLerror(ValueError):
     '''raise this when CFL is violated'''
@@ -16,10 +16,12 @@ def print_overloaded(*args):
     else:
         pass
 
-current_iteration = 0
+# current_iteration = 0
 
 def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting_guess):
     
+
+    preconditioning = Overloaded_Preconditioning(hyperparameters)
 
     set_working_tape(Tape())
 
@@ -48,7 +50,8 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
 
     print_overloaded("Running Transport() with dt = ", hyperparameters["DeltaT"])
 
-    Img_deformed = Transport(Img, control, MaxIter=int(1 / hyperparameters["DeltaT"]), DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
+    Img_deformed = Transport(Img, control, hyperparameters=hyperparameters,
+                            MaxIter=int(1 / hyperparameters["DeltaT"]), DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
                             solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
 
     # solve forward and evaluate objective
@@ -69,23 +72,27 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
 
     print_overloaded("created reduced functional")
 
-    current_iteration = 0
+    # current_iteration = 0
 
-    files["stateFile"].write(Img_deformed, str(current_iteration))
-    files["controlFile"].write(control, str(current_iteration))
+    files["stateFile"].write(Img_deformed, str(0))
+    files["controlFile"].write(control, str(0))
 
     print_overloaded("Wrote fCont0 to file")    
 
     
 
     def cb(*args, **kwargs):
-        global current_iteration
-        current_iteration += 1
+        # global current_iteration
+        # current_iteration += 1
+
 
         current_pde_solution = state.tape_value()
         current_pde_solution.rename("Img", "")
         current_control = cont.tape_value()
         current_control.rename("control", "")
+
+        Jd = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx(domain=Img.function_space().mesh()))
+        Jreg = assemble(alpha*(controlf)**2*dx(domain=Img.function_space().mesh()))
 
         domainmesh = current_pde_solution.function_space().mesh()
         #compute CFL number

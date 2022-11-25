@@ -23,8 +23,9 @@ def print_overloaded(*args):
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--outfolder", required=True, type=str, help=""" name of folder to store to under "path + "outputs/" """)
+parser.add_argument("--outfoldername", required=True, type=str, help=""" name of folder to store to under "path + "output_dir" """)
 parser.add_argument("--code_dir", type=str, default="/home/bastian/Oscar-Image-Registration-via-Transport-Equation/")
+parser.add_argument("--output_dir", type=str, default="/home/bastian/D1/imageregistration_outputs/")
 parser.add_argument("--solver", default="lu", choices=["lu", "krylov"])
 parser.add_argument("--timestepping", default="RungeKutta", choices=["RungeKutta", "CrankNicolson", "explicitEuler"])
 parser.add_argument("--smoothen", default=False, action="store_true", help="Use proper scalar product")
@@ -40,20 +41,24 @@ parser.add_argument("--target", default="mridata_3d/205_cropped_padded_coarsened
 
 hyperparameters = vars(parser.parse_args())
 
+if hyperparameters["solver"] != "lu":
+    raise NotImplementedError("Use Krylov also in preconditioning")
+
 for key, item in hyperparameters.items():
     print_overloaded(key, ":", item)
 
 os.chdir(hyperparameters["code_dir"])
 print_overloaded("Setting pwd to", hyperparameters["code_dir"])
 
-assert "/" not in hyperparameters["outfolder"]
+assert "/" not in hyperparameters["outfoldername"]
 
 if hyperparameters["starting_guess"] is not None:
     assert os.path.isfile(hyperparameters["starting_guess"])
 
 set_log_level(20)
 
-hyperparameters["outputfolder"] = "outputs/" + hyperparameters["outfolder"]
+hyperparameters["preconditioner"] = "amg"
+hyperparameters["outputfolder"] = hyperparameters["output_dir"] + hyperparameters["outfoldername"]
 hyperparameters["lbfgs_max_iterations"] = int(hyperparameters["lbfgs_max_iterations"])
 hyperparameters["MassConservation"] = False
 hyperparameters["functiondegree"] = 1
@@ -78,8 +83,6 @@ else:
     controlfun = None
 
 
-print_overloaded("parameters[std_out_all_processes] ", parameters["std_out_all_processes"] )
-
 (domainmesh, Img, NumData) = read_image(hyperparameters, name="input", mesh=domainmesh)
 
 
@@ -87,6 +90,7 @@ if hyperparameters["starting_guess"] is None:
     # Can now create function space after mesh is created from image
     vCG = VectorFunctionSpace(domainmesh, hyperparameters["functionspace"], hyperparameters["functiondegree"])
 
+T_final = 1
 
 h = CellDiameter(domainmesh)
 h = float(assemble(h*dx))
@@ -94,9 +98,10 @@ h = float(assemble(h*dx))
 hyperparameters["mehsh"] = h
 hyperparameters["maxMeshCoordinate"] = np.max(domainmesh.coordinates())
 
+# hyperparameters["input.shape"]
 
-hyperparameters["expected_distance_covered"] = 25 / 200 # max. 25 voxels
-v_needed = hyperparameters["expected_distance_covered"] / 1 
+hyperparameters["expected_distance_covered"] = 0.25 # assume that voxels need to be moved over a distance of max. 25 % of the image size.
+v_needed = hyperparameters["expected_distance_covered"] / T_final
 hyperparameters["DeltaT"] = float(h) / v_needed #1e-3
 print_overloaded("calculated initial time step size to", hyperparameters["DeltaT"])
 hyperparameters["DeltaT_init"] = hyperparameters["DeltaT"]
@@ -136,16 +141,23 @@ files = {
     "controlFile":controlFile
 }
 
-# transform colored image to black-white intensity image
-Space = FunctionSpace(domainmesh, "DG", 1)
-Img = project(Img, Space)
-Img.rename("img", "")
-Img_goal = project(Img_goal, Space)
-NumData = 1
+# # transform colored image to black-white intensity image
+# Space = FunctionSpace(domainmesh, "DG", 1)
+# if not Img.function_space() == Space:
+#     Img = project(Img, Space)
+#     print_overloaded(Img.function_space())
+#     print_overloaded(Space)
+#     print_overloaded("Projected data")
+#     raise ValueError
 
-print_overloaded("Projected data")
+# if not Img_goal.function_space() == Space:
+#     print_overloaded(Img_goal.function_space(), Space)
+#     Img_goal = project(Img_goal, Space)
+#     print_overloaded("Projected data")
 
-# initialize trafo
+Img.rename("input", "")
+Img_goal.rename("target", "")
+# NumData = 1
 
 File(hyperparameters["outputfolder"] + "/input.pvd") << Img
 File(hyperparameters["outputfolder"] + "/target.pvd") << Img_goal
@@ -165,10 +177,15 @@ for n in range(4):
         find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting_guess=controlfun)
         break
     except CFLerror:
+
+        raise NotImplementedError("Something went wrong here before, 'exploding' gradients-like. Need to be checked")
         hyperparameters["DeltaT"] *= 1 / 2
         print_overloaded("CFL condition violated, reducing time step size and retry")
-        pass
-
+        pass    
+    
+    # sanity check
+    if hyperparameters["starting_guess"] is None:
+        assert controlfun is None
 
 tcomp = (time.time()-t0) / 3600
 

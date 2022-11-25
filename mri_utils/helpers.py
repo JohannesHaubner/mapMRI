@@ -100,10 +100,6 @@ def interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun):
     print_overloaded("rel L2 error", l2 / l2norm)
     print_overloaded("L2 norm of control", l2norm)
 
-    # controlfun.vector().update_ghost_values()
-
-
-
     print_overloaded("Interpolated expression, writing...")
 
     with XDMFFile(hyperparameters["outputfolder"] + "/Interpolated_Control.xdmf") as xdmf:

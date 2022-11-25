@@ -26,7 +26,7 @@ parameters['ghost_mode'] = 'shared_facet'
 
 
 
-def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=False, FNameOut="", 
+def Transport(Img, Wind, MaxIter, DeltaT, hyperparameters, MassConservation = True, StoreHistory=False, FNameOut="",
                 solver=None, timestepping=None):
     
     # assert timestepping in ["CrankNicolson", "explicitEuler"]
@@ -120,21 +120,22 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
         #a = Constant(1.0/DeltaT)*(inner(v, f_next)*dx - inner(v, Img)*dx) - Form(f_next)
         #a = Constant(1.0/DeltaT)*(inner(v, f_next)*dx - inner(v, Img)*dx) - Form(Img)
 
-    # breakpoint()
+    A = assemble(lhs(a))
+
     if solver == "krylov":
-        A = assemble(lhs(a))
-        #solver = LUSolver(A) #needed for Taylor-Test
-        solver = KrylovSolver(A, "gmres", "none")
-        print_overloaded("Assembled A, using Krylov solver")
-    else:
         
-        assert solver == "lu"
-        A = assemble(lhs(a))
+        solver = KrylovSolver(A, "gmres", hyperparameters["preconditioner"])
+        solver.set_operators(A, A)
+        print_overloaded("Assembled A, using Krylov solver")
+    
+    elif solver == "lu":
         solver = LUSolver()
         solver.set_operator(A)
         print_overloaded("Assembled A, using LU solver")
+
         # solver = PETScLUSolver(A, "mumps")
-        
+    else:
+        raise NotImplementedError()
     
     CurTime = 0.0
     if StoreHistory:

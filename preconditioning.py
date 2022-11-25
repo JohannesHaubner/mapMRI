@@ -4,14 +4,25 @@ from fenics_adjoint import *
 import numpy as np
 
 
-class Preconditioning():
-
-    def __init__(self) -> None:
+def print_overloaded(*args):
+    if MPI.rank(MPI.comm_world) == 0:
+        # set_log_level(PROGRESS)
+        print(*args)
+    else:
         pass
 
 
-    def __call__(self, func, smoothen=False):
-        if not smoothen:
+
+class Preconditioning():
+
+    def __init__(self, hyperparameters) -> None:
+        self.smoothen = hyperparameters["smoothen"]
+        self.hyperparameters = hyperparameters
+
+
+    def __call__(self, func):
+        
+        if not self.smoothen:
             c = func.copy()
             C = c.function_space()
             dim = c.geometric_dimension()
@@ -28,7 +39,7 @@ class Preconditioning():
             if not hasattr(self, "solver"):
                 a = inner(grad(c), grad(psi)) * dx
                 A = assemble(a)
-                print("Assembled A in Preconditioning()")
+                print_overloaded("Assembled A in Preconditioning()")
             
             L = inner(func, psi) * dx
 
@@ -39,12 +50,21 @@ class Preconditioning():
 
             if not hasattr(self, "solver"):
 
-                
+                if self.hyperparameters["solver"] == "lu":
 
-                self.solver = LUSolver()
-                self.solver.set_operator(A)
-                print("Created LU solver in Preconditioning()")
-            
+                    self.solver = LUSolver()
+                    self.solver.set_operator(A)
+
+                    print_overloaded("Created LU solver in Preconditioning()")
+
+                elif self.hyperparameters["solver"] == "krylov":
+        
+                    solver = KrylovSolver(A, "gmres", self.hyperparameters["preconditioner"])
+                    solver.set_operators(A, A)
+                    print_overloaded("Assembled A, using Krylov solver")
+
+                    self.solver = solver
+
             BC.apply(A)
             self.solver.solve(c.vector(), tmp)
 

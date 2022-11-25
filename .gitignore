@@ -3,7 +3,7 @@
 *.xdmf
 *.pvd
 output/*
-
+obsolete_outputs
 outputs/*
 slurm*
 *.mgz
