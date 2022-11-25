@@ -2,7 +2,16 @@
 from fenics import *
 from fenics_adjoint import *
 
-print("Setting parameters parameters['ghost_mode'] = 'shared_facet'")
+
+def print_overloaded(*args):
+    if MPI.rank(MPI.comm_world) == 0:
+        # set_log_level(PROGRESS)
+        print(*args)
+    else:
+        pass
+
+
+print_overloaded("Setting parameters parameters['ghost_mode'] = 'shared_facet'")
 parameters['ghost_mode'] = 'shared_facet'
 
 # PETScOptions.set("mat_mumps_use_omp_threads", 8)
@@ -22,13 +31,13 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
     
     # assert timestepping in ["CrankNicolson", "explicitEuler"]
 
-    print("......................................")
-    print("Settings in Transport()")
-    print("--- solver =", solver)
-    print("--- timestepping =", timestepping)
-    print("......................................")
+    print_overloaded("......................................")
+    print_overloaded("Settings in Transport()")
+    print_overloaded("--- solver =", solver)
+    print_overloaded("--- timestepping =", timestepping)
+    print_overloaded("......................................")
 
-    print("parameters['ghost_mode']", parameters['ghost_mode'])
+    print_overloaded("parameters['ghost_mode']", parameters['ghost_mode'])
 
     
     Space = Img.function_space()
@@ -116,14 +125,14 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
         A = assemble(lhs(a))
         #solver = LUSolver(A) #needed for Taylor-Test
         solver = KrylovSolver(A, "gmres", "none")
-        print("Assembled A, using Krylov solver")
+        print_overloaded("Assembled A, using Krylov solver")
     else:
         
         assert solver == "lu"
         A = assemble(lhs(a))
         solver = LUSolver()
         solver.set_operator(A)
-        print("Assembled A, using LU solver")
+        print_overloaded("Assembled A, using LU solver")
         # solver = PETScLUSolver(A, "mumps")
         
     
@@ -134,7 +143,7 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
     for i in range(MaxIter):
         #solve(a==0, Img_next)
 
-        print("Iteration ", i + 1, "/", MaxIter + 1, "in Transport()")
+        print_overloaded("Iteration ", i + 1, "/", MaxIter + 1, "in Transport()")
 
         if timestepping == "RungeKutta":
             dImg = TrialFunction(Img_deformed.function_space())
@@ -163,7 +172,7 @@ def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=
         if StoreHistory:
             FOut.write(Img_deformed, CurTime)
 
-    print("i == MaxIter, Transport() finished")
+    print_overloaded("i == MaxIter, Transport() finished")
     return Img_deformed
 
 if __name__ == "__main__":

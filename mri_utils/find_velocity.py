@@ -9,6 +9,12 @@ from preconditioning_overloaded import preconditioning
 class CFLerror(ValueError):
     '''raise this when CFL is violated'''
 
+def print_overloaded(*args):
+    if MPI.rank(MPI.comm_world) == 0:
+        # set_log_level(PROGRESS)
+        print(*args)
+    else:
+        pass
 
 current_iteration = 0
 
@@ -40,7 +46,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
 
     control.rename("control", "")
 
-    print("Running Transport() with dt = ", hyperparameters["DeltaT"])
+    print_overloaded("Running Transport() with dt = ", hyperparameters["DeltaT"])
 
     Img_deformed = Transport(Img, control, MaxIter=int(1 / hyperparameters["DeltaT"]), DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
                             solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
@@ -52,23 +58,23 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
     cont = Control(controlfun)
 
     J = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx(domain=Img.function_space().mesh()))
-    print("Assembled L2 error between image and target")
-    print("Control type=", type(control))
-    print(control)
+    print_overloaded("Assembled L2 error between image and target")
+    # print_overloaded("Control type=", type(control))
+    # print_overloaded(control)
     # J = J + assemble(alpha*grad(control)**2*dx(domain=Img.function_space().mesh()))
     J = J + assemble(alpha*(controlf)**2*dx(domain=Img.function_space().mesh()))
-    print("Assembled regularization")
+    print_overloaded("Assembled regularization")
 
     Jhat = ReducedFunctional(J, cont)
 
-    print("created reduced functional")
+    print_overloaded("created reduced functional")
 
     current_iteration = 0
 
     files["stateFile"].write(Img_deformed, str(current_iteration))
     files["controlFile"].write(control, str(current_iteration))
 
-    print("Wrote fCont0 to file")    
+    print_overloaded("Wrote fCont0 to file")    
 
     
 
@@ -127,4 +133,4 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
     File(hyperparameters["outputfolder"] + '/Finalvelocity.pvd') << velocityField
     File(hyperparameters["outputfolder"] + '/Finalcontrol.pvd') << current_control
 
-    print("Stored final State, Control, Velocity to .pvd files")
+    print_overloaded("Stored final State, Control, Velocity to .pvd files")

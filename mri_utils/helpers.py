@@ -4,6 +4,12 @@ import os
 import h5py
 import numpy as np
 
+def print_overloaded(*args):
+    if MPI.rank(MPI.comm_world) == 0:
+        # set_log_level(PROGRESS)
+        print(*args)
+    else:
+        pass
 
 def get_lumped_mass_matrix(vCG):
 
@@ -28,20 +34,20 @@ def load_velocity(hyperparameters, controlfun):
 
     assert os.path.isfile(hyperparameters["starting_guess"])
 
-    print("Will try to read starting guess")
+    print_overloaded("Will try to read starting guess")
     h5file = h5py.File(hyperparameters["starting_guess"])
 
-    print("keys in h5file", list(h5file.keys()))
+    print_overloaded("keys in h5file", list(h5file.keys()))
 
     if controlfun is not None:
-        print("max before loading", controlfun.vector()[:].max())
+        print_overloaded("max before loading", controlfun.vector()[:].max())
         working_mesh = controlfun.function_space().mesh()
-        print("trying to read velocity without loading mesh")
+        print_overloaded("trying to read velocity without loading mesh")
         hdf = HDF5File(working_mesh.mpi_comm(), hyperparameters["starting_guess"], 'r')
 
         
     else:
-        print("Reading mesh")
+        print_overloaded("Reading mesh")
         working_mesh = Mesh()
         hdf = HDF5File(working_mesh.mpi_comm(), hyperparameters["starting_guess"], 'r')
         hdf.read(working_mesh, "/mesh", False)
@@ -49,12 +55,17 @@ def load_velocity(hyperparameters, controlfun):
         vCG = VectorFunctionSpace(working_mesh, hyperparameters["functionspace"], hyperparameters["functiondegree"])
         controlfun = Function(vCG)
 
-    print("trying to read", hyperparameters["readname"])
+    print_overloaded("trying to read", hyperparameters["readname"])
     hdf.read(controlfun, hyperparameters["readname"])
     hdf.close()
 
-    print("max after loading", controlfun.vector()[:].max())
-    print("Succesfully read starting guess")
+    print_overloaded("max after loading", controlfun.vector()[:].max())
+    print_overloaded("Succesfully read starting guess")
+
+    print_overloaded("Setting loaded control to 0")
+    controlfun.vector()[:] *= 0
+    assert hyperparameters["debug"]
+
 
     return working_mesh, vCG, controlfun
 
@@ -85,15 +96,15 @@ def interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun):
     l2 = assemble((controlfun_fine - controlfun) ** 2 * dx(domain=controlfun.function_space().mesh()) )
     l2norm = assemble((controlfun) ** 2 * dx(domain=controlfun.function_space().mesh()) )
 
-    print("L2 error", l2)
-    print("rel L2 error", l2 / l2norm)
-    print("L2 norm of control", l2norm)
+    print_overloaded("L2 error", l2)
+    print_overloaded("rel L2 error", l2 / l2norm)
+    print_overloaded("L2 norm of control", l2norm)
 
     # controlfun.vector().update_ghost_values()
 
 
 
-    print("Interpolated expression, writing...")
+    print_overloaded("Interpolated expression, writing...")
 
     with XDMFFile(hyperparameters["outputfolder"] + "/Interpolated_Control.xdmf") as xdmf:
         xdmf.write_checkpoint(controlfun_fine, "fine", 0.)
@@ -110,49 +121,49 @@ def interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun):
 
 #     assert os.path.isfile(hyperparameters["starting_guess"])
 
-#     print("Will try to read starting guess")
+#     print_overloaded("Will try to read starting guess")
     
-#     print("max before loading", controlfun.vector()[:].max())
+#     print_overloaded("max before loading", controlfun.vector()[:].max())
 
     
 #     h5file = h5py.File(hyperparameters["starting_guess"])
 
-#     print("keys in h5file", list(h5file.keys()))
+#     print_overloaded("keys in h5file", list(h5file.keys()))
 
 
 #     if hyperparameters["interpolate"]:
-#         print("--interoplate is set, trying to read coarse mesh")
+#         print_overloaded("--interoplate is set, trying to read coarse mesh")
         
 #         coarse_mesh = Mesh()
 #         hdf = HDF5File(coarse_mesh.mpi_comm(), hyperparameters["starting_guess"], 'r')
 #         hdf.read(coarse_mesh, '/mesh', False)
-#         print("read mesh")
+#         print_overloaded("read mesh")
 
 #         vCG_coarse = VectorFunctionSpace(coarse_mesh, "CG", 1)
 #         controlfun_coarse = Function(vCG_coarse)
 
 #         hdf = HDF5File(coarse_mesh.mpi_comm(), hyperparameters["starting_guess"], 'r')
         
-#         print("trying to read", hyperparameters["readname"])
+#         print_overloaded("trying to read", hyperparameters["readname"])
 #         hdf.read(controlfun_coarse, hyperparameters["readname"])
 
-#         print("read coarse control, try to interpolate to fine mesh")
+#         print_overloaded("read coarse control, try to interpolate to fine mesh")
 
 #         fmesh = controlfun.function_space().mesh()
-#         print(controlfun)
-#         print("controlfun_coarse", controlfun_coarse)
-#         print(fmesh.coordinates().min(), fmesh.coordinates().max())
-#         print("controlfun_coarse", coarse_mesh.coordinates().min(), coarse_mesh.coordinates().max())
+#         print_overloaded(controlfun)
+#         print_overloaded("controlfun_coarse", controlfun_coarse)
+#         print_overloaded(fmesh.coordinates().min(), fmesh.coordinates().max())
+#         print_overloaded("controlfun_coarse", coarse_mesh.coordinates().min(), coarse_mesh.coordinates().max())
 
 #         controlfun = interpolate(controlfun_coarse, controlfun.function_space())
 
 #     else:
-#         print("trying to read velocity without loading mesh")
+#         print_overloaded("trying to read velocity without loading mesh")
     
 #         hdf = HDF5File(controlfun.function_space().mesh().mpi_comm(), hyperparameters["starting_guess"], 'r')
         
-#         print("trying to read", hyperparameters["readname"])
+#         print_overloaded("trying to read", hyperparameters["readname"])
 #         hdf.read(controlfun, hyperparameters["readname"])
 
-#     print("max after loading", controlfun.vector()[:].max())
-#     print("Succesfully read starting guess")
+#     print_overloaded("max after loading", controlfun.vector()[:].max())
+#     print_overloaded("Succesfully read starting guess")

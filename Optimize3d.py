@@ -10,6 +10,15 @@ from mri_utils.helpers import load_velocity, interpolate_velocity, get_lumped_ma
 from mri_utils.MRI2FEM import read_image
 from mri_utils.find_velocity import find_velocity, CFLerror
 
+# parameters["std_out_all_processes"] = False
+
+def print_overloaded(*args):
+    if MPI.rank(MPI.comm_world) == 0:
+        # set_log_level(PROGRESS)
+        print(*args)
+    else:
+        pass
+        # print("passed")
 
 
 parser = argparse.ArgumentParser()
@@ -24,7 +33,7 @@ parser.add_argument("--lbfgs_max_iterations", type=float, default=400)
 parser.add_argument("--readname", type=str)
 parser.add_argument("--starting_guess", type=str, default=None)
 parser.add_argument("--interpolate", default=False, action="store_true", help="Interpolate coarse v to fine mesh; required if the images for --starting_guess and --input are not the same")
-
+parser.add_argument("--debug", default=False, action="store_true", help="Debug")
 
 parser.add_argument("--input", default="mridata_3d/091registeredto205_padded_coarsened.mgz")
 parser.add_argument("--target", default="mridata_3d/205_cropped_padded_coarsened.mgz")
@@ -32,10 +41,10 @@ parser.add_argument("--target", default="mridata_3d/205_cropped_padded_coarsened
 hyperparameters = vars(parser.parse_args())
 
 for key, item in hyperparameters.items():
-    print(key, ":", item)
+    print_overloaded(key, ":", item)
 
 os.chdir(hyperparameters["code_dir"])
-print("Setting pwd to", hyperparameters["code_dir"])
+print_overloaded("Setting pwd to", hyperparameters["code_dir"])
 
 assert "/" not in hyperparameters["outfolder"]
 
@@ -59,14 +68,17 @@ if hyperparameters["starting_guess"] is not None:
     if hyperparameters["interpolate"]:
         domainmesh, vCG, controlfun = interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun)
 
-    # print("-------------------------------------------------------------------")
-    # print("Testing script, EXITING")
-    # print("-------------------------------------------------------------------")
+    # print_overloaded("-------------------------------------------------------------------")
+    # print_overloaded("Testing script, EXITING")
+    # print_overloaded("-------------------------------------------------------------------")
     # exit()
 else:
     # mesh will be created from first image
     domainmesh = None
     controlfun = None
+
+
+print_overloaded("parameters[std_out_all_processes] ", parameters["std_out_all_processes"] )
 
 (domainmesh, Img, NumData) = read_image(hyperparameters, name="input", mesh=domainmesh)
 
@@ -86,7 +98,7 @@ hyperparameters["maxMeshCoordinate"] = np.max(domainmesh.coordinates())
 hyperparameters["expected_distance_covered"] = 25 / 200 # max. 25 voxels
 v_needed = hyperparameters["expected_distance_covered"] / 1 
 hyperparameters["DeltaT"] = float(h) / v_needed #1e-3
-print("calculated initial time step size to", hyperparameters["DeltaT"])
+print_overloaded("calculated initial time step size to", hyperparameters["DeltaT"])
 hyperparameters["DeltaT_init"] = hyperparameters["DeltaT"]
 
 with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as outfile:
@@ -131,14 +143,14 @@ Img.rename("img", "")
 Img_goal = project(Img_goal, Space)
 NumData = 1
 
-print("Projected data")
+print_overloaded("Projected data")
 
 # initialize trafo
 
 File(hyperparameters["outputfolder"] + "/input.pvd") << Img
 File(hyperparameters["outputfolder"] + "/target.pvd") << Img_goal
 
-print("Wrote input and target to pvd files")
+print_overloaded("Wrote input and target to pvd files")
 
 if hyperparameters["smoothen"]:
     M_lumped = get_lumped_mass_matrix(vCG=vCG)
@@ -151,9 +163,10 @@ for n in range(4):
     
     try:
         find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting_guess=controlfun)
+        break
     except CFLerror:
         hyperparameters["DeltaT"] *= 1 / 2
-        print("CFL condition violated, reducing time step size and retry")
+        print_overloaded("CFL condition violated, reducing time step size and retry")
         pass
 
 

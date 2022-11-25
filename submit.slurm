@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=register
 #SBATCH --cpus-per-task=1 --nodes=4
-#SBATCH --partition=milanq
-## SBATCH --partition=fpgaq
+## SBATCH --partition=milanq
+#SBATCH --partition=fpgaq
 ## SBATCH --partition=defq
 #defq also possible
 
@@ -58,11 +58,17 @@ solver=lu
 # --solver ${solver} > ${outfolder}_log_python_srun.txt 
 
 
+OUTFOLDERNAME=testStdOUt
+startingGuess=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/outputs/readStartingGuess/Control.hdf
+srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} \
+--readname 400 --alpha 1e-5 --debug --lbfgs_max_iterations 2 --starting_guess ${startingGuess} --solver ${solver} > ${outfolder}_log_python_srun.txt
 
-# OUTFOLDERNAME=outputTestWStartingGuess
+
+
+# OUTFOLDERNAME=outputTestWStartingGuess0
 # startingGuess=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/outputs/readStartingGuess/Control.hdf
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} \
-# --readname 400 --alpha 1e-5 --lbfgs_max_iterations 2 --starting_guess ${startingGuess} --solver ${solver} > ${outfolder}_log_python_srun.txt
+# --readname 400 --alpha 1e-5 --debug --lbfgs_max_iterations 2 --starting_guess ${startingGuess} --solver ${solver} > ${outfolder}_log_python_srun.txt
 
 # OUTFOLDERNAME=outputTest
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --lbfgs_max_iterations 2 \
@@ -74,9 +80,9 @@ solver=lu
 # --readname 1 --starting_guess ${startingGuess} --solver ${solver} > ${outfolder}_log_python_srun.txt
 
 
-OUTFOLDERNAME=createTestStartingGuessEuler
-srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} \
---solver ${solver} --timestepping explicitEuler --lbfgs_max_iterations 40 > ${outfolder}_log_python_srun.txt 
+# OUTFOLDERNAME=createTestStartingGuessEuler
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} \
+# --solver ${solver} --timestepping explicitEuler --lbfgs_max_iterations 40 > ${outfolder}_log_python_srun.txt 
 
 
 # OUTFOLDERNAME=createTestStartingGuess

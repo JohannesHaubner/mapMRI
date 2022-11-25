@@ -4,9 +4,18 @@ import nibabel
 import numpy as np
 from nibabel.affines import apply_affine
 
+def print_overloaded(*args):
+    if MPI.rank(MPI.comm_world) == 0:
+        # set_log_level(PROGRESS)
+        print(*args)
+    else:
+        pass
+
+    
+
 def read_image(hyperparameters, name, mesh=None, storepath=None):
     
-    print("Loading", hyperparameters[name])
+    print_overloaded("Loading", hyperparameters[name])
     
     image2 = nibabel.load(hyperparameters[name])
     data = image2.get_fdata()
@@ -14,7 +23,7 @@ def read_image(hyperparameters, name, mesh=None, storepath=None):
 
     hyperparameters[name + ".shape"] = list(data.shape)
 
-    print("dimension of image:", data.shape, "(", data.size, "voxels)")
+    print_overloaded("dimension of image:", data.shape, "(", data.size, "voxels)")
 
     # x0 = Point(0.0, 0.0, 0.0)
     # y0 = x0
@@ -48,7 +57,7 @@ def read_image(hyperparameters, name, mesh=None, storepath=None):
 
     # File("/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/testdata_3d/mesh.pvd") << mesh
 
-    # print(len(range(int(mesh.coordinates()[:].min()), int(mesh.coordinates()[:].max()))))
+    # print_overloaded(len(range(int(mesh.coordinates()[:].min()), int(mesh.coordinates()[:].max()))))
 
     # space = VectorFunctionSpace(mesh, "DG", 0, 1)
     space = FunctionSpace(mesh, "DG", 1)
@@ -63,11 +72,11 @@ def read_image(hyperparameters, name, mesh=None, storepath=None):
     except:
         # pass
         # raise NotImplementedError()
-        print("image2.header.get_ras2vox()", ras2vox)
+        print_overloaded("image2.header.get_ras2vox()", ras2vox)
 
         ras2vox = np.linalg.inv(image2.header.get_vox2ras_tkr())
 
-        print("image2.header.get_vox2ras_tkr() = ", ras2vox)
+        print_overloaded("image2.header.get_vox2ras_tkr() = ", ras2vox)
 
         del ras2vox
 
@@ -91,13 +100,13 @@ def read_image(hyperparameters, name, mesh=None, storepath=None):
     # ijk = apply_affine(ras2vox, xyz).T
     # i, j, k = np.rint(ijk).astype("int")
 
-    # print(i.min(), i.max())
+    # print_overloaded(i.min(), i.max())
     
     # if data_filter is not None:
     #     data = data_filter(data, ijk, i, j, k)
     #     u_data.vector()[:] = data[i, j, k]
     # else:
-    #     print("No filter used, setting", np.where(np.isnan(data[i, j, k]), 1, 0).sum(), "/", i.size, " nan voxels to 0")
+    #     print_overloaded("No filter used, setting", np.where(np.isnan(data[i, j, k]), 1, 0).sum(), "/", i.size, " nan voxels to 0")
     #     data[i, j, k] = np.where(np.isnan(data[i, j, k]), 0, data[i, j, k])
     #     u_data.vector()[:] = data[i, j, k]
 
