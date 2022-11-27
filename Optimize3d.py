@@ -129,8 +129,8 @@ Img.vector()[:] = np.where(Img.vector()[:] < 0, 0, Img.vector()[:])
 Img_goal.vector()[:] = np.where(Img_goal.vector()[:] < 0, 0, Img_goal.vector()[:])
 
 # print_overloaded("Normalized:")
-print_overloaded("Img.vector()[:].min()", Img.vector()[:].min())
-print_overloaded("Img_goal.vector()[:].min()", Img_goal.vector()[:].min())
+print_overloaded("Img.vector()[:].mean()", Img.vector()[:].mean())
+print_overloaded("Img_goal.vector()[:].mean()", Img_goal.vector()[:].mean())
 
 # inp=Img.vector()[:]
 # tar=Img_goal.vector()[:]

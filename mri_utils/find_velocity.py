@@ -61,12 +61,12 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
     cont = Control(controlfun)
 
     J = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx(domain=Img.function_space().mesh()))
-    print_overloaded("Assembled L2 error between image and target")
+    print_overloaded("Assembled L2 error between image and target, Jdata=", J)
     # print_overloaded("Control type=", type(control))
     # print_overloaded(control)
     # J = J + assemble(alpha*grad(control)**2*dx(domain=Img.function_space().mesh()))
     J = J + assemble(alpha*(controlf)**2*dx(domain=Img.function_space().mesh()))
-    print_overloaded("Assembled regularization")
+    print_overloaded("Assembled regularization, J=", J)
 
     Jhat = ReducedFunctional(J, cont)
 
@@ -105,6 +105,8 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
 
         Jd = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx(domain=Img.function_space().mesh()))
         Jreg = assemble(alpha*(controlf)**2*dx(domain=Img.function_space().mesh()))
+
+        print("J=", Jd, "Reg=", Jreg)
 
         domainmesh = current_pde_solution.function_space().mesh()
         #compute CFL number

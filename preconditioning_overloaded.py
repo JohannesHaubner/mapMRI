@@ -99,7 +99,7 @@ class Overloaded_Preconditioning():
 
                     ctest = TestFunction(C)
                     tmp = assemble(inner(ctest, ct) * dx)
-                return tmp
+                return  
 
             def recompute_component(self, inputs, block_variable, idx, prepared):
                 return backend_preconditioning(inputs[0]) # , self.smoothen)
