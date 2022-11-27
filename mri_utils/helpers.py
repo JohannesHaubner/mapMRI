@@ -62,9 +62,9 @@ def load_velocity(hyperparameters, controlfun):
     print_overloaded("max after loading", controlfun.vector()[:].max())
     print_overloaded("Succesfully read starting guess")
 
-    print_overloaded("Setting loaded control to 0")
-    controlfun.vector()[:] *= 0
-    assert hyperparameters["debug"]
+    # print_overloaded("Setting loaded control to 0")
+    # controlfun.vector()[:] *= 0
+    # assert hyperparameters["debug"]
 
 
     return working_mesh, vCG, controlfun

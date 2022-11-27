@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=register
 #SBATCH --cpus-per-task=1 --nodes=4
-#SBATCH --partition=milanq
-## SBATCH --partition=fpgaq
+## SBATCH --partition=milanq
+#SBATCH --partition=fpgaq
 ## SBATCH --partition=defq
 #defq also possible
 
@@ -41,9 +41,48 @@ OUTPUTDIR=/home/bastian/D1/imageregistration_outputs/
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
 # --lbfgs_max_iterations 50 --solver krylov > ${LOGOUTFILE}
 
-OUTFOLDERNAME=testEuler
+
+
+OUTPUTDIR=/home/bastian/D1/debug_imageregistration/
+mkdir -pv ${OUTPUTDIR}
+
+# OUTFOLDERNAME=RungeKuttaNoSmoothen
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --nosmoothen --solver lu --debug > ${LOGOUTFILE}
+
+
+# OUTFOLDERNAME=EulerNoSmoothen
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --nosmoothen --solver lu --debug --timestepping explicitEuler > ${LOGOUTFILE}
+
+# OUTFOLDERNAME=CrankNicolsonNoSmoothen
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --nosmoothen --solver lu --debug --timestepping CrankNicolson > ${LOGOUTFILE}
+
+
+OUTFOLDERNAME=RungeKutta
 srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
---lbfgs_max_iterations 50 --solver krylov --timestepping explicitEuler > ${LOGOUTFILE}
+--solver lu --debug > ${LOGOUTFILE}
+
+
+# OUTFOLDERNAME=Euler
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --solver lu --debug --timestepping explicitEuler > ${LOGOUTFILE}
+
+# OUTFOLDERNAME=CrankNicolson
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --solver lu --debug --timestepping CrankNicolson > ${LOGOUTFILE}
+
+
+#############333
+# OUTFOLDERNAME=testRungeKuttaNoSmoothen
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --lbfgs_max_iterations 50 --nosmoothen --solver krylov > ${LOGOUTFILE}
+
+
+# OUTFOLDERNAME=testEuler
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --lbfgs_max_iterations 50 --solver krylov --timestepping explicitEuler > ${LOGOUTFILE}
 
 # OUTFOLDERNAME=test
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} \

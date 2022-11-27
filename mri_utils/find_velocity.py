@@ -79,7 +79,19 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
 
     print_overloaded("Wrote fCont0 to file")    
 
-    
+    if hyperparameters["debug"]:
+
+        print_overloaded("Running convergence test")
+        h = Function(vCG)
+        h.vector()[:] = 0.1
+        h.vector().apply("")
+        conv_rate = taylor_test(Jhat, control, h)
+        print_overloaded(conv_rate)
+        print_overloaded("convergence test done, exiting")
+        
+        hyperparameters["conv_rate"] = float(conv_rate)
+        return
+
 
     def cb(*args, **kwargs):
         # global current_iteration
@@ -138,7 +150,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
     else:
         scaledControl = current_control
 
-    velocityField = preconditioning(scaledControl, smoothen=hyperparameters["smoothen"])
+    velocityField = preconditioning(scaledControl)
     velocityField.rename("velocity", "")
 
     File(hyperparameters["outputfolder"] + '/Finalvelocity.pvd') << velocityField
