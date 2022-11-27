@@ -90,12 +90,15 @@ class Overloaded_Preconditioning():
 
                             self.solver.set_operators(self.A, self.A)
                         
-                    c = Function(C)
+                    ct = Function(C)
                     BC.apply(self.A)
-                    self.solver.solve(c.vector(), tmp)
+                    self.solver.solve(ct.vector(), tmp)
 
                     # solve(A, c.vector(), tmp)
-                    tmp = c.vector()
+                    # tmp = c.vector()
+
+                    ctest = TestFunction(C)
+                    tmp = assemble(inner(ctest, ct) * dx)
                 return tmp
 
             def recompute_component(self, inputs, block_variable, idx, prepared):

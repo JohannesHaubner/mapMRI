@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=register
 #SBATCH --cpus-per-task=1 --nodes=4
-## SBATCH --partition=milanq
-#SBATCH --partition=fpgaq
+#SBATCH --partition=milanq
+## SBATCH --partition=fpgaq
 ## SBATCH --partition=defq
 #defq also possible
 
@@ -29,9 +29,13 @@ SPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation
 LOGOUTFILE=${SPATH}/slurm/${SLURM_JOB_ID}_log_python_srun.txt
 OUTPUTDIR=/home/bastian/D1/imageregistration_outputs/
 
-# OUTFOLDERNAME=timetestLu
-# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
-# --lbfgs_max_iterations 10 --solver lu > ${LOGOUTFILE}
+
+OUTFOLDERNAME=createStartingGuess
+srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+--lbfgs_max_iterations 100 --solver krylov > ${LOGOUTFILE}
+
+
+
 
 # OUTFOLDERNAME=timetestKrylov
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
@@ -43,12 +47,16 @@ OUTPUTDIR=/home/bastian/D1/imageregistration_outputs/
 
 
 
-OUTPUTDIR=/home/bastian/D1/debug_imageregistration/
-mkdir -pv ${OUTPUTDIR}
+# OUTPUTDIR=/home/bastian/D1/debug_imageregistration/
+# mkdir -pv ${OUTPUTDIR}
 
 # OUTFOLDERNAME=RungeKuttaNoSmoothen
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
 # --nosmoothen --solver lu --debug > ${LOGOUTFILE}
+
+# OUTFOLDERNAME=timetestLu
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --lbfgs_max_iterations 10 --solver lu > ${LOGOUTFILE}
 
 
 # OUTFOLDERNAME=EulerNoSmoothen
@@ -60,29 +68,28 @@ mkdir -pv ${OUTPUTDIR}
 # --nosmoothen --solver lu --debug --timestepping CrankNicolson > ${LOGOUTFILE}
 
 
-OUTFOLDERNAME=RungeKutta
-srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
---solver lu --debug > ${LOGOUTFILE}
+# OUTFOLDERNAME=RungeKuttaFix
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --solver lu --debug > ${LOGOUTFILE}
 
 
-# OUTFOLDERNAME=Euler
+# OUTFOLDERNAME=EulerFix
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
 # --solver lu --debug --timestepping explicitEuler > ${LOGOUTFILE}
 
-# OUTFOLDERNAME=CrankNicolson
+# OUTFOLDERNAME=CrankNicolsonFix
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
 # --solver lu --debug --timestepping CrankNicolson > ${LOGOUTFILE}
 
 
-#############333
-# OUTFOLDERNAME=testRungeKuttaNoSmoothen
+# OUTFOLDERNAME=timetestRungeKutta
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
-# --lbfgs_max_iterations 50 --nosmoothen --solver krylov > ${LOGOUTFILE}
+# --lbfgs_max_iterations 10 --solver krylov > ${LOGOUTFILE}
 
 
-# OUTFOLDERNAME=testEuler
+# OUTFOLDERNAME=timetestEuler
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
-# --lbfgs_max_iterations 50 --solver krylov --timestepping explicitEuler > ${LOGOUTFILE}
+# --lbfgs_max_iterations 10 --solver krylov --timestepping explicitEuler > ${LOGOUTFILE}
 
 # OUTFOLDERNAME=test
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} \
