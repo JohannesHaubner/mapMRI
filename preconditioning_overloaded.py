@@ -36,11 +36,12 @@ class PreconditioningBlock(Block):
             psi = TestFunction(C)
             a = inner(grad(c), grad(psi)) * dx
             A = assemble(a)
-            c = Function(C)
+            ct = Function(C)
             BC.apply(A)
             BC.apply(tmp)
-            solve(A, c.vector(), tmp)
-            tmp = c.vector()
+            solve(A, ct.vector(), tmp)
+            ctest = TestFunction(C)
+            tmp = assemble(inner(ctest, ct) * dx)
         return tmp
 
     def recompute_component(self, inputs, block_variable, idx, prepared):

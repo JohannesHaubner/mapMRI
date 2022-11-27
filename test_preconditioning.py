@@ -18,10 +18,10 @@ def test_preconditioning(smoothen):
 
     # initialize control
     controlfun = interpolate(Constant((1., 1.)), vCG)
-    control = preconditioning(controlfun)
+    control = preconditioning(controlfun, smoothen)
 
     # objective
-    J = assemble(control**2*dx)
+    J = assemble((control - Constant((1.0, 1.0)))**2*dx)
 
     c = Control(controlfun)
     Jhat = ReducedFunctional(J, c)
