@@ -17,6 +17,8 @@ class PreconditioningBlock(Block):
         self.add_dependency(func)
         self.smoothen = smoothen
 
+        print("self.smoothen", self.smoothen)
+
     def __str__(self):
         return 'PreconditioningBlock'
 
@@ -28,6 +30,8 @@ class PreconditioningBlock(Block):
             tmp = adj_inputs[0].copy()
             BC.apply(tmp)
         else:
+
+            print(self.smoothen, "Smoothening function")
             tmp = adj_inputs[0].copy()
             C = inputs[idx].function_space()
             dim = inputs[idx].geometric_dimension()

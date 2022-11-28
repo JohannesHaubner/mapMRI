@@ -71,7 +71,7 @@ set_working_tape(Tape())
 
 # initialize control
 controlfun = Function(vCG)
-controlf = transformation(controlfun, M_lumped)
+controlf = transformation(controlfun, M_lumped_inv)
 control = preconditioning(controlf, smoothen=True)
 control.rename("control", "")
 
@@ -105,7 +105,7 @@ def cb(*args, **kwargs):
     current_pde_solution.rename("Img", "")
     current_control = cont.tape_value()
     current_control.rename("control", "")
-    current_trafo = transformation(current_control, M_lumped)
+    current_trafo = transformation(current_control, M_lumped_inv)
     current_trafo = preconditioning(current_trafo, smoothen=True)
     current_trafo.rename("transformation", "")
 
@@ -123,7 +123,7 @@ minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True, "maxiter": maxiter
 
 confun = Function(vCG)
 confun.vector().set_local(controlfun)
-confun = transformation(confun, M_lumped)
+confun = transformation(confun, M_lumped_inv)
 confun = preconditioning(confun, smoothen=True)
 File("output" + filename + "/OptControl.pvd") << confun
 

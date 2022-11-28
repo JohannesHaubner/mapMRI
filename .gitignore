@@ -15,7 +15,7 @@ testdata_3d/
 __pycache__/
 *.py[cod]
 *$py.class
-
+imageregistration_outputs/
 # C extensions
 *.so
 

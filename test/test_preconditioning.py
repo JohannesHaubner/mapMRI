@@ -1,3 +1,8 @@
+from pathlib import Path
+here = Path(__file__).parent
+import sys
+sys.path.insert(0, str(here.parent))
+
 from dolfin import *
 from dolfin_adjoint import *
 import numpy as np
@@ -33,6 +38,6 @@ def test_preconditioning(smoothen):
 
 
 if __name__ == "__main__":
-    test_preconditioning(True)
+    test_preconditioning(False)
 
 
