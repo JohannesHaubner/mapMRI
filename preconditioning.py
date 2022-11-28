@@ -95,7 +95,7 @@ class Preconditioning():
 
                 elif hyperparameters["solver"] == "krylov":
                     # self.solver = PETScKrylovSolver(method="gmres", preconditioner=self.hyperparameters["preconditioner"])
-                    self.solver = PETScKrylovSolver("gmres",    hyperparameters["preconditioner"])
+                    self.solver = PETScKrylovSolver("gmres", hyperparameters["preconditioner"])
                     print_overloaded("type of A", type(self.A), self.A)
                     print_overloaded("type of self.solver", type(self.solver))
                     self.solver.set_operators(self.A, self.A)
@@ -103,7 +103,7 @@ class Preconditioning():
                     print_overloaded("Created Krylov solver in Preconditioning()")
 
 
-            BC.apply(self.A)
+            # BC.apply(self.A)
             # x = args[0]
             # b = args[1]
 

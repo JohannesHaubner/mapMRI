@@ -24,8 +24,8 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
 
     import config
 
-    print_overloaded("config.hyper", sorted(config.hyperparameters))
-    print_overloaded("hyper", sorted(hyperparameters))
+    # print_overloaded("config.hyper", sorted(config.hyperparameters))
+    # print_overloaded("hyper", sorted(hyperparameters))
     # preconditioning = Overloaded_Preconditioning(hyperparameters)
 
     set_working_tape(Tape())
