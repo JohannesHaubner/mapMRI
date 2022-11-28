@@ -26,7 +26,7 @@ def print_overloaded(*args):
 print_overloaded("Setting parameters parameters['ghost_mode'] = 'shared_facet'")
 parameters['ghost_mode'] = 'shared_facet'
 
-from mri_utils.helpers import load_velocity, interpolate_velocity, get_lumped_mass_matrix
+from mri_utils.helpers import load_velocity, interpolate_velocity, get_lumped_mass_matrices
 from mri_utils.MRI2FEM import read_image
 
 import config # import hyperparameters
@@ -213,7 +213,7 @@ if not hyperparameters["debug"]:
     print_overloaded("Wrote input and target to pvd files")
 
 if hyperparameters["smoothen"]:
-    _, M_lumped_inv = get_lumped_mass_matrix(vCG=vCG)
+    _, M_lumped_inv = get_lumped_mass_matrices(vCG=vCG)
 else:
     M_lumped_inv = None
 
