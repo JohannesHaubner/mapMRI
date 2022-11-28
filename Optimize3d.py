@@ -36,13 +36,14 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--outfoldername", required=True, type=str, help=""" name of folder to store to under "path + "output_dir" """)
 parser.add_argument("--code_dir", type=str, default="/home/bastian/Oscar-Image-Registration-via-Transport-Equation/")
 parser.add_argument("--output_dir", type=str, default=None)
-parser.add_argument("--solver", default="lu", choices=["lu", "krylov"])
+parser.add_argument("--solver", default="krylov", choices=["lu", "krylov"])
 parser.add_argument("--timestepping", default="RungeKutta", choices=["RungeKutta", "CrankNicolson", "explicitEuler"])
 parser.add_argument("--smoothen", default=True, action="store_true", help="Obsolete flag. Use proper scalar product")
 parser.add_argument("--nosmoothen", default=False, action="store_true", help="Sets smoothen=False")
 
 parser.add_argument("--alpha", type=float, default=1e-4)
 parser.add_argument("--lbfgs_max_iterations", type=float, default=400)
+parser.add_argument("--vinit", type=float, default=0)
 parser.add_argument("--readname", type=str)
 parser.add_argument("--starting_guess", type=str, default=None)
 parser.add_argument("--interpolate", default=False, action="store_true", help="Interpolate coarse v to fine mesh; required if the images for --starting_guess and --input are not the same")
@@ -78,8 +79,11 @@ hyperparameters["MassConservation"] = False
 hyperparameters["functiondegree"] = 1
 hyperparameters["functionspace"] = "CG"
 
+
 config.hyperparameters = hyperparameters
+
 print_overloaded("Setting config.hyperparameters")
+
 for key, item in hyperparameters.items():
     print_overloaded(key, ":", item)
 
@@ -209,9 +213,9 @@ if not hyperparameters["debug"]:
     print_overloaded("Wrote input and target to pvd files")
 
 if hyperparameters["smoothen"]:
-    M_lumped = get_lumped_mass_matrix(vCG=vCG)
+    _, M_lumped_inv = get_lumped_mass_matrix(vCG=vCG)
 else:
-    M_lumped = None
+    M_lumped_inv = None
 
 t0 = time.time()
 
@@ -220,7 +224,7 @@ from mri_utils.find_velocity import find_velocity, CFLerror
 for n in range(4):
     
     try:
-        find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting_guess=controlfun)
+        find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess=controlfun)
         break
     except CFLerror:
 

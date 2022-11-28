@@ -11,7 +11,7 @@ def print_overloaded(*args):
     else:
         pass
 
-def get_lumped_mass_matrix(vCG):
+def get_lumped_mass_matrices(vCG):
 
     s1 = TrialFunction(vCG)
     s2 = TestFunction(vCG)
@@ -24,11 +24,11 @@ def get_lumped_mass_matrix(vCG):
     diag = assemble(mass_action_form)
     diag[:] = np.sqrt(diag[:])
     diaginv = assemble(mass_action_form)
-    diaginv[:] = 1.0/np.sqrt(diag[:])
+    diaginv[:] = 1.0 / diag[:]
     M_lumped.set_diagonal(diag)
     M_lumped_inv.set_diagonal(diaginv)
 
-    return M_lumped
+    return M_lumped, M_lumped_inv
 
 def load_velocity(hyperparameters, controlfun):
 
@@ -92,9 +92,20 @@ def interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun):
     # controlfun.vector().update_ghost_values()
 
     controlfun_fine = interpolate(controlfun, vCG)
+
+    print_overloaded("COARSE MESH")
     
     l2 = assemble((controlfun_fine - controlfun) ** 2 * dx(domain=controlfun.function_space().mesh()) )
     l2norm = assemble((controlfun) ** 2 * dx(domain=controlfun.function_space().mesh()) )
+
+    print_overloaded("L2 error", l2)
+    print_overloaded("rel L2 error", l2 / l2norm)
+    print_overloaded("L2 norm of control", l2norm)
+
+    print_overloaded("FINE MESH")
+    
+    l2 = assemble((controlfun_fine - controlfun) ** 2 * dx(domain=controlfun_fine.function_space().mesh()) )
+    l2norm = assemble((controlfun) ** 2 * dx(domain=controlfun_fine.function_space().mesh()) )
 
     print_overloaded("L2 error", l2)
     print_overloaded("rel L2 error", l2 / l2norm)

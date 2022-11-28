@@ -20,9 +20,10 @@ def print_overloaded(*args):
 # current_iteration = 0
 
 def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting_guess):
-    
 
-    import config
+    J0 = assemble(0.5 * (Img - Img_goal) ** 2 * dx(domain=Img.function_space().mesh()))    
+
+    # import config
 
     # print_overloaded("config.hyper", sorted(config.hyperparameters))
     # print_overloaded("hyper", sorted(hyperparameters))
@@ -37,6 +38,10 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
     #     interpolate_velocity(hyperparameters, controlfun)
     #     exit()
 
+    if hyperparameters["vinit"] > 0:
+        controlfun.vector()[:] += hyperparameters["vinit"]
+        print_overloaded("----------------------------------- Setting v += vinit as starting guess")
+
     if hyperparameters["starting_guess"] is not None:
         # load_velocity(hyperparameters, controlfun=controlfun)
         controlfun.assign(starting_guess)
@@ -45,6 +50,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
 
 
     if hyperparameters["smoothen"]:
+        print_overloaded("Transforming l2 control to L2 control")
         controlf = transformation(controlfun, M_lumped)
     else:
         controlf = controlfun
@@ -65,8 +71,10 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
     state = Control(Img_deformed)  # The Control type enables easy access to tape values after replays.
     cont = Control(controlfun)
 
-    J = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx(domain=Img.function_space().mesh()))
-    print_overloaded("Assembled L2 error between image and target, Jdata=", J)
+    print_overloaded("Assembled L2 error between input image and target, J0=", J0)
+
+    J = assemble(0.5 * (Img_deformed - Img_goal) ** 2 * dx(domain=Img.function_space().mesh()))
+    print_overloaded("Assembled L2 error between transported image and target, Jdata=", J)
     # print_overloaded("Control type=", type(control))
     # print_overloaded(control)
     # J = J + assemble(alpha*grad(control)**2*dx(domain=Img.function_space().mesh()))
