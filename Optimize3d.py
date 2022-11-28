@@ -8,7 +8,8 @@ import numpy as np
 
 from mri_utils.helpers import load_velocity, interpolate_velocity, get_lumped_mass_matrix
 from mri_utils.MRI2FEM import read_image
-from mri_utils.find_velocity import find_velocity, CFLerror
+
+import config # import hyperparameters
 
 # parameters["std_out_all_processes"] = False
 
@@ -43,8 +44,7 @@ parser.add_argument("--target", default="mridata_3d/205_cropped_padded_coarsened
 
 hyperparameters = vars(parser.parse_args())
 
-for key, item in hyperparameters.items():
-    print_overloaded(key, ":", item)
+
 
 os.chdir(hyperparameters["code_dir"])
 print_overloaded("Setting pwd to", hyperparameters["code_dir"])
@@ -68,6 +68,11 @@ hyperparameters["lbfgs_max_iterations"] = int(hyperparameters["lbfgs_max_iterati
 hyperparameters["MassConservation"] = False
 hyperparameters["functiondegree"] = 1
 hyperparameters["functionspace"] = "CG"
+
+config.hyperparameters = hyperparameters
+print_overloaded("Setting config.hyperparameters")
+for key, item in hyperparameters.items():
+    print_overloaded(key, ":", item)
 
 if not os.path.isdir(hyperparameters["outputfolder"]):
     os.makedirs(hyperparameters["outputfolder"], exist_ok=True)
@@ -188,10 +193,11 @@ Img.rename("input", "")
 Img_goal.rename("target", "")
 # NumData = 1
 
-File(hyperparameters["outputfolder"] + "/input.pvd") << Img
-File(hyperparameters["outputfolder"] + "/target.pvd") << Img_goal
+if not hyperparameters["debug"]:
+    File(hyperparameters["outputfolder"] + "/input.pvd") << Img
+    File(hyperparameters["outputfolder"] + "/target.pvd") << Img_goal
 
-print_overloaded("Wrote input and target to pvd files")
+    print_overloaded("Wrote input and target to pvd files")
 
 if hyperparameters["smoothen"]:
     M_lumped = get_lumped_mass_matrix(vCG=vCG)
@@ -199,6 +205,8 @@ else:
     M_lumped = None
 
 t0 = time.time()
+
+from mri_utils.find_velocity import find_velocity, CFLerror
 
 for n in range(4):
     

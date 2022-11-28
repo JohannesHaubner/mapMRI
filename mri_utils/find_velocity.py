@@ -4,7 +4,8 @@ from fenics_adjoint import *
 # from mri_utils.helpers import load_velocity, interpolate_velocity
 from DGTransport import Transport
 from transformation_overloaded import transformation
-from preconditioning_overloaded import Overloaded_Preconditioning # preconditioning
+# from preconditioning_overloaded import Overloaded_Preconditioning # 
+from preconditioning_overloaded import preconditioning
 
 class CFLerror(ValueError):
     '''raise this when CFL is violated'''
@@ -21,7 +22,11 @@ def print_overloaded(*args):
 def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting_guess):
     
 
-    preconditioning = Overloaded_Preconditioning(hyperparameters)
+    import config
+
+    print_overloaded("config.hyper", sorted(config.hyperparameters))
+    print_overloaded("hyper", sorted(hyperparameters))
+    # preconditioning = Overloaded_Preconditioning(hyperparameters)
 
     set_working_tape(Tape())
 

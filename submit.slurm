@@ -78,9 +78,9 @@ mkdir -pv ${OUTPUTDIR}
 # --solver lu --debug --nosmoothen --timestepping explicitEuler > ${LOGOUTFILE}
 
 
-# OUTFOLDERNAME=EulerFix
-# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
-# --solver lu --debug --timestepping explicitEuler > 
+OUTFOLDERNAME=EulerFix
+srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+--solver lu --debug --timestepping explicitEuler > ${LOGOUTFILE}
 
 # OUTFOLDERNAME=CrankNicolsonFix
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
