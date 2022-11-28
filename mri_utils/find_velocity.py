@@ -119,7 +119,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
         Jd = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx(domain=Img.function_space().mesh()))
         Jreg = assemble(alpha*(controlf)**2*dx(domain=Img.function_space().mesh()))
 
-        print("J=", Jd, "Reg=", Jreg)
+        print_overloaded("J=", Jd, "Reg=", Jreg)
 
         domainmesh = current_pde_solution.function_space().mesh()
         #compute CFL number

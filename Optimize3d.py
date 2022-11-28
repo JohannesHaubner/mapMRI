@@ -43,6 +43,7 @@ parser.add_argument("--nosmoothen", default=False, action="store_true", help="Se
 
 parser.add_argument("--alpha", type=float, default=1e-4)
 parser.add_argument("--lbfgs_max_iterations", type=float, default=400)
+parser.add_argument("--dt_buffer", type=float, default=1)
 parser.add_argument("--vinit", type=float, default=0)
 parser.add_argument("--readname", type=str)
 parser.add_argument("--starting_guess", type=str, default=None)
@@ -125,7 +126,7 @@ hyperparameters["maxMeshCoordinate"] = np.max(domainmesh.coordinates())
 
 hyperparameters["expected_distance_covered"] = 0.25 # assume that voxels need to be moved over a distance of max. 25 % of the image size.
 v_needed = hyperparameters["expected_distance_covered"] / T_final
-hyperparameters["DeltaT"] = float(h) / v_needed #1e-3
+hyperparameters["DeltaT"] = hyperparameters["dt_buffer"] * float(h) / v_needed #1e-3
 print_overloaded("calculated initial time step size to", hyperparameters["DeltaT"])
 hyperparameters["DeltaT_init"] = hyperparameters["DeltaT"]
 

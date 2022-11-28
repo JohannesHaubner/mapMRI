@@ -28,50 +28,36 @@ set -o nounset # Treat any unset variables as an error
 
 echo "starting to run"
 
+
+#######################################################
+## EXECUTE AFTER ANOTHER JOB IS DONE:
+## sbatch --dependency=afterany: submit.slurm
+#######################################################
 SPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation
 LOGOUTFILE=${SPATH}/slurm/${SLURM_JOB_ID}_log_python_srun.txt
 OUTPUTDIR=/home/bastian/D1/imageregistration_outputs/
 
 
-
-# OUTFOLDERNAME=createStartingGuessNoSmoothenRome16
-# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
-# --lbfgs_max_iterations 10 --nosmoothen > ${LOGOUTFILE}
-
-
-# OUTFOLDERNAME=perturbEuler
-# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
-# --lbfgs_max_iterations 10 --timestepping explicitEuler --vinit 0.1 > ${LOGOUTFILE}
-
-
-# OUTFOLDERNAME=perturbCn
-# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
-# --lbfgs_max_iterations 10 --timestepping CrankNicolson --vinit 0.1 > ${LOGOUTFILE}
-
-
-
-# OUTFOLDERNAME=perturbVinit
-# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
-# --lbfgs_max_iterations 10 --vinit 0.1 > ${LOGOUTFILE}
-
-OUTFOLDERNAME=noperturb
+OUTFOLDERNAME=createStartingGuessNoSmoothen
 srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
---lbfgs_max_iterations 10 > ${LOGOUTFILE}
+--lbfgs_max_iterations 100 --nosmoothen > ${LOGOUTFILE}
 
 
 # OUTFOLDERNAME=createStartingGuess
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
-# --lbfgs_max_iterations 10 --solver krylov > ${LOGOUTFILE}
+# --lbfgs_max_iterations 100 > ${LOGOUTFILE}
 
-# OUTFOLDERNAME=timeTestLu
+# OUTFOLDERNAME=createStartingGuessBuffer
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
-# --lbfgs_max_iterations 10 --solver lu > ${LOGOUTFILE}
+# --lbfgs_max_iterations 100 > ${LOGOUTFILE}
 
 
-
-# OUTFOLDERNAME=createStartingGuessEuler
+# OUTFOLDERNAME=noperturbBuffer
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
-# --lbfgs_max_iterations 10 --timestepping explicitEuler --solver krylov > ${LOGOUTFILE}
+# --lbfgs_max_iterations 10 --dt_buffer 0.2 > ${LOGOUTFILE}
+
+
+
 
 
 OUTPATH=${OUTPUTDIR}${OUTFOLDERNAME}/
