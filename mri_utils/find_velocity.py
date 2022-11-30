@@ -92,18 +92,18 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
 
     print_overloaded("Wrote fCont0 to file")    
 
-    if hyperparameters["debug"]:
+    # if hyperparameters["debug"]:
 
-        print_overloaded("Running convergence test")
-        h = Function(vCG)
-        h.vector()[:] = 0.1
-        h.vector().apply("")
-        conv_rate = taylor_test(Jhat, control, h)
-        print_overloaded(conv_rate)
-        print_overloaded("convergence test done, exiting")
+    #     print_overloaded("Running convergence test")
+    #     h = Function(vCG)
+    #     h.vector()[:] = 0.1
+    #     h.vector().apply("")
+    #     conv_rate = taylor_test(Jhat, control, h)
+    #     print_overloaded(conv_rate)
+    #     print_overloaded("convergence test done, exiting")
         
-        hyperparameters["conv_rate"] = float(conv_rate)
-        return
+    #     hyperparameters["conv_rate"] = float(conv_rate)
+    #     return
 
 
     def cb(*args, **kwargs):
@@ -115,6 +115,9 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
         current_pde_solution.rename("Img", "")
         current_control = cont.tape_value()
         current_control.rename("control", "")
+
+        if current_pde_solution.vector()[:].max() > 10:
+            raise ValueError("State became > 10 at some vertex, something is probably wrong")
 
         Jd = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx(domain=Img.function_space().mesh()))
         Jreg = assemble(alpha*(controlf)**2*dx(domain=Img.function_space().mesh()))

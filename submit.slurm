@@ -34,13 +34,21 @@ echo "starting to run"
 ## sbatch --dependency=afterany: submit.slurm
 #######################################################
 SPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation
-LOGOUTFILE=${SPATH}/slurm/${SLURM_JOB_ID}_log_python_srun.txt
+LOGOUTFILE=${SPATH}/outs/${SLURM_JOB_ID}_log_python_srun.txt
 OUTPUTDIR=/home/bastian/D1/imageregistration_outputs/
 
 
-OUTFOLDERNAME=createStartingGuessNoSmoothen
+
+
+OUTFOLDERNAME=testWithStartingGuess
 srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
---lbfgs_max_iterations 100 --nosmoothen > ${LOGOUTFILE}
+--starting_guess /home/bastian/D1/imageregistration_outputs/createStartingGuess/Control.hdf \
+--lbfgs_max_iterations 10 --alpha 1e-5 > ${LOGOUTFILE}
+# --interpolate --debug
+
+# OUTFOLDERNAME=createStartingGuessNoSmoothen
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --lbfgs_max_iterations 100 --nosmoothen > ${LOGOUTFILE}
 
 
 # OUTFOLDERNAME=createStartingGuess
@@ -49,10 +57,10 @@ srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --outpu
 
 # OUTFOLDERNAME=createStartingGuessBuffer
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
-# --lbfgs_max_iterations 100 > ${LOGOUTFILE}
+# --lbfgs_max_iterations 100 --dt_buffer 0.2 > ${LOGOUTFILE}
 
 
-# OUTFOLDERNAME=noperturbBuffer
+# OUTFOLDERNAME=createStartingGuess10
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
 # --lbfgs_max_iterations 10 --dt_buffer 0.2 > ${LOGOUTFILE}
 

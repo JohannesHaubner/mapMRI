@@ -6,6 +6,7 @@ import time
 import argparse
 import numpy as np
 
+set_log_level(LogLevel.CRITICAL)
 
 # PETScOptions.set("mat_mumps_use_omp_threads", 8)
 # PETScOptions.set("mat_mumps_icntl_35", True) # set use of BLR (Block Low-Rank) feature (0:off, 1:optimal)
@@ -24,7 +25,7 @@ def print_overloaded(*args):
         # print("passed")
 
 print_overloaded("Setting parameters parameters['ghost_mode'] = 'shared_facet'")
-parameters['ghost_mode'] = 'shared_facet'
+# parameters['ghost_mode'] = 'shared_facet'
 
 from mri_utils.helpers import load_velocity, interpolate_velocity, get_lumped_mass_matrices
 from mri_utils.MRI2FEM import read_image
@@ -45,7 +46,7 @@ parser.add_argument("--alpha", type=float, default=1e-4)
 parser.add_argument("--lbfgs_max_iterations", type=float, default=400)
 parser.add_argument("--dt_buffer", type=float, default=1)
 parser.add_argument("--vinit", type=float, default=0)
-parser.add_argument("--readname", type=str)
+parser.add_argument("--readname", type=str, default="-1")
 parser.add_argument("--starting_guess", type=str, default=None)
 parser.add_argument("--interpolate", default=False, action="store_true", help="Interpolate coarse v to fine mesh; required if the images for --starting_guess and --input are not the same")
 parser.add_argument("--debug", default=False, action="store_true", help="Debug")
