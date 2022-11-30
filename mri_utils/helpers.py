@@ -30,6 +30,7 @@ def get_lumped_mass_matrices(vCG):
 
     return M_lumped, M_lumped_inv
 
+
 def load_velocity(hyperparameters, controlfun):
 
     assert os.path.isfile(hyperparameters["starting_guess"])
@@ -62,28 +63,23 @@ def load_velocity(hyperparameters, controlfun):
     print_overloaded("max after loading", controlfun.vector()[:].max())
     print_overloaded("Succesfully read starting guess")
 
-    # print_overloaded("Setting loaded control to 0")
-    # controlfun.vector()[:] *= 0
-    # assert hyperparameters["debug"]
-
-
     return working_mesh, vCG, controlfun
 
 
 
 
 
-def interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun):
+def interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun, store_pvd=False):
 
-    controlFile = HDF5File(domainmesh.mpi_comm(), hyperparameters["outputfolder"] + "/Loaded_Control.hdf", "w")
-    controlFile.write(domainmesh, "mesh")
-    controlFile.write(controlfun, "loaded_control")
-    controlFile.close()
+    # controlFile = HDF5File(domainmesh.mpi_comm(), hyperparameters["outputfolder"] + "/Loaded_Control.hdf", "w")
+    # controlFile.write(domainmesh, "mesh")
+    # controlFile.write(controlfun, "loaded_control")
+    # controlFile.close()
 
-    with XDMFFile(hyperparameters["outputfolder"] + "/Loaded_Control.xdmf") as xdmf:
-        xdmf.write_checkpoint(controlfun, "coarse", 0.)
-
-    File(hyperparameters["outputfolder"] + "/Loaded_Control.pvd") << controlfun
+    # with XDMFFile(hyperparameters["outputfolder"] + "/Loaded_Control.xdmf") as xdmf:
+    #     xdmf.write_checkpoint(controlfun, "coarse", 0.)
+    if store_pvd:
+        File(hyperparameters["outputfolder"] + "/Loaded_Control.pvd") << controlfun
 
     print_overloaded("parameters['ghost_mode'] in interpolate_velocity()", parameters['ghost_mode'])
     print_overloaded("trying to refine the mesh")
@@ -92,45 +88,34 @@ def interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun):
 
     vCG = VectorFunctionSpace(domainmesh, hyperparameters["functionspace"], hyperparameters["functiondegree"])
 
-    # controlfun.set_allow_extrapolation(True)
-    # controlfun.rename("controlfun_coarse", "")
-    # controlfun.vector().update_ghost_values()
-
     controlfun_fine = interpolate(controlfun, vCG)
 
-    print_overloaded("COARSE MESH")
-    
-    # coarse_vec = (controlfun_fine - controlfun).vector()[:]
-    # linfinity = np.max(np.abs(coarse_vec))
+    # l2 = assemble((controlfun_fine - controlfun) ** 2 * dx(domain=controlfun.function_space().mesh()) )
+    # l2norm = assemble((controlfun) ** 2 * dx(domain=controlfun.function_space().mesh()) )
 
-    l2 = assemble((controlfun_fine - controlfun) ** 2 * dx(domain=controlfun.function_space().mesh()) )
-    l2norm = assemble((controlfun) ** 2 * dx(domain=controlfun.function_space().mesh()) )
-
-    print_overloaded("L2 error", l2)
-    print_overloaded("rel L2 error", l2 / l2norm)
-    print_overloaded("L2 norm of control", l2norm)
-
-    # print_overloaded("l infinity error", linfinity)
+    # print_overloaded("COARSE MESH")
+    # print_overloaded("L2 error", l2)
+    # print_overloaded("rel L2 error", l2 / l2norm)
+    # print_overloaded("L2 norm of control", l2norm)
 
     print_overloaded("FINE MESH")
     
     l2 = assemble((controlfun_fine - controlfun) ** 2 * dx(domain=controlfun_fine.function_space().mesh()) )
     l2norm = assemble((controlfun) ** 2 * dx(domain=controlfun_fine.function_space().mesh()) )
 
-    # coarse_vec = (controlfun_fine - controlfun).vector()[:]
-    # linfinity = np.max(np.abs(coarse_vec))
-
     print_overloaded("L2 error", l2)
     print_overloaded("rel L2 error", l2 / l2norm)
     print_overloaded("L2 norm of control", l2norm)
-    # print_overloaded("l infinity error", linfinity)
+
 
     print_overloaded("Interpolated expression, writing...")
 
-    with XDMFFile(hyperparameters["outputfolder"] + "/Interpolated_Control.xdmf") as xdmf:
-        xdmf.write_checkpoint(controlfun_fine, "fine", 0.)
+    # with XDMFFile(hyperparameters["outputfolder"] + "/Interpolated_Control.xdmf") as xdmf:
+    #     xdmf.write_checkpoint(controlfun_fine, "fine", 0.)
 
-    File(hyperparameters["outputfolder"] + "/Interpolated_Control.pvd") << controlfun_fine
+
+    if store_pvd:
+        File(hyperparameters["outputfolder"] + "/Interpolated_Control.pvd") << controlfun_fine
 
     controlFileInterpolated = HDF5File(domainmesh.mpi_comm(), hyperparameters["outputfolder"] + "/Interpolated_Control.hdf", "w")
     controlFileInterpolated.write(domainmesh, "mesh")

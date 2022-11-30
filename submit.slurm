@@ -44,6 +44,16 @@ OUTFOLDERNAME=testWithStartingGuess
 srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
 --starting_guess /home/bastian/D1/imageregistration_outputs/createStartingGuess/Control.hdf \
 --lbfgs_max_iterations 10 --alpha 1e-5 > ${LOGOUTFILE}
+
+
+# OUTFOLDERNAME=testWithStartingGuess
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --starting_guess /home/bastian/D1/imageregistration_outputs/createStartingGuess/Control.hdf > ${LOGOUTFILE}
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --starting_guess /home/bastian/D1/imageregistration_outputs/createStartingGuess/Control.hdf \
+# --lbfgs_max_iterations 10 --alpha 1e-5 > ${LOGOUTFILE}
+
+
 # --interpolate --debug
 
 # OUTFOLDERNAME=createStartingGuessNoSmoothen

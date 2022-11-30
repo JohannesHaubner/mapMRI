@@ -25,9 +25,9 @@ def print_overloaded(*args):
         # print("passed")
 
 print_overloaded("Setting parameters parameters['ghost_mode'] = 'shared_facet'")
-# parameters['ghost_mode'] = 'shared_facet'
+parameters['ghost_mode'] = 'shared_facet'
 
-from mri_utils.helpers import load_velocity, interpolate_velocity, get_lumped_mass_matrices
+from mri_utils.helpers import load_velocity, get_lumped_mass_matrices
 from mri_utils.MRI2FEM import read_image
 
 import config # import hyperparameters
@@ -48,7 +48,7 @@ parser.add_argument("--dt_buffer", type=float, default=1)
 parser.add_argument("--vinit", type=float, default=0)
 parser.add_argument("--readname", type=str, default="-1")
 parser.add_argument("--starting_guess", type=str, default=None)
-parser.add_argument("--interpolate", default=False, action="store_true", help="Interpolate coarse v to fine mesh; required if the images for --starting_guess and --input are not the same")
+# parser.add_argument("--interpolate", default=False, action="store_true", help="Interpolate coarse v to fine mesh; required if the images for --starting_guess and --input are not the same")
 parser.add_argument("--debug", default=False, action="store_true", help="Debug")
 
 parser.add_argument("--input", default="mridata_3d/091registeredto205_padded_coarsened.mgz")
@@ -95,8 +95,8 @@ if not os.path.isdir(hyperparameters["outputfolder"]):
 if hyperparameters["starting_guess"] is not None:
     domainmesh, vCG, controlfun = load_velocity(hyperparameters, controlfun=None)
     
-    if hyperparameters["interpolate"]:
-        domainmesh, vCG, controlfun = interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun)
+    # if hyperparameters["interpolate"]:
+    #     domainmesh, vCG, controlfun = interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun)
 
     # print_overloaded("-------------------------------------------------------------------")
     # print_overloaded("Testing script, EXITING")
