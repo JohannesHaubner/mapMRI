@@ -1,0 +1,198 @@
+Setting parameters parameters['ghost_mode'] = 'shared_facet'
+Setting pwd to /home/bastian/Oscar-Image-Registration-via-Transport-Equation/
+Setting config.hyperparameters
+outfoldername : createStartingGuessBuffer0.05
+code_dir : /home/bastian/Oscar-Image-Registration-via-Transport-Equation/
+output_dir : /home/bastian/D1/imageregistration_outputs/
+solver : krylov
+timestepping : RungeKutta
+smoothen : True
+nosmoothen : False
+alpha : 0.0001
+lbfgs_max_iterations : 100
+dt_buffer : 0.05
+vinit : 0
+readname : -1
+starting_guess : None
+debug : False
+input : mridata_3d/091registeredto205_padded_coarsened.mgz
+target : mridata_3d/205_cropped_padded_coarsened.mgz
+preconditioner : amg
+outputfolder : /home/bastian/D1/imageregistration_outputs/createStartingGuessBuffer0.05
+MassConservation : False
+functiondegree : 1
+functionspace : CG
+Loading mridata_3d/091registeredto205_padded_coarsened.mgz
+dimension of image: (72, 76, 92) ( 503424 voxels)
+calculated initial time step size to 0.004811252243188876
+Loading mridata_3d/205_cropped_padded_coarsened.mgz
+dimension of image: (72, 76, 92) ( 503424 voxels)
+Normalizing input and target with
+Img.vector()[:].max() 0.8710229396820068
+Img_goal.vector()[:].max() 0.5929500460624695
+Applying ReLU() to images
+Img.vector()[:].mean() 0.13747799215221593
+Img_goal.vector()[:].mean() 0.12036630863107216
+Wrote input and target to pvd files
+Setting parameters parameters['ghost_mode'] = 'shared_facet'
+Transforming l2 control to L2 control
+Assembled A in Preconditioning()
+Created Krylov solver in Preconditioning()
+Running Transport() with dt =  0.004811252243188876
+......................................
+Settings in Transport()
+--- solver = krylov
+--- timestepping = RungeKutta
+......................................
+parameters['ghost_mode'] shared_facet
+Assembled A, using Krylov solver
+Iteration  1 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  2 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Iteration  3 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  4 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Iteration  5 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  6 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  7 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  8 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  9 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  10 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  11 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  12 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  13 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  14 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  15 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  16 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  17 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  18 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  19 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  20 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  21 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  22 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  23 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  24 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  25 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  26 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  27 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  28 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  29 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  30 / 208 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.

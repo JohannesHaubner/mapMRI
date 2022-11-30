@@ -1,0 +1,78 @@
+Setting parameters parameters['ghost_mode'] = 'shared_facet'
+Setting pwd to /home/bastian/Oscar-Image-Registration-via-Transport-Equation/
+Setting config.hyperparameters
+outfoldername : createFineStartingGuessA1e-6
+code_dir : /home/bastian/Oscar-Image-Registration-via-Transport-Equation/
+output_dir : /home/bastian/D1/imageregistration_outputs/
+solver : krylov
+timestepping : RungeKutta
+smoothen : True
+nosmoothen : False
+alpha : 1e-06
+lbfgs_max_iterations : 50
+dt_buffer : 1
+vinit : 0
+readname : -1
+starting_guess : None
+debug : False
+input : /home/bastian/Oscar-Image-Registration-via-Transport-Equation/mridata_3d/091registeredto205_padded.mgz
+target : /home/bastian/Oscar-Image-Registration-via-Transport-Equation/mridata_3d/205_cropped_padded.mgz
+preconditioner : amg
+outputfolder : /home/bastian/D1/imageregistration_outputs/createFineStartingGuessA1e-6
+MassConservation : False
+functiondegree : 1
+functionspace : CG
+Loading /home/bastian/Oscar-Image-Registration-via-Transport-Equation/mridata_3d/091registeredto205_padded.mgz
+dimension of image: (144, 152, 184) ( 4027392 voxels)
+calculated initial time step size to 0.04811252243603539
+Loading /home/bastian/Oscar-Image-Registration-via-Transport-Equation/mridata_3d/205_cropped_padded.mgz
+dimension of image: (144, 152, 184) ( 4027392 voxels)
+Normalizing input and target with
+Img.vector()[:].max() 0.8310327529907227
+Img_goal.vector()[:].max() 0.8570500016212463
+Applying ReLU() to images
+Img.vector()[:].mean() 0.17945130835711726
+Img_goal.vector()[:].mean() 0.11474970514660611
+Wrote input and target to pvd files
+Setting parameters parameters['ghost_mode'] = 'shared_facet'
+Transforming l2 control to L2 control
+Assembled A in Preconditioning()
+Created Krylov solver in Preconditioning()
+Running Transport() with dt =  0.04811252243603539
+......................................
+Settings in Transport()
+--- solver = krylov
+--- timestepping = RungeKutta
+......................................
+parameters['ghost_mode'] shared_facet
+Assembled A, using Krylov solver
+Iteration  1 / 21 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Iteration  2 / 21 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Iteration  3 / 21 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Iteration  4 / 21 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Iteration  5 / 21 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Iteration  6 / 21 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 2: Solving linear variational problem.

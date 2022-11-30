@@ -1,6 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=register
-#SBATCH --cpus-per-task=1 --nodes=4
+#SBATCH --cpus-per-task=1
+## #### SBATCH --nodes=4
+#SBATCH --ntasks=4
 #################################################################
 ## SBATCH --partition=milanq
 #SBATCH --partition=fpgaq
@@ -37,22 +39,38 @@ SPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation
 LOGOUTFILE=${SPATH}/outs/${SLURM_JOB_ID}_log_python_srun.txt
 OUTPUTDIR=/home/bastian/D1/imageregistration_outputs/
 
-
-
-
-OUTFOLDERNAME=testWithStartingGuess
-srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
---starting_guess /home/bastian/D1/imageregistration_outputs/createStartingGuess/Control.hdf \
---lbfgs_max_iterations 10 --alpha 1e-5 > ${LOGOUTFILE}
+DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/mridata_3d
 
 
 # OUTFOLDERNAME=testWithStartingGuess
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
-# --starting_guess /home/bastian/D1/imageregistration_outputs/createStartingGuess/Control.hdf > ${LOGOUTFILE}
-# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
 # --starting_guess /home/bastian/D1/imageregistration_outputs/createStartingGuess/Control.hdf \
 # --lbfgs_max_iterations 10 --alpha 1e-5 > ${LOGOUTFILE}
 
+
+# OUTFOLDERNAME=interpolateStartingGuess
+# srun -n 4 python3 -u ${SPATH}/mri_utils/Interpolate_Guess.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --fun /home/bastian/D1/imageregistration_outputs/createStartingGuess/Control.hdf > ${LOGOUTFILE}
+
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --starting_guess ${OUTPUTDIR}${OUTFOLDERNAME}/Interpolated_Control.hdf --readname refined_control \
+# --input ${DATAPATH}/091registeredto205_padded.mgz --target ${DATAPATH}/205_cropped_padded.mgz \
+# --lbfgs_max_iterations 1 --alpha 1e-5 > ${LOGOUTFILE}
+
+# OUTFOLDERNAME=createFineStartingGuessA1e-5
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --input ${DATAPATH}/091registeredto205_padded.mgz --target ${DATAPATH}/205_cropped_padded.mgz \
+# --lbfgs_max_iterations 50 --alpha 1e-5 > ${LOGOUTFILE}
+
+# OUTFOLDERNAME=createFineStartingGuessA1e-6
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --input ${DATAPATH}/091registeredto205_padded.mgz --target ${DATAPATH}/205_cropped_padded.mgz \
+# --lbfgs_max_iterations 50 --alpha 1e-6 > ${LOGOUTFILE}
+
+# OUTFOLDERNAME=createFineStartingGuessA1e-7
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --input ${DATAPATH}/091registeredto205_padded.mgz --target ${DATAPATH}/205_cropped_padded.mgz \
+# --lbfgs_max_iterations 50 --alpha 1e-7 > ${LOGOUTFILE}
 
 # --interpolate --debug
 
@@ -60,6 +78,10 @@ srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --outpu
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
 # --lbfgs_max_iterations 100 --nosmoothen > ${LOGOUTFILE}
 
+
+# OUTFOLDERNAME=createStartingGuessNoSmoothenBuffer
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --lbfgs_max_iterations 100 --nosmoothen --dt_buffer 0.2 > ${LOGOUTFILE}
 
 # OUTFOLDERNAME=createStartingGuess
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
@@ -69,6 +91,21 @@ srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --outpu
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
 # --lbfgs_max_iterations 100 --dt_buffer 0.2 > ${LOGOUTFILE}
 
+OUTFOLDERNAME=createStartingGuessA1e-5
+srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+--lbfgs_max_iterations 100 --alpha 1e-5 > ${LOGOUTFILE}
+
+OUTFOLDERNAME=createStartingGuessA1e-6
+srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+--lbfgs_max_iterations 100 --alpha 1e-6 > ${LOGOUTFILE}
+
+OUTFOLDERNAME=createStartingGuessA1e-7
+srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+--lbfgs_max_iterations 100 --alpha 1e-7 > ${LOGOUTFILE}
+
+# OUTFOLDERNAME=createStartingGuessBuffer0.05
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --lbfgs_max_iterations 100 --dt_buffer 0.05 > ${LOGOUTFILE}
 
 # OUTFOLDERNAME=createStartingGuess10
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \

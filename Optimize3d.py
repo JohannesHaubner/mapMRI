@@ -245,3 +245,6 @@ hyperparameters["optimization_time_hours"] = tcomp
 
 with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as outfile:
     json.dump(hyperparameters, outfile, sort_keys=True, indent=4)
+
+
+print_overloaded("Optimize3d.py ran succesfully :-)")

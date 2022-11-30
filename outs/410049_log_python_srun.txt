@@ -1,0 +1,268 @@
+Setting parameters parameters['ghost_mode'] = 'shared_facet'
+Setting pwd to /home/bastian/Oscar-Image-Registration-via-Transport-Equation/
+Setting config.hyperparameters
+outfoldername : interpolateStartingGuess
+code_dir : /home/bastian/Oscar-Image-Registration-via-Transport-Equation/
+output_dir : /home/bastian/D1/imageregistration_outputs/
+solver : krylov
+timestepping : RungeKutta
+smoothen : True
+nosmoothen : False
+alpha : 0.0001
+lbfgs_max_iterations : 400
+dt_buffer : 1
+vinit : 0
+readname : -1
+starting_guess : /home/bastian/D1/imageregistration_outputs/createStartingGuess/Control.hdf
+debug : False
+input : mridata_3d/091registeredto205_padded_coarsened.mgz
+target : mridata_3d/205_cropped_padded_coarsened.mgz
+preconditioner : amg
+outputfolder : /home/bastian/D1/imageregistration_outputs/interpolateStartingGuess
+MassConservation : False
+functiondegree : 1
+functionspace : CG
+Will try to read starting guess
+keys in h5file ['-1', '0', 'mesh']
+Reading mesh
+trying to read -1
+max after loading 0.00020637923016593603
+Succesfully read starting guess
+Loading mridata_3d/091registeredto205_padded_coarsened.mgz
+dimension of image: (72, 76, 92) ( 503424 voxels)
+calculated initial time step size to 0.09622504486377752
+Loading mridata_3d/205_cropped_padded_coarsened.mgz
+dimension of image: (72, 76, 92) ( 503424 voxels)
+Normalizing input and target with
+Img.vector()[:].max() 0.8355153203010559
+Img_goal.vector()[:].max() 0.6256482601165771
+Applying ReLU() to images
+Img.vector()[:].mean() 0.18390788888718668
+Img_goal.vector()[:].mean() 0.16962720437335455
+Wrote input and target to pvd files
+Setting parameters parameters['ghost_mode'] = 'shared_facet'
+Transforming l2 control to L2 control
+Assembled A in Preconditioning()
+Created Krylov solver in Preconditioning()
+Running Transport() with dt =  0.09622504486377752
+......................................
+Settings in Transport()
+--- solver = krylov
+--- timestepping = RungeKutta
+......................................
+parameters['ghost_mode'] shared_facet
+Assembled A, using Krylov solver
+Iteration  1 / 11 in Transport()
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Iteration  2 / 11 in Transport()
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Iteration  3 / 11 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  4 / 11 in Transport()
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  5 / 11 in Transport()
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  6 / 11 in Transport()
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  7 / 11 in Transport()
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  8 / 11 in Transport()
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  9 / 11 in Transport()
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  10 / 11 in Transport()
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+i == MaxIter, Transport() finished
+Assembled L2 error between input image and target, J0= 0.007471031798977279
+Assembled L2 error between transported image and target, Jdata= 0.007395690397088435
+Assembled regularization, J= 0.007395799066977304
+created reduced functional
+Wrote fCont0 to file
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Assembled A in PreconditioningBlock()
+Created Krylov solver in PreconditioningBlock()
+RUNNING THE L-BFGS-B CODE
+
+           * * *
+
+Machine precision = 2.220D-16
+ N =      1167051     M =           10
+
+At X0         0 variables are exactly at the bounds
+
+At iterate    0    f=  7.39580D-03    |proj g|=  1.30822D-05
+RUNNING THE L-BFGS-B CODE
+
+           * * *
+
+Machine precision = 2.220D-16
+ N =      1167051     M =           10
+RUNNING THE L-BFGS-B CODE
+
+           * * *
+
+Machine precision = 2.220D-16
+ N =      1167051     M =           10
+
+At X0         0 variables are exactly at the bounds
+
+At X0         0 variables are exactly at the bounds
+
+At iterate    0    f=  7.39580D-03    |proj g|=  1.30822D-05
+
+At iterate    0    f=  7.39580D-03    |proj g|=  1.30822D-05
+RUNNING THE L-BFGS-B CODE
+
+           * * *
+
+Machine precision = 2.220D-16
+ N =      1167051     M =           10
+
+At X0         0 variables are exactly at the bounds
+
+At iterate    0    f=  7.39580D-03    |proj g|=  1.30822D-05
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.

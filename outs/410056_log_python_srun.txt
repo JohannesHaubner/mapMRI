@@ -1,0 +1,1246 @@
+Setting parameters parameters['ghost_mode'] = 'shared_facet'
+Setting pwd to /home/bastian/Oscar-Image-Registration-via-Transport-Equation/
+.................................................................................................................................
+--nosmoothen is set, will not use transform and preconditioning!
+.................................................................................................................................
+Setting config.hyperparameters
+outfoldername : createStartingGuessNoSmoothen
+code_dir : /home/bastian/Oscar-Image-Registration-via-Transport-Equation/
+output_dir : /home/bastian/D1/imageregistration_outputs/
+solver : krylov
+timestepping : RungeKutta
+smoothen : False
+nosmoothen : True
+alpha : 0.0001
+lbfgs_max_iterations : 100
+dt_buffer : 1
+vinit : 0
+readname : -1
+starting_guess : None
+debug : False
+input : mridata_3d/091registeredto205_padded_coarsened.mgz
+target : mridata_3d/205_cropped_padded_coarsened.mgz
+preconditioner : amg
+outputfolder : /home/bastian/D1/imageregistration_outputs/createStartingGuessNoSmoothen
+MassConservation : False
+functiondegree : 1
+functionspace : CG
+Loading mridata_3d/091registeredto205_padded_coarsened.mgz
+dimension of image: (72, 76, 92) ( 503424 voxels)
+calculated initial time step size to 0.09622504486377752
+Loading mridata_3d/205_cropped_padded_coarsened.mgz
+dimension of image: (72, 76, 92) ( 503424 voxels)
+Normalizing input and target with
+Img.vector()[:].max() 0.8710229396820068
+Img_goal.vector()[:].max() 0.5929500460624695
+Applying ReLU() to images
+Img.vector()[:].mean() 0.13747799215221593
+Img_goal.vector()[:].mean() 0.12036630863107216
+Wrote input and target to pvd files
+Setting parameters parameters['ghost_mode'] = 'shared_facet'
+Running Transport() with dt =  0.09622504486377752
+......................................
+Settings in Transport()
+--- solver = krylov
+--- timestepping = RungeKutta
+......................................
+parameters['ghost_mode'] shared_facet
+Assembled A, using Krylov solver
+Iteration  1 / 11 in Transport()
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  2 / 11 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  3 / 11 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  4 / 11 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  5 / 11 in Transport()
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  6 / 11 in Transport()
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  7 / 11 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  8 / 11 in Transport()
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  9 / 11 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Iteration  10 / 11 in Transport()
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+i == MaxIter, Transport() finished
+Assembled L2 error between input image and target, J0= 0.007330927073336095
+Assembled L2 error between transported image and target, Jdata= 0.00733092707334519
+Assembled regularization, J= 0.00733092707334519
+created reduced functional
+Wrote fCont0 to file
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+RUNNING THE L-BFGS-B CODE
+
+           * * *
+
+Machine precision = 2.220D-16
+ N =      1167051     M =           10
+
+At X0         0 variables are exactly at the bounds
+
+At iterate    0    f=  7.33093D-03    |proj g|=  5.10153D-05
+RUNNING THE L-BFGS-B CODE
+
+           * * *
+
+Machine precision = 2.220D-16
+ N =      1167051     M =           10
+
+At X0         0 variables are exactly at the bounds
+
+At iterate    0    f=  7.33093D-03    |proj g|=  5.10153D-05
+RUNNING THE L-BFGS-B CODE
+
+           * * *
+
+Machine precision = 2.220D-16
+ N =      1167051     M =           10
+
+At X0         0 variables are exactly at the bounds
+RUNNING THE L-BFGS-B CODE
+
+           * * *
+
+Machine precision = 2.220D-16
+ N =      1167051     M =           10
+
+At iterate    0    f=  7.33093D-03    |proj g|=  5.10153D-05
+
+At X0         0 variables are exactly at the bounds
+
+At iterate    0    f=  7.33093D-03    |proj g|=  5.10153D-05
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+
+At iterate    1    f=  7.12333D-03    |proj g|=  6.02548D-05
+
+At iterate    1    f=  7.12333D-03    |proj g|=  6.02548D-05
+
+At iterate    1    f=  7.12333D-03    |proj g|=  6.02548D-05
+
+At iterate    1    f=  7.12333D-03    |proj g|=  6.02548D-05
+J= 0.00733092707334519 Reg= 0.0
+Wrote files in callback
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+
+At iterate    2    f=  6.92713D-03    |proj g|=  1.71666D-04
+
+At iterate    2    f=  6.92713D-03    |proj g|=  1.71666D-04
+
+At iterate    2    f=  6.92713D-03    |proj g|=  1.71666D-04
+
+At iterate    2    f=  6.92713D-03    |proj g|=  1.71666D-04
+J= 0.00733092707334519 Reg= 0.0
+Wrote files in callback
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+
+At iterate    3    f=  6.79093D-03    |proj g|=  2.55994D-04
+
+At iterate    3    f=  6.79093D-03    |proj g|=  2.55994D-04
+
+At iterate    3    f=  6.79093D-03    |proj g|=  2.55994D-04
+
+At iterate    3    f=  6.79093D-03    |proj g|=  2.55994D-04
+J= 0.00733092707334519 Reg= 0.0
+Wrote files in callback
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+
+At iterate    4    f=  6.70781D-03    |proj g|=  3.55571D-04
+
+At iterate    4    f=  6.70781D-03    |proj g|=  3.55571D-04
+
+
+At iterate    4    f=  6.70781D-03    |proj g|=  3.55571D-04
+At iterate    4    f=  6.70781D-03    |proj g|=  3.55571D-04
+J= 0.00733092707334519 Reg= 0.0
+Wrote files in callback
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+
+At iterate    5    f=  6.61804D-03    |proj g|=  4.97286D-04
+
+At iterate    5    f=  6.61804D-03    |proj g|=  4.97286D-04
+
+At iterate    5    f=  6.61804D-03    |proj g|=  4.97286D-04
+
+At iterate    5    f=  6.61804D-03    |proj g|=  4.97286D-04
+J= 0.00733092707334519 Reg= 0.0
+Wrote files in callback
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+
+At iterate    6    f=  6.56126D-03    |proj g|=  2.36839D-04
+
+
+At iterate    6    f=  6.56126D-03    |proj g|=  2.36839D-04
+At iterate    6    f=  6.56126D-03    |proj g|=  2.36839D-04
+
+At iterate    6    f=  6.56126D-03    |proj g|=  2.36839D-04
+J= 0.00733092707334519 Reg= 0.0
+Wrote files in callback
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+
+At iterate    7    f=  6.48201D-03    |proj g|=  9.76153D-05
+
+At iterate    7    f=  6.48201D-03    |proj g|=  9.76153D-05
+
+At iterate    7    f=  6.48201D-03    |proj g|=  9.76153D-05
+
+At iterate    7    f=  6.48201D-03    |proj g|=  9.76153D-05
+J= 0.00733092707334519 Reg= 0.0
+Wrote files in callback
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+
+At iterate    8    f=  6.42332D-03    |proj g|=  4.66677D-04
+
+At iterate    8    f=  6.42332D-03    |proj g|=  4.66677D-04
+
+At iterate    8    f=  6.42332D-03    |proj g|=  4.66677D-04
+
+At iterate    8    f=  6.42332D-03    |proj g|=  4.66677D-04
+J= 0.00733092707334519 Reg= 0.0
+Wrote files in callback
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+
+At iterate    9    f=  6.38323D-03    |proj g|=  5.01421D-05
+
+At iterate    9    f=  6.38323D-03    |proj g|=  5.01421D-05
+
+
+At iterate    9    f=  6.38323D-03    |proj g|=  5.01421D-05
+At iterate    9    f=  6.38323D-03    |proj g|=  5.01421D-05
+J= 0.00733092707334519 Reg= 0.0
+Wrote files in callback
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.
+Process 0: Solving linear variational problem.
+Process 3: Solving linear variational problem.
+Process 2: Solving linear variational problem.
+Process 1: Solving linear variational problem.

@@ -21,8 +21,7 @@ def print_overloaded(*args):
         pass
 
 
-from mri_utils.helpers import load_velocity, interpolate_velocity
-import config
+from helpers import load_velocity, interpolate_velocity
 
 parser = argparse.ArgumentParser()
 
@@ -30,7 +29,7 @@ parser.add_argument("--outfoldername", required=True, type=str, help=""" name of
 parser.add_argument("--code_dir", type=str, default="/home/bastian/Oscar-Image-Registration-via-Transport-Equation/")
 parser.add_argument("--output_dir", type=str, default=None)
 parser.add_argument("--readname", type=str, default="-1")
-parser.add_argument("--starting_guess", type=str, default=None)
+parser.add_argument("--function", type=str, default=None)
 parser.add_argument("--debug", default=False, action="store_true", help="Debug")
 
 hyperparameters = vars(parser.parse_args())
@@ -42,8 +41,8 @@ print_overloaded("Setting pwd to", hyperparameters["code_dir"])
 
 assert "/" not in hyperparameters["outfoldername"]
 
-if hyperparameters["starting_guess"] is not None:
-    assert os.path.isfile(hyperparameters["starting_guess"])
+if hyperparameters["function"] is not None:
+    assert os.path.isfile(hyperparameters["function"])
 
 set_log_level(20)
 
@@ -51,16 +50,13 @@ hyperparameters["outputfolder"] = hyperparameters["output_dir"] + hyperparameter
 hyperparameters["functiondegree"] = 1
 hyperparameters["functionspace"] = "CG"
 
-config.hyperparameters = hyperparameters
-
-print_overloaded("Setting config.hyperparameters")
-
 for key, item in hyperparameters.items():
     print_overloaded(key, ":", item)
 
 if not os.path.isdir(hyperparameters["outputfolder"]):
     os.makedirs(hyperparameters["outputfolder"], exist_ok=True)
 
+hyperparameters["starting_guess"] = hyperparameters["function"]
 
 domainmesh, vCG, controlfun = load_velocity(hyperparameters, controlfun=None)
 

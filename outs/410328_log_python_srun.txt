@@ -1,0 +1,40 @@
+Setting parameters parameters['ghost_mode'] = 'shared_facet'
+Setting pwd to /home/bastian/Oscar-Image-Registration-via-Transport-Equation/
+Setting config.hyperparameters
+outfoldername : createStartingGuessA1e-5
+code_dir : /home/bastian/Oscar-Image-Registration-via-Transport-Equation/
+output_dir : /home/bastian/D1/imageregistration_outputs/
+solver : krylov
+timestepping : RungeKutta
+smoothen : True
+nosmoothen : False
+alpha : 1e-05
+lbfgs_max_iterations : 100
+dt_buffer : 1
+vinit : 0
+readname : -1
+starting_guess : None
+debug : False
+input : mridata_3d/091registeredto205_padded_coarsened.mgz
+target : mridata_3d/205_cropped_padded_coarsened.mgz
+preconditioner : amg
+outputfolder : /home/bastian/D1/imageregistration_outputs/createStartingGuessA1e-5
+MassConservation : False
+functiondegree : 1
+functionspace : CG
+Loading mridata_3d/091registeredto205_padded_coarsened.mgz
+dimension of image: (72, 76, 92) ( 503424 voxels)
+calculated initial time step size to 0.09622504486377752
+Loading mridata_3d/205_cropped_padded_coarsened.mgz
+dimension of image: (72, 76, 92) ( 503424 voxels)
+Normalizing input and target with
+Img.vector()[:].max() 0.8710229396820068
+Img_goal.vector()[:].max() 0.5929500460624695
+Applying ReLU() to images
+Img.vector()[:].mean() 0.13747799215221593
+Img_goal.vector()[:].mean() 0.12036630863107216
+Wrote input and target to pvd files
+Setting parameters parameters['ghost_mode'] = 'shared_facet'
+Transforming l2 control to L2 control
+Assembled A in Preconditioning()
+Created Krylov solver in Preconditioning()
