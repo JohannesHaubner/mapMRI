@@ -5,8 +5,8 @@
 #SBATCH --ntasks=4
 #################################################################
 ## SBATCH --partition=milanq
-#SBATCH --partition=fpgaq
-## SBATCH --partition=defq
+## SBATCH --partition=fpgaq
+#SBATCH --partition=defq
 ## SBATCH --partition=slowq
 ## SBATCH --partition=rome16q
 #################################################################
@@ -91,27 +91,35 @@ DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/mridata_3
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
 # --lbfgs_max_iterations 100 --dt_buffer 0.2 > ${LOGOUTFILE}
 
-OUTFOLDERNAME=createStartingGuessA1e-5
-srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
---lbfgs_max_iterations 100 --alpha 1e-5 > ${LOGOUTFILE}
-
-OUTFOLDERNAME=createStartingGuessA1e-6
-srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
---lbfgs_max_iterations 100 --alpha 1e-6 > ${LOGOUTFILE}
-
-OUTFOLDERNAME=createStartingGuessA1e-7
-srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
---lbfgs_max_iterations 100 --alpha 1e-7 > ${LOGOUTFILE}
-
-# OUTFOLDERNAME=createStartingGuessBuffer0.05
+# OUTFOLDERNAME=createStartingGuessBuffer0.1A1e-5
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
-# --lbfgs_max_iterations 100 --dt_buffer 0.05 > ${LOGOUTFILE}
+# --lbfgs_max_iterations 100 --dt_buffer 0.1 --alpha 1e-5 > ${LOGOUTFILE}
+
+OUTFOLDERNAME=createStartingGuessBuffer0.1A1e-6
+srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+--lbfgs_max_iterations 100 --dt_buffer 0.1 --alpha 1e-6 > ${LOGOUTFILE}
+
+# OUTFOLDERNAME=createStartingGuessBuffer0.1
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --lbfgs_max_iterations 100 --dt_buffer 0.1 > ${LOGOUTFILE}
 
 # OUTFOLDERNAME=createStartingGuess10
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
 # --lbfgs_max_iterations 10 --dt_buffer 0.2 > ${LOGOUTFILE}
 
+#################
+# ARE THESE FINISHED=?
+# OUTFOLDERNAME=createStartingGuessA1e-5
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --lbfgs_max_iterations 100 --alpha 1e-5 > ${LOGOUTFILE}
 
+# OUTFOLDERNAME=createStartingGuessA1e-6
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --lbfgs_max_iterations 100 --alpha 1e-6 > ${LOGOUTFILE}
+
+# OUTFOLDERNAME=createStartingGuessA1e-7
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --lbfgs_max_iterations 100 --alpha 1e-7 > ${LOGOUTFILE}
 
 
 
