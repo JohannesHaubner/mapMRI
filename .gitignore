@@ -15,7 +15,7 @@ testdata_3d/
 __pycache__/
 *.py[cod]
 *$py.class
-
+*log_python_srun*
 # C extensions
 *.so
 

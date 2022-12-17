@@ -79,6 +79,29 @@ DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/mridata_3
 # --lbfgs_max_iterations 100 --nosmoothen > ${LOGOUTFILE}
 
 
+# OUTFOLDERNAME=smoothen100
+# OUTPUTDIR=/home/bastian/D1/testregistration/
+# DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_3d
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
+# --lbfgs_max_iterations 100 > ${LOGOUTFILE}
+
+OUTFOLDERNAME=smoothen100Buffer02
+OUTPUTDIR=/home/bastian/D1/testregistration/
+DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_3d
+srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+--input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
+--lbfgs_max_iterations 100 --dt_buffer 0.2 > ${LOGOUTFILE}
+
+
+# OUTFOLDERNAME=nosmoothen100Buffer02
+# OUTPUTDIR=/home/bastian/D1/testregistration/
+# DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_3d
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
+# --lbfgs_max_iterations 100 --nosmoothen --dt_buffer 0.2 > ${LOGOUTFILE}
+
+
 # OUTFOLDERNAME=createStartingGuessNoSmoothenBuffer
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
 # --lbfgs_max_iterations 100 --nosmoothen --dt_buffer 0.2 > ${LOGOUTFILE}
@@ -95,13 +118,27 @@ DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/mridata_3
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
 # --lbfgs_max_iterations 100 --dt_buffer 0.1 --alpha 1e-5 > ${LOGOUTFILE}
 
-OUTFOLDERNAME=createStartingGuessBuffer0.1A1e-6
-srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
---lbfgs_max_iterations 100 --dt_buffer 0.1 --alpha 1e-6 > ${LOGOUTFILE}
+# OUTFOLDERNAME=createStartingGuessBufferA1e-6
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --lbfgs_max_iterations 100 --dt_buffer 0.2 --solver lu --alpha 1e-6 > ${LOGOUTFILE}
+
+# OUTFOLDERNAME=createStartingGuessBufferA1e-7
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --lbfgs_max_iterations 100 --dt_buffer 0.2 --solver lu --alpha 1e-7 > ${LOGOUTFILE}
+
+# OUTFOLDERNAME=createStartingGuessBufferA1e-5
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --lbfgs_max_iterations 100 --dt_buffer 0.2 --solver lu --alpha 1e- > ${LOGOUTFILE}
+
+
+# OUTFOLDERNAME=createStartingGuessBufferA1e-5
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --lbfgs_max_iterations 100 --dt_buffer 0.2 --solver lu --alpha 1e-5 > ${LOGOUTFILE}
 
 # OUTFOLDERNAME=createStartingGuessBuffer0.1
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
-# --lbfgs_max_iterations 100 --dt_buffer 0.1 > ${LOGOUTFILE}
+# --lbfgs_max_iterations 100 --dt_buffer 0.1 --solver lu > ${LOGOUTFILE}
+
 
 # OUTFOLDERNAME=createStartingGuess10
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \

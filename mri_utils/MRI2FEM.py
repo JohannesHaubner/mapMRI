@@ -13,17 +13,17 @@ def print_overloaded(*args):
 
     
 
-def read_image(hyperparameters, name, mesh=None, storepath=None):
-    
-    print_overloaded("Loading", hyperparameters[name])
+def read_image(hyperparameters, name, mesh=None, storepath=None, printout=True):
+    if printout:
+        print_overloaded("Loading", hyperparameters[name])
     
     image2 = nibabel.load(hyperparameters[name])
     data = image2.get_fdata()
 
 
     hyperparameters[name + ".shape"] = list(data.shape)
-
-    print_overloaded("dimension of image:", data.shape, "(", data.size, "voxels)")
+    if printout:
+        print_overloaded("dimension of image:", data.shape, "(", data.size, "voxels)")
 
     # x0 = Point(0.0, 0.0, 0.0)
     # y0 = x0
@@ -43,24 +43,9 @@ def read_image(hyperparameters, name, mesh=None, storepath=None):
     # mesh = BoxMesh(MPI.comm_world, x0, y0, z0, x1, y1, z1, nx, ny, nz)
     # nx += 2
     if mesh is None:
-        mesh = UnitCubeMesh(MPI.comm_world, nx, nx, nx)
-        # breakpoint()
-        # mesh.coordinates()[:, 0] *= (nx - 1)
-        # mesh.coordinates()[:, 1] *= (ny - 1)
-        # mesh.coordinates()[:, 2] *= (nz - 1)
+        mesh = UnitCubeMesh(MPI.comm_world, nx, ny, nz)
 
-    # xyzm = mesh.coordinates()[:]
-
-    # breakpoint()
-
-    
-
-    # File("/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/testdata_3d/mesh.pvd") << mesh
-
-    # print_overloaded(len(range(int(mesh.coordinates()[:].min()), int(mesh.coordinates()[:].max()))))
-
-    # space = VectorFunctionSpace(mesh, "DG", 0, 1)
-    space = FunctionSpace(mesh, "DG", 1)
+    space = FunctionSpace(mesh, hyperparameters["state_functionspace"], hyperparameters["state_functiondegree"])
 
     u_data = Function(space)
 
@@ -111,6 +96,19 @@ def read_image(hyperparameters, name, mesh=None, storepath=None):
     #     u_data.vector()[:] = data[i, j, k]
 
     # File("/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/testdata_3d/u_data.pvd") << u_data
+    if printout:
+        print_overloaded("Normalizing image")
+        print_overloaded("Img.vector()[:].max()", u_data.vector()[:].max())
+    # print_overloaded("Img_goal.vector()[:].max()", Img_goal.vector()[:].max())
+
+    u_data.vector()[:] *= 1 / u_data.vector()[:].max()
+    # Img_goal.vector()[:] *= 1 / Img_goal.vector()[:].max()
+
+    if printout:
+        print_overloaded("Applying ReLU() to image")
+    
+    u_data.vector()[:] = np.where(u_data.vector()[:] < 0, 0, u_data.vector()[:])
+    # Img_goal.vector()[:] = np.where(Img_goal.vector()[:] < 0, 0, Img_goal.vector()[:])
 
     return mesh, u_data, 1
 

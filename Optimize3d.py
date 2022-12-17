@@ -27,7 +27,7 @@ def print_overloaded(*args):
 print_overloaded("Setting parameters parameters['ghost_mode'] = 'shared_facet'")
 parameters['ghost_mode'] = 'shared_facet'
 
-from mri_utils.helpers import load_velocity, get_lumped_mass_matrices
+from mri_utils.helpers import load_velocity, get_lumped_mass_matrices, interpolate_velocity
 from mri_utils.MRI2FEM import read_image
 
 import config # import hyperparameters
@@ -78,9 +78,10 @@ hyperparameters["preconditioner"] = "amg"
 hyperparameters["outputfolder"] = hyperparameters["output_dir"] + hyperparameters["outfoldername"]
 hyperparameters["lbfgs_max_iterations"] = int(hyperparameters["lbfgs_max_iterations"])
 hyperparameters["MassConservation"] = False
-hyperparameters["functiondegree"] = 1
-hyperparameters["functionspace"] = "CG"
-
+hyperparameters["velocity_functiondegree"] = 1
+hyperparameters["velocity_functionspace"] = "CG"
+hyperparameters["state_functiondegree"] = 1
+hyperparameters["state_functionspace"] = "DG"
 
 config.hyperparameters = hyperparameters
 
@@ -95,8 +96,8 @@ if not os.path.isdir(hyperparameters["outputfolder"]):
 if hyperparameters["starting_guess"] is not None:
     domainmesh, vCG, controlfun = load_velocity(hyperparameters, controlfun=None)
     
-    # if hyperparameters["interpolate"]:
-    #     domainmesh, vCG, controlfun = interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun)
+    if hyperparameters["interpolate"]:
+        domainmesh, vCG, controlfun = interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun)
 
     # print_overloaded("-------------------------------------------------------------------")
     # print_overloaded("Testing script, EXITING")
@@ -113,7 +114,7 @@ else:
 
 if hyperparameters["starting_guess"] is None:
     # Can now create function space after mesh is created from image
-    vCG = VectorFunctionSpace(domainmesh, hyperparameters["functionspace"], hyperparameters["functiondegree"])
+    vCG = VectorFunctionSpace(domainmesh, hyperparameters["velocity_functionspace"], hyperparameters["velocity_functiondegree"])
 
 T_final = 1
 
@@ -131,22 +132,24 @@ hyperparameters["DeltaT"] = hyperparameters["dt_buffer"] * float(h) / v_needed #
 print_overloaded("calculated initial time step size to", hyperparameters["DeltaT"])
 hyperparameters["DeltaT_init"] = hyperparameters["DeltaT"]
 
+hyperparameters["max_timesteps"] = int(1 / hyperparameters["DeltaT"])
+
 with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as outfile:
     json.dump(hyperparameters, outfile, sort_keys=True, indent=4)
 
 (mesh_goal, Img_goal, NumData_goal) = read_image(hyperparameters, name="target", mesh=domainmesh)
 
-print_overloaded("Normalizing input and target with")
-print_overloaded("Img.vector()[:].max()", Img.vector()[:].max())
-print_overloaded("Img_goal.vector()[:].max()", Img_goal.vector()[:].max())
+# print_overloaded("Normalizing input and target with")
+# print_overloaded("Img.vector()[:].max()", Img.vector()[:].max())
+# print_overloaded("Img_goal.vector()[:].max()", Img_goal.vector()[:].max())
 
-Img.vector()[:] *= 1 / Img.vector()[:].max()
-Img_goal.vector()[:] *= 1 / Img_goal.vector()[:].max()
+# Img.vector()[:] *= 1 / Img.vector()[:].max()
+# Img_goal.vector()[:] *= 1 / Img_goal.vector()[:].max()
 
 
-print_overloaded("Applying ReLU() to images")
-Img.vector()[:] = np.where(Img.vector()[:] < 0, 0, Img.vector()[:])
-Img_goal.vector()[:] = np.where(Img_goal.vector()[:] < 0, 0, Img_goal.vector()[:])
+# print_overloaded("Applying ReLU() to images")
+# Img.vector()[:] = np.where(Img.vector()[:] < 0, 0, Img.vector()[:])
+# Img_goal.vector()[:] = np.where(Img_goal.vector()[:] < 0, 0, Img_goal.vector()[:])
 
 # print_overloaded("Normalized:")
 print_overloaded("Img.vector()[:].mean()", Img.vector()[:].mean())
@@ -190,19 +193,6 @@ files = {
     "controlFile":controlFile
 }
 
-# # transform colored image to black-white intensity image
-# Space = FunctionSpace(domainmesh, "DG", 1)
-# if not Img.function_space() == Space:
-#     Img = project(Img, Space)
-#     print_overloaded(Img.function_space())
-#     print_overloaded(Space)
-#     print_overloaded("Projected data")
-#     raise ValueError
-
-# if not Img_goal.function_space() == Space:
-#     print_overloaded(Img_goal.function_space(), Space)
-#     Img_goal = project(Img_goal, Space)
-#     print_overloaded("Projected data")
 
 Img.rename("input", "")
 Img_goal.rename("target", "")
@@ -222,6 +212,14 @@ else:
 t0 = time.time()
 
 from mri_utils.find_velocity import find_velocity, CFLerror
+
+hyperparameters["Jd"] = []
+hyperparameters["Jreg"] = []
+
+files["lossfile"] = open(hyperparameters["outputfolder"] + '/loss.txt', 'w')
+files["regularizationfile"] = open(hyperparameters["outputfolder"] + '/regularization.txt', 'w')
+
+
 
 for n in range(4):
     
@@ -246,5 +244,7 @@ hyperparameters["optimization_time_hours"] = tcomp
 with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as outfile:
     json.dump(hyperparameters, outfile, sort_keys=True, indent=4)
 
+files["lossfile"].close()
+files["regularizationfile"].close()
 
 print_overloaded("Optimize3d.py ran succesfully :-)")

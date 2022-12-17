@@ -175,24 +175,6 @@ if __name__ == "__main__":
     FName = "shuttle_small.png"
     from Pic2Fen import Pic2FEM, FEM2Pic
     (mesh, Img, NumData) = Pic2FEM(FName)
-
-    """
-    #read from file
-    FIn = HDF5File(MPI.comm_world, FName+".h5", 'r')
-    mesh = Mesh()
-    FIn.read(mesh, "mesh", False)
-    Space = VectorFunctionSpace(mesh, "DG", 0)
-    Img = Function(Space)
-    FIn.read(Img, "Data1")
-    """
-
-    """
-    #make artificial
-    mesh = UnitSquareMesh(100,100)
-    x = SpatialCoordinate(mesh)
-    Img = project(x[0], FunctionSpace(mesh, "DG", 0))
-    NumData = 1
-    """
     
     FNameOut = "img_DG"
     FNameOut = "output/"+FNameOut+".xdmf"
@@ -204,8 +186,6 @@ if __name__ == "__main__":
     x = SpatialCoordinate(mesh)
     Wind = as_vector((0.0, x[1]))
 
-    #Img = project(sqrt(inner(Img, Img)), FunctionSpace(mesh, "DG", 0))
-    #Img = project(Img, VectorFunctionSpace(mesh, "CG", 1, NumData))
     Img = project(Img, VectorFunctionSpace(mesh, "DG", 1, NumData))
     Img.rename("img", "")
 

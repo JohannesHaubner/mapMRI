@@ -48,7 +48,7 @@ set_log_level(20)
 
 hyperparameters["outputfolder"] = hyperparameters["output_dir"] + hyperparameters["outfoldername"]
 hyperparameters["functiondegree"] = 1
-hyperparameters["functionspace"] = "CG"
+hyperparameters["velocity_functionspace"] = "CG"
 
 for key, item in hyperparameters.items():
     print_overloaded(key, ":", item)

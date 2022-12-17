@@ -21,8 +21,6 @@ def print_overloaded(*args):
 
 def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting_guess):
 
-    J0 = assemble(0.5 * (Img - Img_goal) ** 2 * dx(domain=Img.function_space().mesh()))    
-
     # import config
 
     # print_overloaded("config.hyper", sorted(config.hyperparameters))
@@ -62,7 +60,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
     print_overloaded("Running Transport() with dt = ", hyperparameters["DeltaT"])
 
     Img_deformed = Transport(Img, control, hyperparameters=hyperparameters,
-                            MaxIter=int(1 / hyperparameters["DeltaT"]), DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
+                            MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
                             solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
 
     # solve forward and evaluate objective
@@ -70,8 +68,6 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
 
     state = Control(Img_deformed)  # The Control type enables easy access to tape values after replays.
     cont = Control(controlfun)
-
-    print_overloaded("Assembled L2 error between input image and target, J0=", J0)
 
     J = assemble(0.5 * (Img_deformed - Img_goal) ** 2 * dx(domain=Img.function_space().mesh()))
     print_overloaded("Assembled L2 error between transported image and target, Jdata=", J)
@@ -121,6 +117,14 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
 
         Jd = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx(domain=Img.function_space().mesh()))
         Jreg = assemble(alpha*(controlf)**2*dx(domain=Img.function_space().mesh()))
+
+        if MPI.rank(MPI.comm_world) == 0:
+            
+            hyperparameters["Jd"].append(float(Jd))
+            hyperparameters["Jreg"].append(float(Jreg))
+
+            files["lossfile"].write(str(float(Jd)))
+            files["regularizationfile"].write(str(float(Jreg)))
 
         print_overloaded("J=", Jd, "Reg=", Jreg)
 

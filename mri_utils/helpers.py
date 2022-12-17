@@ -53,7 +53,7 @@ def load_velocity(hyperparameters, controlfun):
         hdf = HDF5File(working_mesh.mpi_comm(), hyperparameters["starting_guess"], 'r')
         hdf.read(working_mesh, "/mesh", False)
         
-        vCG = VectorFunctionSpace(working_mesh, hyperparameters["functionspace"], hyperparameters["functiondegree"])
+        vCG = VectorFunctionSpace(working_mesh, hyperparameters["velocity_functionspace"], hyperparameters["functiondegree"])
         controlfun = Function(vCG)
 
     print_overloaded("trying to read", hyperparameters["readname"])
@@ -86,7 +86,7 @@ def interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun, store_pvd
 
     domainmesh = refine(domainmesh, redistribute=False)
 
-    vCG = VectorFunctionSpace(domainmesh, hyperparameters["functionspace"], hyperparameters["functiondegree"])
+    vCG = VectorFunctionSpace(domainmesh, hyperparameters["velocity_functionspace"], hyperparameters["functiondegree"])
 
     controlfun_fine = interpolate(controlfun, vCG)
 
