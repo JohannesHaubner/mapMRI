@@ -115,16 +115,16 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
         if current_pde_solution.vector()[:].max() > 10:
             raise ValueError("State became > 10 at some vertex, something is probably wrong")
 
-        Jd = assemble(0.5 * (Img_deformed - Img_goal)**2 * dx(domain=Img.function_space().mesh()))
-        Jreg = assemble(alpha*(controlf)**2*dx(domain=Img.function_space().mesh()))
+        Jd = assemble(0.5 * (current_pde_solution - Img_goal)**2 * dx(domain=Img.function_space().mesh()))
+        Jreg = assemble(alpha*(current_control)**2*dx(domain=Img.function_space().mesh()))
 
         if MPI.rank(MPI.comm_world) == 0:
             
             hyperparameters["Jd"].append(float(Jd))
             hyperparameters["Jreg"].append(float(Jreg))
 
-            files["lossfile"].write(str(float(Jd)))
-            files["regularizationfile"].write(str(float(Jreg)))
+            files["lossfile"].write(str(float(Jd))+ ", ")
+            files["regularizationfile"].write(str(float(Jreg))+ ", ")
 
         print_overloaded("J=", Jd, "Reg=", Jreg)
 
