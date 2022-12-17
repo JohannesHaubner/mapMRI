@@ -11,6 +11,7 @@ mridata_3d/
 braindata*
 outputmask_only/
 testdata_3d/
+imageregistration_outputs/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

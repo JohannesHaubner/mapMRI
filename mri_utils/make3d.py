@@ -10,11 +10,11 @@ target_dir = "./"
 
 N = 32
 
-wx = 1 * 1
-wy = 2 * 1
+wx = 2 * 1
+wy = 4 * 1
 wz = 4 * 1
 
-center = N / 2
+center = (N-1) / 2
 
 input = np.zeros((N, N, N))
 
@@ -37,11 +37,12 @@ print(input.sum() / input.size)
 
 input = scipy.ndimage.gaussian_filter(input, sigma=(1, 1, 1))
 
-ds = 4
+ds = 2
+rotx = 1
 dx, dy, dz = ds, ds, ds
 
 aff = np.array([
-    [  1,    0,    0,  dx],
+    [  rotx,    0,    0,  dx],
     [   0,    1,    0,  dy],
     [   0,   0,    1,  dz],
     [   0,    0,    0,    1]
@@ -73,8 +74,8 @@ generic_affine = np.array([
     [0, 0, 0, 1]
     ])
 
-input += 0.01
-target += 0.01
+# input += 0.01
+# target += 0.01
 
 
 np.save(target_dir + "input.npy", input)
