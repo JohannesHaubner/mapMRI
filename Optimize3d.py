@@ -37,6 +37,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--outfoldername", required=True, type=str, help=""" name of folder to store to under "path + "output_dir" """)
 parser.add_argument("--code_dir", type=str, default="/home/bastian/Oscar-Image-Registration-via-Transport-Equation/")
 parser.add_argument("--output_dir", type=str, default=None)
+parser.add_argument("--slurmid", type=str, required=True)
 parser.add_argument("--solver", default="krylov", choices=["lu", "krylov"])
 parser.add_argument("--timestepping", default="RungeKutta", choices=["RungeKutta", "CrankNicolson", "explicitEuler"])
 parser.add_argument("--smoothen", default=True, action="store_true", help="Obsolete flag. Use proper scalar product")
@@ -213,12 +214,9 @@ t0 = time.time()
 
 from mri_utils.find_velocity import find_velocity, CFLerror
 
-hyperparameters["Jd"] = []
-hyperparameters["Jreg"] = []
 
 files["lossfile"] = open(hyperparameters["outputfolder"] + '/loss.txt', 'w')
 files["regularizationfile"] = open(hyperparameters["outputfolder"] + '/regularization.txt', 'w')
-
 
 
 for n in range(4):

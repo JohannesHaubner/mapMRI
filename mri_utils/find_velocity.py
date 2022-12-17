@@ -69,12 +69,18 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
     state = Control(Img_deformed)  # The Control type enables easy access to tape values after replays.
     cont = Control(controlfun)
 
-    J = assemble(0.5 * (Img_deformed - Img_goal) ** 2 * dx(domain=Img.function_space().mesh()))
-    print_overloaded("Assembled L2 error between transported image and target, Jdata=", J)
+    Jd = assemble(0.5 * (Img_deformed - Img_goal) ** 2 * dx(domain=Img.function_space().mesh()))
+    print_overloaded("Assembled L2 error between transported image and target, Jdata=", Jd)
     # print_overloaded("Control type=", type(control))
     # print_overloaded(control)
     # J = J + assemble(alpha*grad(control)**2*dx(domain=Img.function_space().mesh()))
-    J = J + assemble(alpha*(controlf)**2*dx(domain=Img.function_space().mesh()))
+    Jreg = assemble(alpha*(controlf)**2*dx(domain=Img.function_space().mesh()))
+    
+    J = Jd + Jreg
+    
+    hyperparameters["Jd_init"] = float(Jd)
+    hyperparameters["Jreg_init"] = float(Jreg)
+    
     print_overloaded("Assembled regularization, J=", J)
 
     Jhat = ReducedFunctional(J, cont)
@@ -88,18 +94,18 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
 
     print_overloaded("Wrote fCont0 to file")    
 
-    # if hyperparameters["debug"]:
+    if hyperparameters["debug"]:
 
-    #     print_overloaded("Running convergence test")
-    #     h = Function(vCG)
-    #     h.vector()[:] = 0.1
-    #     h.vector().apply("")
-    #     conv_rate = taylor_test(Jhat, control, h)
-    #     print_overloaded(conv_rate)
-    #     print_overloaded("convergence test done, exiting")
+        print_overloaded("Running convergence test")
+        h = Function(vCG)
+        h.vector()[:] = 0.1
+        h.vector().apply("")
+        conv_rate = taylor_test(Jhat, control, h)
+        print_overloaded(conv_rate)
+        print_overloaded("convergence test done, exiting")
         
-    #     hyperparameters["conv_rate"] = float(conv_rate)
-    #     return
+        hyperparameters["conv_rate"] = float(conv_rate)
+        return
 
 
     def cb(*args, **kwargs):
@@ -120,8 +126,8 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
 
         if MPI.rank(MPI.comm_world) == 0:
             
-            hyperparameters["Jd"].append(float(Jd))
-            hyperparameters["Jreg"].append(float(Jreg))
+            hyperparameters["Jd_current"] = float(Jd)
+            hyperparameters["Jreg_current"] = float(Jreg)
 
             files["lossfile"].write(str(float(Jd))+ ", ")
             files["regularizationfile"].write(str(float(Jreg))+ ", ")
@@ -157,6 +163,10 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
     minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True, "maxiter": hyperparameters["lbfgs_max_iterations"]}, tol=1e-08, callback = cb)
 
     # Store final values in pvd format for visualization
+
+    hyperparameters["Jd_final"] = hyperparameters["Jd_current"]
+    hyperparameters["Jreg_final"] = hyperparameters["Jreg_current"]
+
 
     current_pde_solution = state.tape_value()
     current_pde_solution.rename("finalstate", "")

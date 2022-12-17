@@ -1,1 +1,0 @@
-Setting parameters parameters['ghost_mode'] = 'shared_facet'
