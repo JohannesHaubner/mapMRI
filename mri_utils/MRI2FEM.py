@@ -37,13 +37,18 @@ def read_image(hyperparameters, name, mesh=None, storepath=None, printout=True):
     ny = data.shape[1]
     nz = data.shape[2]
 
+
+
     # assert nx == ny
     # assert ny == nz
 
     # mesh = BoxMesh(MPI.comm_world, x0, y0, z0, x1, y1, z1, nx, ny, nz)
     # nx += 2
     if mesh is None:
-        mesh = UnitCubeMesh(MPI.comm_world, nx, ny, nz)
+        if nz == 1:
+            mesh = UnitSquareMesh(MPI.comm_world, nx, ny)
+        else:
+            mesh = UnitCubeMesh(MPI.comm_world, nx, ny, nz)
 
     space = FunctionSpace(mesh, hyperparameters["state_functionspace"], hyperparameters["state_functiondegree"])
 
@@ -69,33 +74,29 @@ def read_image(hyperparameters, name, mesh=None, storepath=None, printout=True):
 
     xyz[0, :] *= (nx - 1)
     xyz[1, :] *= (ny - 1)
-    xyz[2, :] *= (nz - 1)
+    if nz > 1:
+
+        xyz[2, :] *= (nz - 1)
+
+    else:
+
+        xyz2 = np.zeros((3, xyz.shape[1]))
+
+        xyz2[0, :] = xyz[0, :]
+        xyz2[1, :] = xyz[1, :]
+
+        xyz = xyz2
+        del xyz2
 
     i, j, k = np.rint(xyz).astype("int")
 
-    # breakpoint()
+    
     # ijk = apply_affine(ras2vox, xyz).T
     # i, j, k = np.rint(ijk).astype("int")
 
     # breakpoint()
     u_data.vector()[:] = data[i, j, k]
 
-    # breakpoint()
-
-    # ijk = apply_affine(ras2vox, xyz).T
-    # i, j, k = np.rint(ijk).astype("int")
-
-    # print_overloaded(i.min(), i.max())
-    
-    # if data_filter is not None:
-    #     data = data_filter(data, ijk, i, j, k)
-    #     u_data.vector()[:] = data[i, j, k]
-    # else:
-    #     print_overloaded("No filter used, setting", np.where(np.isnan(data[i, j, k]), 1, 0).sum(), "/", i.size, " nan voxels to 0")
-    #     data[i, j, k] = np.where(np.isnan(data[i, j, k]), 0, data[i, j, k])
-    #     u_data.vector()[:] = data[i, j, k]
-
-    # File("/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/testdata_3d/u_data.pvd") << u_data
     if printout:
         print_overloaded("Normalizing image")
         print_overloaded("Img.vector()[:].max()", u_data.vector()[:].max())

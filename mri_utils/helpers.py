@@ -16,7 +16,7 @@ def get_lumped_mass_matrices(vCG):
     s1 = TrialFunction(vCG)
     s2 = TestFunction(vCG)
     form = inner(s1, s2) * dx
-    mass_action_form = action(form, Constant((1., 1., 1.)))
+    mass_action_form = action(form, Constant((1., ) * Function(vCG).geometric_dimension()))
     M_lumped = assemble(form)
     M_lumped_inv = assemble(form)
     M_lumped.zero()

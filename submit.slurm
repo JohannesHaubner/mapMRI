@@ -5,8 +5,8 @@
 #SBATCH --ntasks=4
 #################################################################
 ## SBATCH --partition=milanq
-#SBATCH --partition=fpgaq
-## SBATCH --partition=defq
+## SBATCH --partition=fpgaq
+#SBATCH --partition=defq
 ## SBATCH --partition=slowq
 ## SBATCH --partition=rome16q
 #################################################################
@@ -43,19 +43,77 @@ DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/mridata_3
 
 ### Tests
 
-# OUTFOLDERNAME=smoothen1000Buffer005
+# OUTFOLDERNAME=smoothen1000Buffer001
 # OUTPUTDIR=/home/bastian/D1/testregistration/
 # DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_3d
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
 # --input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
-# --lbfgs_max_iterations 1000 --dt_buffer 0.05 --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+# --lbfgs_max_iterations 1000 --dt_buffer 0.01 --solver lu --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 
-OUTFOLDERNAME=nosmoothen1000Buffer005
-OUTPUTDIR=/home/bastian/D1/testregistration/
-DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_3d
+OUTPUTDIR=/home/bastian/D1/testregistration2d/
+DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_2d
+
+# ITERS=192
+# ALPHA=1e-4
+# OUTFOLDERNAME=testmpismoothN${ITERS}A${ALPHA}
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
+# --max_timesteps ${ITERS} --alpha ${ALPHA} \
+# --lbfgs_max_iterations 1000 --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+
+# ALPHA=1e-5
+# OUTFOLDERNAME=testmpismoothN${ITERS}A${ALPHA}
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
+# --max_timesteps ${ITERS} --alpha ${ALPHA} \
+# --lbfgs_max_iterations 1000 --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+
+# ALPHA=1e-6
+# OUTFOLDERNAME=testmpismoothN${ITERS}A${ALPHA}
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
+# --max_timesteps ${ITERS} --alpha ${ALPHA} \
+# --lbfgs_max_iterations 1000 --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+
+# ALPHA=1e-7
+# OUTFOLDERNAME=testmpismoothN${ITERS}A${ALPHA}
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
+# --max_timesteps ${ITERS} --alpha ${ALPHA} \
+# --lbfgs_max_iterations 1000 --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+
+
+ITERS=192
+ALPHA=1e-4
+OUTFOLDERNAME=testmpiN${ITERS}A${ALPHA}
 srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
---input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz --nosmoothen \
---lbfgs_max_iterations 1000 --dt_buffer 0.05 --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+--input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
+--max_timesteps ${ITERS} --alpha ${ALPHA} \
+--lbfgs_max_iterations 1000 --nosmoothen --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+
+# ALPHA=1e-5
+# OUTFOLDERNAME=testmpiN${ITERS}A${ALPHA}
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
+# --max_timesteps ${ITERS} --alpha ${ALPHA} \
+# --lbfgs_max_iterations 1000 --nosmoothen --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+
+
+# ALPHA=1e-6
+# OUTFOLDERNAME=testmpiN${ITERS}A${ALPHA}
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
+# --max_timesteps ${ITERS} --alpha ${ALPHA} \
+# --lbfgs_max_iterations 1000 --nosmoothen --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+
+
+# ALPHA=1e-7
+# OUTFOLDERNAME=testmpiN${ITERS}A${ALPHA}
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
+# --max_timesteps ${ITERS} --alpha ${ALPHA} \
+# --lbfgs_max_iterations 1000 --nosmoothen --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+
 
 
 OUTPATH=${OUTPUTDIR}${OUTFOLDERNAME}/

@@ -56,11 +56,20 @@ class Preconditioning():
     def __call__(self, func):
 
         if not hyperparameters["smoothen"]:
+
+            # print_overloaded("applying BC to func in Preconditioning()")
             cc = func.copy()
+
+            # breakpoint()
+
+            # print_overloaded("Debugging: cc ", cc.vector()[:].min(), cc.vector()[:].max(), cc.vector()[:].mean())
             C = cc.function_space()
             dim = cc.geometric_dimension()
             BC=DirichletBC(C, Constant((0.0,)*dim), "on_boundary")
             BC.apply(cc.vector())
+
+            # print_overloaded("Debugging: cc ", cc.vector()[:].min(), cc.vector()[:].max(), cc.vector()[:].mean())
+
         else:
             C = func.function_space()
             dim = func.geometric_dimension()

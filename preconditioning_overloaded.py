@@ -44,6 +44,7 @@ class PreconditioningBlock(Block):
         # print("self.smoothen=", self.smoothen)
         
         if not hyperparameters["smoothen"]:
+
             C = inputs[idx].function_space()
             dim = Function(C).geometric_dimension()
             BC=DirichletBC(C, Constant((0.0,)*dim), "on_boundary")

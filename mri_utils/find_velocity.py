@@ -7,6 +7,8 @@ from transformation_overloaded import transformation
 # from preconditioning_overloaded import Overloaded_Preconditioning # 
 from preconditioning_overloaded import preconditioning
 
+set_log_level(LogLevel.CRITICAL)
+
 class CFLerror(ValueError):
     '''raise this when CFL is violated'''
 
@@ -17,7 +19,7 @@ def print_overloaded(*args):
     else:
         pass
 
-# current_iteration = 0
+current_iteration = 0
 
 def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting_guess):
 
@@ -109,8 +111,8 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
 
 
     def cb(*args, **kwargs):
-        # global current_iteration
-        # current_iteration += 1
+        global current_iteration
+        current_iteration += 1
 
 
         current_pde_solution = state.tape_value()
@@ -125,14 +127,21 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
         Jreg = assemble(alpha*(current_control)**2*dx(domain=Img.function_space().mesh()))
 
         if MPI.rank(MPI.comm_world) == 0:
-            
-            hyperparameters["Jd_current"] = float(Jd)
-            hyperparameters["Jreg_current"] = float(Jreg)
+       
+            with open(files["lossfile"], "a") as myfile:
+                myfile.write(str(float(Jd))+ ", ")
+            with open(files["regularizationfile"], "a") as myfile:
+                myfile.write(str(float(Jreg))+ ", ")
 
-            files["lossfile"].write(str(float(Jd))+ ", ")
-            files["regularizationfile"].write(str(float(Jreg))+ ", ")
+            # print("Wrote to lossfile and regularizationfile, stored Jd_current")
+        
+        hyperparameters["Jd_current"] = float(Jd)
+        hyperparameters["Jreg_current"] = float(Jreg)
+        
 
-        print_overloaded("J=", Jd, "Reg=", Jreg)
+        # print("checking key:", "Jd_current" in hyperparameters.keys())
+        
+        print_overloaded("Iter", format(current_iteration, ".0f"), "Jd =", format(Jd, ".2e"), "Reg =", format(Jreg, ".2e"))
 
         domainmesh = current_pde_solution.function_space().mesh()
         #compute CFL number
@@ -158,9 +167,9 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
 
         File(hyperparameters["outputfolder"] + '/Currentstate.pvd') << current_pde_solution
 
-        print_overloaded("Wrote files in callback")
+        # print_overloaded("Wrote files in callback")
 
-    minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True, "maxiter": hyperparameters["lbfgs_max_iterations"]}, tol=1e-08, callback = cb)
+    minimize(Jhat,  method = 'L-BFGS-B', options = {"iprint": 0, "disp": None, "maxiter": hyperparameters["lbfgs_max_iterations"]}, tol=1e-08, callback = cb)
 
     # Store final values in pvd format for visualization
 
@@ -170,7 +179,6 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
 
     current_pde_solution = state.tape_value()
     current_pde_solution.rename("finalstate", "")
-
     File(hyperparameters["outputfolder"] + '/Finalstate.pvd') << current_pde_solution
 
     current_control = cont.tape_value()
@@ -189,3 +197,90 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
     File(hyperparameters["outputfolder"] + '/Finalcontrol.pvd') << current_control
 
     print_overloaded("Stored final State, Control, Velocity to .pvd files")
+
+
+    shape = hyperparameters["input.shape"]
+
+    from mpi4py import MPI as pyMPI
+
+    def mpi4py_comm(comm):
+        '''Get mpi4py communicator'''
+        try:
+            return comm.tompi4py()
+        except AttributeError:
+            return comm
+
+        
+    def peval(f, x):
+        '''Parallel synced eval'''
+        try:
+            yloc = f(x)
+        except RuntimeError:
+            yloc = np.inf*np.ones(f.value_shape())
+
+        comm = mpi4py_comm(f.function_space().mesh().mpi_comm())
+        yglob = np.zeros_like(yloc)
+        comm.Allreduce(yloc, yglob, op=pyMPI.MIN)
+
+        return yglob
+
+    if shape[-1] == 1:
+
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        image = np.zeros((shape[0], shape[1]))
+
+        for nx in range(shape[0]):
+            for ny in range(shape[1]):
+                image[nx, ny] = peval(current_pde_solution, [nx / shape[0], ny / shape[1]])
+
+        plt.title("State after " + str(current_iteration + 1) + "/" + str(hyperparameters["lbfgs_max_iterations"]) + " iterations")
+        plt.imshow(image)
+        plt.colorbar()
+        plt.savefig(hyperparameters["outputfolder"] + "/_finalsolution.png")
+        plt.close()
+
+
+
+        image = np.zeros((shape[0], shape[1]))
+
+        for nx in range(shape[0]):
+            for ny in range(shape[1]):
+                image[nx, ny] = peval(Img, [nx / shape[0], ny / shape[1]])
+        plt.title("Input")
+        plt.imshow(image)
+        plt.colorbar()
+        plt.savefig(hyperparameters["outputfolder"] + "/_input.png")
+        plt.close()
+
+
+
+        image = np.zeros((shape[0], shape[1]))
+
+        for nx in range(shape[0]):
+            for ny in range(shape[1]):
+                image[nx, ny] = peval(Img_goal, [nx / shape[0], ny / shape[1]])
+
+        plt.title("Target")
+        plt.imshow(image)
+        plt.colorbar()
+        plt.savefig(hyperparameters["outputfolder"] + "/_target.png")
+        plt.close()
+
+
+        image = np.zeros((shape[0], shape[1]))
+
+        for nx in range(shape[0]):
+            for ny in range(shape[1]):
+                image[nx, ny] = np.linalg.norm(peval(velocityField, [nx / shape[0], ny / shape[1]]))
+
+        plt.title("Velocity after " + str(current_iteration + 1) + "/" + str(hyperparameters["lbfgs_max_iterations"]) + " iterations")
+        plt.imshow(image)
+        plt.colorbar()
+        plt.savefig(hyperparameters["outputfolder"] + "/_velocity.png")
+        plt.close()
+
+
+
+

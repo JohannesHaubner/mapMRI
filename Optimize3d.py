@@ -45,7 +45,10 @@ parser.add_argument("--nosmoothen", default=False, action="store_true", help="Se
 
 parser.add_argument("--alpha", type=float, default=1e-4)
 parser.add_argument("--lbfgs_max_iterations", type=float, default=400)
-parser.add_argument("--dt_buffer", type=float, default=1)
+parser.add_argument("--dt_buffer", type=float, default=0.1)
+parser.add_argument("--max_timesteps", type=float, default=None)
+
+
 parser.add_argument("--vinit", type=float, default=0)
 parser.add_argument("--readname", type=str, default="-1")
 parser.add_argument("--starting_guess", type=str, default=None)
@@ -126,14 +129,17 @@ hyperparameters["mehsh"] = h
 hyperparameters["maxMeshCoordinate"] = np.max(domainmesh.coordinates())
 
 # hyperparameters["input.shape"]
+if hyperparameters["max_timesteps"] is None:
+    hyperparameters["expected_distance_covered"] = 0.25 # assume that voxels need to be moved over a distance of max. 25 % of the image size.
+    v_needed = hyperparameters["expected_distance_covered"] / T_final
+    hyperparameters["DeltaT"] = hyperparameters["dt_buffer"] * float(h) / v_needed #1e-3
+    print_overloaded("calculated initial time step size to", hyperparameters["DeltaT"])
+    hyperparameters["DeltaT_init"] = hyperparameters["DeltaT"]
 
-hyperparameters["expected_distance_covered"] = 0.25 # assume that voxels need to be moved over a distance of max. 25 % of the image size.
-v_needed = hyperparameters["expected_distance_covered"] / T_final
-hyperparameters["DeltaT"] = hyperparameters["dt_buffer"] * float(h) / v_needed #1e-3
-print_overloaded("calculated initial time step size to", hyperparameters["DeltaT"])
-hyperparameters["DeltaT_init"] = hyperparameters["DeltaT"]
-
-hyperparameters["max_timesteps"] = int(1 / hyperparameters["DeltaT"])
+    hyperparameters["max_timesteps"] = int(1 / hyperparameters["DeltaT"])
+else:
+    hyperparameters["max_timesteps"] = int(hyperparameters["max_timesteps"])
+    hyperparameters["DeltaT"] = 1 / hyperparameters["max_timesteps"]
 
 with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as outfile:
     json.dump(hyperparameters, outfile, sort_keys=True, indent=4)
@@ -215,25 +221,38 @@ t0 = time.time()
 from mri_utils.find_velocity import find_velocity, CFLerror
 
 
-files["lossfile"] = open(hyperparameters["outputfolder"] + '/loss.txt', 'w')
-files["regularizationfile"] = open(hyperparameters["outputfolder"] + '/regularization.txt', 'w')
+files["lossfile"] = hyperparameters["outputfolder"] + '/loss.txt'
+files["regularizationfile"] = hyperparameters["outputfolder"] + '/regularization.txt'
 
-
-for n in range(4):
+# for n in range(1):
     
-    try:
-        find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess=controlfun)
-        break
-    except CFLerror:
-
-        raise NotImplementedError("Something went wrong here before, 'exploding' gradients-like. Need to be checked")
-        hyperparameters["DeltaT"] *= 1 / 2
-        print_overloaded("CFL condition violated, reducing time step size and retry")
-        pass    
+#     try:
+try:
+    find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess=controlfun)
+except RuntimeError:
+    print(":" * 100)
+    print("Trying with LU solver")
+    print(":" * 100)
+    hyperparameters["solver"] = "lu"
     
-    # sanity check
-    if hyperparameters["starting_guess"] is None:
-        assert controlfun is None
+    hyperparameters["krylov_failed"] = True
+
+    with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as outfile:
+        json.dump(hyperparameters, outfile, sort_keys=True, indent=4)
+
+    find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess=controlfun)
+    
+    #     break
+    # except CFLerror:
+
+    #     raise NotImplementedError("Something went wrong here before, 'exploding' gradients-like. Need to be checked")
+    #     hyperparameters["DeltaT"] *= 1 / 2
+    #     print_overloaded("CFL condition violated, reducing time step size and retry")
+    #     pass    
+    
+    # # sanity check
+    # if hyperparameters["starting_guess"] is None:
+    #     assert controlfun is None
 
 tcomp = (time.time()-t0) / 3600
 
@@ -242,7 +261,5 @@ hyperparameters["optimization_time_hours"] = tcomp
 with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as outfile:
     json.dump(hyperparameters, outfile, sort_keys=True, indent=4)
 
-files["lossfile"].close()
-files["regularizationfile"].close()
 
 print_overloaded("Optimize3d.py ran succesfully :-)")

@@ -9,6 +9,12 @@ while True:
         if not job.endswith(".out"):
             
             continue
+
+        jobid = int(job.replace(".out", ""))
+
+        if jobid < 420480:
+            continue
+
         jobfile = jobpath + job
 
         jobid = str(pathlib.Path(job).stem)
@@ -25,8 +31,8 @@ while True:
         for line in Lines:
             # print(line)
 
-            if "Killed" in line and "error" in line:
-                os.system("scancel " + jobid)
+            if "error" in line.lower():
+                # os.system("scancel " + jobid)
                 # print(line)
                 print("Cancelled job", jobid)
                 break
