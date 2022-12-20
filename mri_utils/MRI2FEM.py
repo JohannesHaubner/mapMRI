@@ -17,9 +17,17 @@ def read_image(hyperparameters, name, mesh=None, storepath=None, printout=True):
     if printout:
         print_overloaded("Loading", hyperparameters[name])
     
-    image2 = nibabel.load(hyperparameters[name])
-    data = image2.get_fdata()
+    if hyperparameters[name].endswith(".mgz"):
+        image2 = nibabel.load(hyperparameters[name])
+        data = image2.get_fdata()
+    elif hyperparameters[name].endswith(".png"):
+        from PIL import Image
+        img = Image.open(hyperparameters[name])
+        img = img.convert("L")
+        data = np.array(img)
 
+        data = np.expand_dims(data, -1)
+        # pass
 
     hyperparameters[name + ".shape"] = list(data.shape)
     if printout:
@@ -54,21 +62,21 @@ def read_image(hyperparameters, name, mesh=None, storepath=None, printout=True):
 
     u_data = Function(space)
 
-    try:
-        ras2vox = image2.header.get_ras2vox()
-        assert np.unique(ras2vox).size == 2
-        assert 1. in np.unique(ras2vox)
-        assert 0. in np.unique(ras2vox)
-    except:
-        # pass
-        # raise NotImplementedError()
-        print_overloaded("image2.header.get_ras2vox()", ras2vox)
+    # try:
+    #     ras2vox = image2.header.get_ras2vox()
+    #     assert np.unique(ras2vox).size == 2
+    #     assert 1. in np.unique(ras2vox)
+    #     assert 0. in np.unique(ras2vox)
+    # except:
+    #     # pass
+    #     # raise NotImplementedError()
+    #     print_overloaded("image2.header.get_ras2vox()", ras2vox)
 
-        ras2vox = np.linalg.inv(image2.header.get_vox2ras_tkr())
+    #     ras2vox = np.linalg.inv(image2.header.get_vox2ras_tkr())
 
-        print_overloaded("image2.header.get_vox2ras_tkr() = ", ras2vox)
+    #     print_overloaded("image2.header.get_vox2ras_tkr() = ", ras2vox)
 
-        del ras2vox
+    #     del ras2vox
 
     xyz = space.tabulate_dof_coordinates().transpose()
 

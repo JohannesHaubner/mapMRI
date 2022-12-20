@@ -2,11 +2,11 @@
 #SBATCH --job-name=register
 #SBATCH --cpus-per-task=1
 ## #### SBATCH --nodes=4
-#SBATCH --ntasks=4
+#SBATCH --ntasks=1
 #################################################################
-#SBATCH --partition=milanq
-##SBATCH --partition=fpgaq
-## SBATCH --partition=defq
+##SBATCH --partition=milanq
+## SBATCH --partition=fpgaq
+#SBATCH --partition=defq
 ## SBATCH --partition=slowq
 ## SBATCH --partition=rome16q
 #################################################################
@@ -44,10 +44,12 @@ DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/mridata_3
 ### Tests
 
 
-OUTPUTDIR=/home/bastian/D1/hyperparameterstudy_2d/
-DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_2d
-ITERS=$1
-ALPHA=$2
+# OUTPUTDIR=/home/bastian/D1/hyperparameterstudy_2d/
+# DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_2d
+# ITERS=$1
+# ALPHA=$2
+
+
 
 
 # OUTFOLDERNAME=smoothN${ITERS}A${ALPHA}
@@ -57,15 +59,84 @@ ALPHA=$2
 # --lbfgs_max_iterations 1000 --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 
 
-OUTFOLDERNAME=N${ITERS}A${ALPHA}
-srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
---input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
---max_timesteps ${ITERS} --alpha ${ALPHA} \
---lbfgs_max_iterations 1000 --nosmoothen --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+# OUTFOLDERNAME=N${ITERS}A${ALPHA}
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
+# --max_timesteps ${ITERS} --alpha ${ALPHA} \
+# --lbfgs_max_iterations 1000 --nosmoothen --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+
+OUTPUTDIR=/home/bastian/D1/debugging/
+
+# OUTFOLDERNAME=RocketOriginalTransport
+# OUTPATH=${OUTPUTDIR}${OUTFOLDERNAME}/
+# mkdir -pv ${OUTPATH}
+# cd ${OUTPATH}
+# python -u /home/bastian/Oscar-Image-Registration-via-Transport-Equation/Optimize.py > ${LOGOUTFILE}
+
+# OUTFOLDERNAME=CubeOriginalTransport
+# OUTPATH=${OUTPUTDIR}${OUTFOLDERNAME}/
+# mkdir -pv ${OUTPATH}
+# cd ${OUTPATH}
+# python -u /home/bastian/Oscar-Image-Registration-via-Transport-Equation/Optimize.py > ${LOGOUTFILE}
+
+# OUTFOLDERNAME=RocketNewTransport
+# OUTPATH=${OUTPUTDIR}${OUTFOLDERNAME}/
+# mkdir -pv ${OUTPATH}
+# cd ${OUTPATH}
+# python -u /home/bastian/Oscar-Image-Registration-via-Transport-Equation/Optimize.py > ${LOGOUTFILE}
+
+# OUTFOLDERNAME=CubeNewTransport
+# OUTPATH=${OUTPUTDIR}${OUTFOLDERNAME}/
+# mkdir -pv ${OUTPATH}
+# cd ${OUTPATH}
+# python -u /home/bastian/Oscar-Image-Registration-via-Transport-Equation/Optimize.py > ${LOGOUTFILE}
 
 
+# OUTFOLDERNAME=RocketNewCode
+# OUTPATH=${OUTPUTDIR}${OUTFOLDERNAME}/
+# mkdir -pv ${OUTPATH}
+# cd ${OUTPATH}
+# DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation
 
+# srun -n 1 python3 -u /home/bastian/Oscar-Image-Registration-via-Transport-Equation/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --slurmid ${SLURM_JOB_ID} \
+# --lbfgs_max_iterations 1000 --max_timesteps 800 --input ${DATAPATH}/shuttle_small.png --target ${DATAPATH}/shuttle_goal.png > ${LOGOUTFILE}
+
+OUTFOLDERNAME=RocketNewCodeRungeKutta
 OUTPATH=${OUTPUTDIR}${OUTFOLDERNAME}/
+mkdir -pv ${OUTPATH}
+cd ${OUTPATH}
+DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation
+
+srun -n 1 python3 -u /home/bastian/Oscar-Image-Registration-via-Transport-Equation/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+--slurmid ${SLURM_JOB_ID} --timestepping RungeKutta \
+--lbfgs_max_iterations 1000 --max_timesteps 800 --input ${DATAPATH}/shuttle_small.png --target ${DATAPATH}/shuttle_goal.png > ${LOGOUTFILE}
+
+
+# OUTFOLDERNAME=CubeNewCodeCrankNicolson
+# OUTPATH=${OUTPUTDIR}${OUTFOLDERNAME}/
+# mkdir -pv ${OUTPATH}
+# cd ${OUTPATH}
+# DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_2d
+
+# srun -n 1 python3 -u /home/bastian/Oscar-Image-Registration-via-Transport-Equation/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --slurmid ${SLURM_JOB_ID} --timestepping CrankNicolson \
+# --lbfgs_max_iterations 1000 --max_timesteps 800 \
+# --input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz > ${LOGOUTFILE}
+
+# OUTFOLDERNAME=CubeNewCodeRungeKutta
+# OUTPATH=${OUTPUTDIR}${OUTFOLDERNAME}/
+# mkdir -pv ${OUTPATH}
+# cd ${OUTPATH}
+# DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_2d
+
+# srun -n 1 python3 -u /home/bastian/Oscar-Image-Registration-via-Transport-Equation/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --slurmid ${SLURM_JOB_ID} --timestepping RungeKutta \
+# --lbfgs_max_iterations 1000 --max_timesteps 800 \
+# --input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz > ${LOGOUTFILE}
+
+
+
 cp -v ${LOGOUTFILE} ${OUTPATH}
 
 

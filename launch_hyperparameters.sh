@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ALPHA=1e-8
+ALPHA=1e-0
 for MAXIITER in 64 128 256 512
 do
     if [ -z ${jobid+x} ]; 

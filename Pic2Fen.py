@@ -6,7 +6,14 @@ from PIL import Image
 import numpy as np
 
 def Pic2FEM(FName, mesh=None):
-    img = Image.open(FName)
+    if FName.endswith("mgz"):
+        import nibabel
+        myarray=nibabel.load(FName).get_fdata()[:,:, 0]
+        myarray = myarray / np.max(myarray)
+        img = Image.fromarray(np.uint8(myarray*255))
+        img = img.convert("RGB")
+    else:
+        img = Image.open(FName)
     xPixel = np.shape(img)[0]
     yPixel = np.shape(img)[1]
     

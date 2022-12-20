@@ -1,39 +1,10 @@
-#solver for transporting images
-from fenics import *
-from fenics_adjoint import *
+# solver for transporting images
 
-
-def print_overloaded(*args):
-    if MPI.rank(MPI.comm_world) == 0:
-        # set_log_level(PROGRESS)
-        print(*args)
-    else:
-        pass
-
-
-print_overloaded("Setting parameters parameters['ghost_mode'] = 'shared_facet'")
+from dolfin import *
+from dolfin_adjoint import *
 parameters['ghost_mode'] = 'shared_facet'
 
-
-
-
-
-
-
-def Transport(Img, Wind, MaxIter, DeltaT, hyperparameters, MassConservation = True, StoreHistory=False, FNameOut="",
-                solver=None, timestepping=None):
-    
-    # assert timestepping in ["CrankNicolson", "explicitEuler"]
-
-    print_overloaded("......................................")
-    print_overloaded("Settings in Transport()")
-    print_overloaded("--- solver =", solver)
-    print_overloaded("--- timestepping =", timestepping)
-    print_overloaded("......................................")
-
-    print_overloaded("parameters['ghost_mode']", parameters['ghost_mode'])
-
-    
+def Transport(Img, Wind, MaxIter, DeltaT, MassConservation = True, StoreHistory=False, FNameOut=""):
     Space = Img.function_space()
     v = TestFunction(Space)
     if StoreHistory:
@@ -46,9 +17,8 @@ def Transport(Img, Wind, MaxIter, DeltaT, hyperparameters, MassConservation = Tr
     #compute CFL number
     h = CellDiameter(mesh)
     CFL = project(sqrt(inner(Wind, Wind))*Constant(DeltaT)/h, FunctionSpace(mesh, "DG", 0))
-    
     if(CFL.vector().max() > 1.0):
-        raise ValueError("DGTransport: WARNING: CFL = %le", CFL)
+        print("DGTransport: WARNING: CFL = %le", CFL)
 
     #Make form:
     n = FacetNormal(mesh)
@@ -98,38 +68,14 @@ def Transport(Img, Wind, MaxIter, DeltaT, hyperparameters, MassConservation = Tr
     Img_deformed.assign(Img)
     Img_deformed.rename("Img", "")
 
-    a = Constant(1.0/DeltaT)*(inner(v,Img_next)*dx - inner(v, Img_deformed)*dx)
-    
-    if timestepping == "explicitEuler":
-        a = a + Form(Img_deformed)
-    elif timestepping == "RungeKutta":
-        # in this case we assemble the RHS during the loop
-        pass 
+    a = Constant(1.0/DeltaT)*(inner(v,Img_next)*dx - inner(v, Img_deformed)*dx) + 0.5*(Form(Img_deformed) + Form(Img_next))
 
-    elif timestepping == "CrankNicolson":
-        a = a + 0.5*(Form(Img_deformed) + Form(Img_next))
-    else:
-        raise NotImplementedError
-
-        #a = Constant(1.0/DeltaT)*(inner(v, f_next)*dx - inner(v, Img)*dx) - Form(f_next)
-        #a = Constant(1.0/DeltaT)*(inner(v, f_next)*dx - inner(v, Img)*dx) - Form(Img)
+    #a = Constant(1.0/DeltaT)*(inner(v, f_next)*dx - inner(v, Img)*dx) - Form(f_next)
+    #a = Constant(1.0/DeltaT)*(inner(v, f_next)*dx - inner(v, Img)*dx) - Form(Img)
 
     A = assemble(lhs(a))
-
-    if solver == "krylov":
-        
-        solver = KrylovSolver(A, "gmres", hyperparameters["preconditioner"])
-        solver.set_operators(A, A)
-        print_overloaded("Assembled A, using Krylov solver")
-    
-    elif solver == "lu":
-        solver = LUSolver()
-        solver.set_operator(A)
-        print_overloaded("Assembled A, using LU solver")
-
-        # solver = PETScLUSolver(A, "mumps")
-    else:
-        raise NotImplementedError()
+    #solver = LUSolver(A) #needed for Taylor-Test
+    solver = KrylovSolver(A, "gmres", "none")
     
     CurTime = 0.0
     if StoreHistory:
@@ -138,38 +84,17 @@ def Transport(Img, Wind, MaxIter, DeltaT, hyperparameters, MassConservation = Tr
     for i in range(MaxIter):
         #solve(a==0, Img_next)
 
-        print_overloaded("Iteration ", i + 1, "/", MaxIter + 1, "in Transport()")
-
-        if timestepping == "RungeKutta":
-            dImg = TrialFunction(Img_deformed.function_space())
-            dI = Function(Img_deformed.function_space())
-            
-            solve(inner(dImg, v)*dx == Form(Img_deformed), dI)
-            # A = assemble(lhs(tempA))
-            # b = assemble()
-            # solve(A, x, b)
-
-            # BZ: potentially factor dt / 2 missing in front of dI ?
-            factor = DeltaT / 2.
-            da = Form(Img_deformed + factor * dI)
-            
-            system_rhs = rhs(a + da)
-        else:
-            system_rhs = rhs(a)
-
-        b = assemble(system_rhs)
+        b = assemble(rhs(a))
         b.apply("")
         
         #solver.solve(Img_deformed.vector(), b)
         solver.solve(Img.vector(), b)
         Img_deformed.assign(Img)
-
         
         CurTime = i*DeltaT
         if StoreHistory:
             FOut.write(Img_deformed, CurTime)
 
-    print_overloaded("i == MaxIter, Transport() finished")
     return Img_deformed
 
 if __name__ == "__main__":
@@ -177,6 +102,24 @@ if __name__ == "__main__":
     FName = "shuttle_small.png"
     from Pic2Fen import Pic2FEM, FEM2Pic
     (mesh, Img, NumData) = Pic2FEM(FName)
+
+    """
+    #read from file
+    FIn = HDF5File(MPI.comm_world, FName+".h5", 'r')
+    mesh = Mesh()
+    FIn.read(mesh, "mesh", False)
+    Space = VectorFunctionSpace(mesh, "DG", 0)
+    Img = Function(Space)
+    FIn.read(Img, "Data1")
+    """
+
+    """
+    #make artificial
+    mesh = UnitSquareMesh(100,100)
+    x = SpatialCoordinate(mesh)
+    Img = project(x[0], FunctionSpace(mesh, "DG", 0))
+    NumData = 1
+    """
     
     FNameOut = "img_DG"
     FNameOut = "output/"+FNameOut+".xdmf"
@@ -188,6 +131,8 @@ if __name__ == "__main__":
     x = SpatialCoordinate(mesh)
     Wind = as_vector((0.0, x[1]))
 
+    #Img = project(sqrt(inner(Img, Img)), FunctionSpace(mesh, "DG", 0))
+    #Img = project(Img, VectorFunctionSpace(mesh, "CG", 1, NumData))
     Img = project(Img, VectorFunctionSpace(mesh, "DG", 1, NumData))
     Img.rename("img", "")
 

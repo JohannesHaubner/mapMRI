@@ -31,10 +31,11 @@ while True:
         for line in Lines:
             # print(line)
 
-            if "error" in line.lower():
+            if "RocketNewCode".lower() in line.lower():
                 # os.system("scancel " + jobid)
                 # print(line)
-                print("Cancelled job", jobid)
+                #print("Cancelled job", jobid)
+                print(job)
                 break
 
 
