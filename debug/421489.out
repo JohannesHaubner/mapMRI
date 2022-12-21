@@ -1,0 +1,21 @@
+starting to run
+mkdir: created directory '/home/bastian/D1/testdebugging/false1e-4L2controlMRI2FEMfalse/'
+mkdir: created directory '/home/bastian/D1/testdebugging/false1e-4L2controlMRI2FEMfalse//output'
+DEBUGGING
+Traceback (most recent call last):
+  File "/home/bastian/Oscar-Image-Registration-via-Transport-Equation/Optimize.py", line 213, in <module>
+    minimize(Jhat,  method = 'L-BFGS-B', options = {"disp": True, "maxiter": maxlbfgsiter}, tol=1e-08, callback = cb)
+  File "/home/bastian/.conda/envs/mri_inverse/lib/python3.9/site-packages/pyadjoint/tape.py", line 46, in wrapper
+    return function(*args, **kwargs)
+  File "/home/bastian/.conda/envs/mri_inverse/lib/python3.9/site-packages/pyadjoint/optimization/optimization.py", line 252, in minimize
+    opt = algorithm(rf_np, **kwargs)
+  File "/home/bastian/.conda/envs/mri_inverse/lib/python3.9/site-packages/pyadjoint/optimization/optimization.py", line 135, in minimize_scipy_generic
+    res = scipy_minimize(J, m_global, method=method, **kwargs)
+  File "/home/bastian/.conda/envs/mri_inverse/lib/python3.9/site-packages/scipy/optimize/_minimize.py", line 623, in minimize
+    return _minimize_lbfgsb(fun, x0, args, jac, bounds,
+  File "/home/bastian/.conda/envs/mri_inverse/lib/python3.9/site-packages/scipy/optimize/lbfgsb.py", line 365, in _minimize_lbfgsb
+    callback(np.copy(x))
+  File "/home/bastian/Oscar-Image-Registration-via-Transport-Equation/Optimize.py", line 181, in cb
+    raise ValueError("State became > 10 at some vertex, something is probably wrong")
+ValueError: State became > 10 at some vertex, something is probably wrong
+ This problem is unconstrained.

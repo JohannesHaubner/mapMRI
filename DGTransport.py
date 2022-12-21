@@ -105,7 +105,9 @@ def Transport(Img, Wind, MaxIter, DeltaT, hyperparameters, MassConservation = Tr
     elif timestepping == "RungeKutta":
         # in this case we assemble the RHS during the loop
         pass 
-
+    elif timestepping == "RungeKuttaBug":
+        # in this case we assemble the RHS during the loop
+        pass 
     elif timestepping == "CrankNicolson":
         a = a + 0.5*(Form(Img_deformed) + Form(Img_next))
     else:
@@ -140,7 +142,7 @@ def Transport(Img, Wind, MaxIter, DeltaT, hyperparameters, MassConservation = Tr
 
         print_overloaded("Iteration ", i + 1, "/", MaxIter + 1, "in Transport()")
 
-        if timestepping == "RungeKutta":
+        if timestepping == "RungeKutta" or timestepping == "RungeKuttaBug":
             dImg = TrialFunction(Img_deformed.function_space())
             dI = Function(Img_deformed.function_space())
             
@@ -151,6 +153,10 @@ def Transport(Img, Wind, MaxIter, DeltaT, hyperparameters, MassConservation = Tr
 
             # BZ: potentially factor dt / 2 missing in front of dI ?
             factor = DeltaT / 2.
+
+            if timestepping == "RungeKuttaBug":
+                factor = 1
+
             da = Form(Img_deformed + factor * dI)
             
             system_rhs = rhs(a + da)

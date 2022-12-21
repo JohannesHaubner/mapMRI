@@ -1,0 +1,7 @@
+starting to run
+mkdir: created directory '/home/bastian/D1/testdebugging/false1e-4velocityPic2FENtrue/'
+mkdir: created directory '/home/bastian/D1/testdebugging/false1e-4velocityPic2FENtrue//output'
+DEBUGGING
+ This problem is unconstrained.
+'/home/bastian/Oscar-Image-Registration-via-Transport-Equation/debug/421490_log_python_srun.txt' -> '/home/bastian/D1/testdebugging/false1e-4velocityPic2FENtrue/421490_log_python_srun.txt'
+success

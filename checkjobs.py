@@ -1,7 +1,7 @@
 import os
 import pathlib
 import time
-jobpath = "/home/bastian/Oscar-Image-Registration-via-Transport-Equation/slurm/"
+jobpath = "/home/bastian/Oscar-Image-Registration-via-Transport-Equation/debug/"
 
 while True:
     for job in sorted(os.listdir(jobpath)):
@@ -9,9 +9,9 @@ while True:
         if not job.endswith(".out"):
             
             continue
-
+        # jobid = int(job.replace("_log_python_srun.txt", ""))
         jobid = int(job.replace(".out", ""))
-
+        # print(jobid)
         if jobid < 420480:
             continue
 
@@ -27,17 +27,15 @@ while True:
         except UnicodeDecodeError:
             print("UnicodeDecodeError at job", job, "will continue to next job")
             continue
-
+        succes = False
         for line in Lines:
             # print(line)
 
-            if "RocketNewCode".lower() in line.lower():
-                # os.system("scancel " + jobid)
-                # print(line)
-                #print("Cancelled job", jobid)
-                print(job)
-                break
+            if "success".lower() in line.lower():
+                succes = True
 
-
+        if not succes:
+            print(jobid)
+            print(Lines[-5:])
     print("Sleeping for one hour")
     time.sleep(60 * 60)

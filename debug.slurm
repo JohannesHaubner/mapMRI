@@ -12,7 +12,7 @@
 #################################################################
 
 #SBATCH --time 6-24 ##--time=99:00:00
-#SBATCH -o /home/bastian/Oscar-Image-Registration-via-Transport-Equation/slurm/%j.out
+#SBATCH -o /home/bastian/Oscar-Image-Registration-via-Transport-Equation/cubedebugging/%j.out
 #SBATCH --export=ALL
 #SBATCH --mail-user=bastian@simula.no
 #module load gcc
@@ -36,33 +36,25 @@ echo "starting to run"
 ## sbatch --dependency=afterany: submit.slurm
 #######################################################
 SPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation
-LOGOUTFILE=${SPATH}/slurm/${SLURM_JOB_ID}_log_python_srun.txt
+LOGOUTFILE=${SPATH}/cubedebugging/${SLURM_JOB_ID}_log_python_srun.txt
 OUTPUTDIR=/home/bastian/D1/mriregistration_outputs/
 DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/mridata_3d
 
+OUTPUTDIR=/home/bastian/D1/cubedebugging/
 
-# ITERS=$1
-# ALPHA=$2
-
-# # OUTFOLDERNAME=explicit${ITERS}A${ALPHA}
-# # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
-# # --max_timesteps ${ITERS} --alpha ${ALPHA} --timestepping explicitEuler \
-# # --lbfgs_max_iterations 100 --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
-
-# OUTFOLDERNAME=RK${ITERS}A${ALPHA}
-# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
-# --max_timesteps ${ITERS} --alpha ${ALPHA} --timestepping RungeKutta \
-# --lbfgs_max_iterations 100 --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
-
-
-# ### Tests
-
-
-# OUTPUTDIR=/home/bastian/D1/hyperparameterstudy_2d/
-# DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_2d
-# ITERS=$1
-# ALPHA=$2
-
+OUTFOLDERNAME=$1$2$3$4$5$6
+OUTPATH=${OUTPUTDIR}${OUTFOLDERNAME}/
+mkdir -pv ${OUTPATH}
+cd ${OUTPATH}
+mkdir -pv ${OUTPATH}/output
+echo "DEBUGGING"
+# parser.add_argument("--newTransport",type=str, choices=["true", "false"])
+# parser.add_argument("--alpha", default=1e-4, type=float)
+# parser.add_argument("--regularize", choices=["L2control", "velocity"])
+# parser.add_argument("--loading", choices=["Pic2FEN", "MRI2FEM"])
+# parser.add_argument("--normalize", type=str, choices=["true", "false"])
+python -u /home/bastian/Oscar-Image-Registration-via-Transport-Equation/Optimize.py --maxiter 800 --maxlbfs 1000 \
+--newTransport $1 --alpha $2 --regularize $3 --loading $4 --normalize $5 --cube true --timestepping $6 > ${LOGOUTFILE}
 
 
 

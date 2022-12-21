@@ -5,7 +5,7 @@ parameters['ghost_mode'] = 'shared_facet'
 from PIL import Image
 import numpy as np
 
-def Pic2FEM(FName, mesh=None):
+def Pic2FEM(FName, mesh=None, degree=0):
     if FName.endswith("mgz"):
         import nibabel
         myarray=nibabel.load(FName).get_fdata()[:,:, 0]
@@ -34,7 +34,7 @@ def Pic2FEM(FName, mesh=None):
             PixID[2*(img.size[0]*j + i)+0, 1] = i
             PixID[2*(img.size[0]*j + i)+1, 1] = i
 
-    ImgSpace = VectorFunctionSpace(mesh, "DG", 0, len(Channels))
+    ImgSpace = VectorFunctionSpace(mesh, "DG", degree, len(Channels))
     ImgFunction = Function(ImgSpace)
     ImgFunction.rename("image", "")
     Fvalues = np.zeros(ImgFunction.vector().local_size())

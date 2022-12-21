@@ -13,7 +13,7 @@ def print_overloaded(*args):
 
     
 
-def read_image(hyperparameters, name, mesh=None, storepath=None, printout=True):
+def read_image(hyperparameters, name, mesh=None, storepath=None, printout=True, normalize=True):
     if printout:
         print_overloaded("Loading", hyperparameters[name])
     
@@ -105,19 +105,21 @@ def read_image(hyperparameters, name, mesh=None, storepath=None, printout=True):
     # breakpoint()
     u_data.vector()[:] = data[i, j, k]
 
-    if printout:
-        print_overloaded("Normalizing image")
-        print_overloaded("Img.vector()[:].max()", u_data.vector()[:].max())
-    # print_overloaded("Img_goal.vector()[:].max()", Img_goal.vector()[:].max())
 
-    u_data.vector()[:] *= 1 / u_data.vector()[:].max()
-    # Img_goal.vector()[:] *= 1 / Img_goal.vector()[:].max()
 
-    if printout:
-        print_overloaded("Applying ReLU() to image")
-    
-    u_data.vector()[:] = np.where(u_data.vector()[:] < 0, 0, u_data.vector()[:])
-    # Img_goal.vector()[:] = np.where(Img_goal.vector()[:] < 0, 0, Img_goal.vector()[:])
+    if normalize:
+        if printout:
+            print_overloaded("Normalizing image")
+            print_overloaded("Img.vector()[:].max()", u_data.vector()[:].max())
+
+        u_data.vector()[:] *= 1 / u_data.vector()[:].max()
+        # Img_goal.vector()[:] *= 1 / Img_goal.vector()[:].max()
+
+        if printout:
+            print_overloaded("Applying ReLU() to image")
+        
+        u_data.vector()[:] = np.where(u_data.vector()[:] < 0, 0, u_data.vector()[:])
+        # Img_goal.vector()[:] = np.where(Img_goal.vector()[:] < 0, 0, Img_goal.vector()[:])
 
     return mesh, u_data, 1
 
