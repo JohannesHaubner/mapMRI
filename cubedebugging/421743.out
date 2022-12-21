@@ -1,0 +1,7 @@
+starting to run
+mkdir: created directory '/home/bastian/D1/cubedebugging/true1e-4L2controlMRI2FEMtrueexplicitEuler/'
+mkdir: created directory '/home/bastian/D1/cubedebugging/true1e-4L2controlMRI2FEMtrueexplicitEuler//output'
+DEBUGGING
+ This problem is unconstrained.
+'/home/bastian/Oscar-Image-Registration-via-Transport-Equation/cubedebugging/421743_log_python_srun.txt' -> '/home/bastian/D1/cubedebugging/true1e-4L2controlMRI2FEMtrueexplicitEuler/421743_log_python_srun.txt'
+success

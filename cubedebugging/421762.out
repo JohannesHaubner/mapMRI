@@ -1,0 +1,5 @@
+starting to run
+mkdir: created directory '/home/bastian/D1/cubedebugging/false1e-4L2controlPic2FENtrueRungeKutta/'
+mkdir: created directory '/home/bastian/D1/cubedebugging/false1e-4L2controlPic2FENtrueRungeKutta//output'
+DEBUGGING
+slurmstepd: error: *** JOB 421762 ON n020 CANCELLED AT 2022-12-21T15:42:45 ***
