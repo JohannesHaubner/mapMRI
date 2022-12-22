@@ -37,33 +37,31 @@ echo "starting to run"
 #######################################################
 SPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation
 LOGOUTFILE=${SPATH}/slurm/${SLURM_JOB_ID}_log_python_srun.txt
-OUTPUTDIR=/home/bastian/D1/mriregistration_outputs/
-DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/mridata_3d
+
+# OUTPUTDIR=/home/bastian/D1/mriregistration_outputs/
 
 
-# ITERS=$1
-# ALPHA=$2
 
-# # OUTFOLDERNAME=explicit${ITERS}A${ALPHA}
-# # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
-# # --max_timesteps ${ITERS} --alpha ${ALPHA} --timestepping explicitEuler \
-# # --lbfgs_max_iterations 100 --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+
+ITERS=$1
+ALPHA=$2
+LBFGS=10
 
 # OUTFOLDERNAME=RK${ITERS}A${ALPHA}
+# OUTPUTDIR=/home/bastian/D1/cuberegistration_outputs/
+# DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_3d
+
 # srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+# --input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
 # --max_timesteps ${ITERS} --alpha ${ALPHA} --timestepping RungeKutta \
 # --lbfgs_max_iterations 100 --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 
+OUTFOLDERNAME=RK${ITERS}A${ALPHA}LBFGS${LBFGS}
+OUTPUTDIR=/home/bastian/D1/imageregistration_outputs/
 
-# ### Tests
-
-
-# OUTPUTDIR=/home/bastian/D1/hyperparameterstudy_2d/
-# DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_2d
-# ITERS=$1
-# ALPHA=$2
-
-
+srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+--max_timesteps ${ITERS} --alpha ${ALPHA} --timestepping RungeKutta \
+--lbfgs_max_iterations ${LBFGS} --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 
 
 

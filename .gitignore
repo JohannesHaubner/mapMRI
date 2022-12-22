@@ -21,6 +21,7 @@ __pycache__/
 # C extensions
 *.so
 #cudedebugging/
+cubedebugging/
 cudedebugging2/
 cubedebugging2/
 

@@ -13,7 +13,7 @@ def print_overloaded(*args):
 
     
 
-def read_image(hyperparameters, name, mesh=None, storepath=None, printout=True, normalize=True):
+def read_image(hyperparameters, name, mesh=None, printout=True, normalize=True):
     if printout:
         print_overloaded("Loading", hyperparameters[name])
     
@@ -58,7 +58,7 @@ def read_image(hyperparameters, name, mesh=None, storepath=None, printout=True, 
         else:
             mesh = UnitCubeMesh(MPI.comm_world, nx, ny, nz)
 
-    space = FunctionSpace(mesh, hyperparameters["state_functionspace"], hyperparameters["state_functiondegree"])
+    space = FunctionSpace(mesh, hyperparameters["state_functionspace"], 0) #hyperparameters["state_functiondegree"])
 
     u_data = Function(space)
 
@@ -120,6 +120,11 @@ def read_image(hyperparameters, name, mesh=None, storepath=None, printout=True, 
         
         u_data.vector()[:] = np.where(u_data.vector()[:] < 0, 0, u_data.vector()[:])
         # Img_goal.vector()[:] = np.where(Img_goal.vector()[:] < 0, 0, Img_goal.vector()[:])
+
+    space = FunctionSpace(mesh, hyperparameters["state_functionspace"], hyperparameters["state_functiondegree"])
+        
+    u_data = project(u_data, space)
+
 
     return mesh, u_data, 1
 

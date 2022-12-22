@@ -1,5 +1,8 @@
 from dolfin import *
 from dolfin_adjoint import *
+
+set_log_level(LogLevel.CRITICAL)
+
 import argparse
 
 parser = argparse.ArgumentParser()

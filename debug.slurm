@@ -42,7 +42,7 @@ DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/mridata_3
 
 OUTPUTDIR=/home/bastian/D1/cubedebugging/
 
-OUTFOLDERNAME=$1$2$3$4$5$6
+OUTFOLDERNAME=$1$2$3$4$5$6DG0
 OUTPATH=${OUTPUTDIR}${OUTFOLDERNAME}/
 mkdir -pv ${OUTPATH}
 cd ${OUTPATH}
