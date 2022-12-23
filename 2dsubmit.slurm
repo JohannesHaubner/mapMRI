@@ -12,7 +12,7 @@
 #################################################################
 
 #SBATCH --time 6-24 ##--time=99:00:00
-#SBATCH -o /home/bastian/Oscar-Image-Registration-via-Transport-Equation/slurm/%j.out
+#SBATCH -o /home/bastian/Oscar-Image-Registration-via-Transport-Equation/2dslurm/%j.out
 #SBATCH --export=ALL
 #SBATCH --mail-user=bastian@simula.no
 #module load gcc
@@ -45,16 +45,17 @@ LOGOUTFILE=${SPATH}/slurm/${SLURM_JOB_ID}_log_python_srun.txt
 
 ITERS=$1
 ALPHA=$2
-LBFGS=1
+LBFGS=100
 
-OUTFOLDERNAME=RK${ITERS}A${ALPHA}LBFGS${LBFGS}
-OUTPUTDIR=/home/bastian/D1/cuberegistration_outputs/
-DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_3d
+OUTFOLDERNAME=RK${ITERS}A${ALPHA}LBFGS${LBFGS}Pic2FEN
+OUTPUTDIR=/home/bastian/D1/boxregistration_outputs/
+DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_2d
 
 srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
 --input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
 --max_timesteps ${ITERS} --alpha ${ALPHA} --timestepping RungeKutta \
---lbfgs_max_iterations ${LBFGS} --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+--Pic2FEN --lbfgs_max_iterations ${LBFGS} --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+# --Pic2FEN 
 
 # OUTFOLDERNAME=RK${ITERS}A${ALPHA}LBFGS${LBFGS}
 # OUTPUTDIR=/home/bastian/D1/imageregistration_outputs/

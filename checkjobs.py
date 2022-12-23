@@ -1,7 +1,7 @@
 import os
 import pathlib
 import time
-jobpath = "/home/bastian/Oscar-Image-Registration-via-Transport-Equation/debug/"
+jobpath = "/home/bastian/Oscar-Image-Registration-via-Transport-Equation/slurm/"
 
 while True:
     for job in sorted(os.listdir(jobpath)):
@@ -29,13 +29,13 @@ while True:
             continue
         succes = False
         for line in Lines:
-            # print(line)
+            # eprint(line)
 
-            if "success".lower() in line.lower():
+            if "error".lower() in line.lower():
                 succes = True
 
-        if not succes:
-            print(jobid)
-            print(Lines[-5:])
+        #if not succes:
+        #    print(jobid)
+        #    print(Lines[-5:])
     print("Sleeping for one hour")
     time.sleep(60 * 60)

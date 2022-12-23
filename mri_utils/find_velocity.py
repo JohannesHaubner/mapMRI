@@ -9,6 +9,7 @@ from preconditioning_overloaded import preconditioning
 
 set_log_level(LogLevel.CRITICAL)
 
+
 class CFLerror(ValueError):
     '''raise this when CFL is violated'''
 
@@ -18,6 +19,12 @@ def print_overloaded(*args):
         print(*args)
     else:
         pass
+
+print_overloaded("parameters['ghost_mode'] = ", parameters['ghost_mode'] )
+print_overloaded("Setting parameters parameters['ghost_mode'] = 'shared_facet'")
+parameters['ghost_mode'] = 'shared_facet'
+
+
 
 current_iteration = 0
 
@@ -138,6 +145,14 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
         hyperparameters["Jd_current"] = float(Jd)
         hyperparameters["Jreg_current"] = float(Jreg)
         
+        fCont = XDMFFile(MPI.comm_world, hyperparameters["outputfolder"] + "/State.xdmf")
+        fCont.parameters["flush_output"] = True
+        fCont.parameters["rewrite_function_mesh"] = False
+        # fCont.write(Img.function_space().mesh(), '/mesh')
+        fCont.write(current_pde_solution, 0)
+        fCont.close()
+        
+        print_overloaded("Wrote xdfm to ", hyperparameters["outputfolder"] + "/State.xdmf")
 
         # print("checking key:", "Jd_current" in hyperparameters.keys())
         

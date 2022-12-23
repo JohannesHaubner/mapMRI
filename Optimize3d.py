@@ -43,6 +43,8 @@ parser.add_argument("--timestepping", default="RungeKutta", choices=["RungeKutta
 parser.add_argument("--smoothen", default=True, action="store_true", help="Obsolete flag. Use proper scalar product")
 parser.add_argument("--nosmoothen", default=False, action="store_true", help="Sets smoothen=False")
 
+parser.add_argument("--Pic2FEN", default=False, action="store_true", help="Load images using old code")
+
 parser.add_argument("--alpha", type=float, default=1e-4)
 parser.add_argument("--lbfgs_max_iterations", type=float, default=400)
 parser.add_argument("--dt_buffer", type=float, default=0.1)
@@ -112,8 +114,22 @@ else:
     domainmesh = None
     controlfun = None
 
+if hyperparameters["Pic2FEN"]:
 
-(domainmesh, Img, NumData) = read_image(hyperparameters, name="input", mesh=domainmesh)
+    from Pic2Fen import Pic2FEM
+    (domainmesh, Img, NumData) = Pic2FEM(hyperparameters["input"], mesh=None)
+    (mesh_goal, Img_goal, NumData_goal) = Pic2FEM(hyperparameters["target"], mesh=domainmesh)
+
+    Space = FunctionSpace(domainmesh, "DG", 1)
+    Img = project(sqrt(inner(Img, Img)), Space)
+    Img.rename("img", "")
+    Img_goal = project(sqrt(inner(Img_goal, Img_goal)), Space)
+    NumData = 1
+
+else:
+
+    (domainmesh, Img, NumData) = read_image(hyperparameters, name="input", mesh=domainmesh)
+    (mesh_goal, Img_goal, NumData_goal) = read_image(hyperparameters, name="target", mesh=domainmesh)
 
 
 if hyperparameters["starting_guess"] is None:
@@ -144,7 +160,7 @@ else:
 with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as outfile:
     json.dump(hyperparameters, outfile, sort_keys=True, indent=4)
 
-(mesh_goal, Img_goal, NumData_goal) = read_image(hyperparameters, name="target", mesh=domainmesh)
+
 
 # print_overloaded("Normalizing input and target with")
 # print_overloaded("Img.vector()[:].max()", Img.vector()[:].max())
@@ -193,6 +209,21 @@ velocityFile = HDF5File(MPI.comm_world, hyperparameters["outputfolder"] + "/Velo
 velocityFile.write(domainmesh, "mesh")
 # velocityFile.parameters["flush_output"] = True
 # velocityFile.parameters["rewrite_function_mesh"] = False
+
+
+file = XDMFFile(MPI.comm_world, hyperparameters["outputfolder"] + "/Input.xdmf")
+file.parameters["flush_output"] = True
+file.parameters["rewrite_function_mesh"] = False
+# fCont.write(Img.function_space().mesh(), '/mesh')
+file.write(Img, 0)
+file.close()
+
+file = XDMFFile(MPI.comm_world, hyperparameters["outputfolder"] + "/Target.xdmf")
+file.parameters["flush_output"] = True
+file.parameters["rewrite_function_mesh"] = False
+# fCont.write(Img.function_space().mesh(), '/mesh')
+file.write(Img_goal, 0)
+file.close()
 
 files = {
     "velocityFile": velocityFile,

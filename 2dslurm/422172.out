@@ -1,0 +1,30 @@
+starting to run
+ This problem is unconstrained.
+ This problem is unconstrained.
+ This problem is unconstrained.
+ This problem is unconstrained.
+Traceback (most recent call last):
+  File "/home/bastian/Oscar-Image-Registration-via-Transport-Equation/Optimize3d.py", line 262, in <module>
+Traceback (most recent call last):
+  File "/home/bastian/Oscar-Image-Registration-via-Transport-Equation/Optimize3d.py", line 262, in <module>
+Traceback (most recent call last):
+  File "/home/bastian/Oscar-Image-Registration-via-Transport-Equation/Optimize3d.py", line 262, in <module>
+    find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess=controlfun)
+  File "/home/bastian/Oscar-Image-Registration-via-Transport-Equation/mri_utils/find_velocity.py", line 217, in find_velocity
+    find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess=controlfun)
+  File "/home/bastian/Oscar-Image-Registration-via-Transport-Equation/mri_utils/find_velocity.py", line 217, in find_velocity
+    find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess=controlfun)
+  File "/home/bastian/Oscar-Image-Registration-via-Transport-Equation/mri_utils/find_velocity.py", line 217, in find_velocity
+    shape = hyperparameters["input.shape"]
+    shape = hyperparameters["input.shape"]
+    shape = hyperparameters["input.shape"]
+KeyError: 'input.shape'
+KeyError: 'input.shape'
+KeyError: 'input.shape'
+Traceback (most recent call last):
+  File "/home/bastian/Oscar-Image-Registration-via-Transport-Equation/Optimize3d.py", line 262, in <module>
+    find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess=controlfun)
+  File "/home/bastian/Oscar-Image-Registration-via-Transport-Equation/mri_utils/find_velocity.py", line 217, in find_velocity
+    shape = hyperparameters["input.shape"]
+KeyError: 'input.shape'
+srun: error: n018: tasks 0-3: Exited with exit code 1
