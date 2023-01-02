@@ -1,5 +1,0 @@
-starting to run
-mkdir: created directory '/home/bastian/D1/systematicdebugging/true1e-6L2controlPic2FENtrue/'
-mkdir: created directory '/home/bastian/D1/systematicdebugging/true1e-6L2controlPic2FENtrue//output'
-DEBUGGING
-slurmstepd: error: *** JOB 421518 ON n020 CANCELLED AT 2022-12-21T15:40:48 ***

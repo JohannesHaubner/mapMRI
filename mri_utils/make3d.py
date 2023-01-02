@@ -9,14 +9,15 @@ target_dir = "./"
 
 
 N = 32
+Nz = 1
 
 wx = 2 * 1
 wy = 4 * 1
-wz = 4 * 1
+wz = Nz
 
 center = (N-1) / 2
 
-input = np.zeros((N, N, N))
+input = np.zeros((N, N, Nz))
 
 for x in range(N):
 
@@ -27,19 +28,22 @@ for x in range(N):
         if abs(y - center) > wy:
             continue
 
-        for z in range(N):
-            if abs(z - center) > wz:
+        for z in range(Nz):
+            if Nz > 1 and abs(z - center) > wz:
                 continue
 
             input[x, y, z] = 1.
 
-print(input.sum() / input.size)
+# print(input.sum() / input.size)
 
 input = scipy.ndimage.gaussian_filter(input, sigma=(1, 1, 1))
 
 ds = 2
 rotx = 1
 dx, dy, dz = ds, ds, ds
+
+if Nz == 1:
+    dz = 0
 
 aff = np.array([
     [  rotx,    0,    0,  dx],
