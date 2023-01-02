@@ -63,7 +63,6 @@ parser.add_argument("--target", default="mridata_3d/205_cropped_padded_coarsened
 hyperparameters = vars(parser.parse_args())
 
 
-
 os.chdir(hyperparameters["code_dir"])
 print_overloaded("Setting pwd to", hyperparameters["code_dir"])
 
@@ -211,26 +210,34 @@ velocityFile.write(domainmesh, "mesh")
 # velocityFile.parameters["rewrite_function_mesh"] = False
 
 
-file = XDMFFile(MPI.comm_world, hyperparameters["outputfolder"] + "/Input.xdmf")
-file.parameters["flush_output"] = True
-file.parameters["rewrite_function_mesh"] = False
-# fCont.write(Img.function_space().mesh(), '/mesh')
-file.write(Img, 0)
-file.close()
+# file = XDMFFile(MPI.comm_world, hyperparameters["outputfolder"] + "/Input.xdmf")
+# file.parameters["flush_output"] = True
+# file.parameters["rewrite_function_mesh"] = False
+# # fCont.write(Img.function_space().mesh(), '/mesh')
+# file.write(Img, 0)
+# file.close()
 
-file = XDMFFile(MPI.comm_world, hyperparameters["outputfolder"] + "/Target.xdmf")
-file.parameters["flush_output"] = True
-file.parameters["rewrite_function_mesh"] = False
-# fCont.write(Img.function_space().mesh(), '/mesh')
-file.write(Img_goal, 0)
-file.close()
+# file = XDMFFile(MPI.comm_world, hyperparameters["outputfolder"] + "/Target.xdmf")
+# file.parameters["flush_output"] = True
+# file.parameters["rewrite_function_mesh"] = False
+# # fCont.write(Img.function_space().mesh(), '/mesh')
+# file.write(Img_goal, 0)
+# file.close()
+
+
+# Img_goal.vector().update_ghost_values()
+
+with XDMFFile(hyperparameters["outputfolder"] + "/Target.xdmf") as xdmf:
+    xdmf.write_checkpoint(Img_goal, "Img_goal", 0.)
+
+with XDMFFile(hyperparameters["outputfolder"] + "/Input.xdmf") as xdmf:
+    xdmf.write_checkpoint(Img, "Img", 0.)
 
 files = {
     "velocityFile": velocityFile,
     "stateFile": stateFile,
     "controlFile":controlFile
 }
-
 
 Img.rename("input", "")
 Img_goal.rename("target", "")

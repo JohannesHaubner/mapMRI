@@ -125,6 +125,9 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
         current_pde_solution = state.tape_value()
         current_pde_solution.rename("Img", "")
         current_control = cont.tape_value()
+        current_pde_solution.vector().update_ghost_values()
+        current_control.vector().update_ghost_values()
+
         current_control.rename("control", "")
 
         if current_pde_solution.vector()[:].max() > 10:
@@ -145,14 +148,14 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
         hyperparameters["Jd_current"] = float(Jd)
         hyperparameters["Jreg_current"] = float(Jreg)
         
-        fCont = XDMFFile(MPI.comm_world, hyperparameters["outputfolder"] + "/State.xdmf")
-        fCont.parameters["flush_output"] = True
-        fCont.parameters["rewrite_function_mesh"] = False
-        # fCont.write(Img.function_space().mesh(), '/mesh')
-        fCont.write(current_pde_solution, 0)
-        fCont.close()
+        # fCont = XDMFFile(MPI.comm_world, hyperparameters["outputfolder"] + "/State.xdmf")
+        # fCont.parameters["flush_output"] = True
+        # fCont.parameters["rewrite_function_mesh"] = False
+        # # fCont.write(Img.function_space().mesh(), '/mesh')
+        # fCont.write(current_pde_solution, 0)
+        # fCont.close()
         
-        print_overloaded("Wrote xdfm to ", hyperparameters["outputfolder"] + "/State.xdmf")
+        # print_overloaded("Wrote xdfm to ", hyperparameters["outputfolder"] + "/State.xdmf")
 
         # print("checking key:", "Jd_current" in hyperparameters.keys())
         
@@ -180,7 +183,12 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
         files["controlFile"].write(current_control, "-1") #str(current_iteration))
         files["stateFile"].write(current_pde_solution, "-1") # str(current_iteration))
 
-        File(hyperparameters["outputfolder"] + '/Currentstate.pvd') << current_pde_solution
+        # File(hyperparameters["outputfolder"] + '/Currentstate.pvd') << current_pde_solution
+
+        with XDMFFile(hyperparameters["outputfolder"] + "/State_checkpoint.xdmf") as xdmf:
+            xdmf.write_checkpoint(current_pde_solution, "CurrentState", 0.)
+        with XDMFFile(hyperparameters["outputfolder"] + "/Velocity_checkpoint.xdmf") as xdmf:
+            xdmf.write_checkpoint(velocityField, "CurrentV", 0.)
 
         # print_overloaded("Wrote files in callback")
 
@@ -194,7 +202,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
 
     current_pde_solution = state.tape_value()
     current_pde_solution.rename("finalstate", "")
-    File(hyperparameters["outputfolder"] + '/Finalstate.pvd') << current_pde_solution
+    # File(hyperparameters["outputfolder"] + '/Finalstate.pvd') << current_pde_solution
 
     current_control = cont.tape_value()
     current_control.rename("control", "")
@@ -208,93 +216,98 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
     velocityField = preconditioning(scaledControl)
     velocityField.rename("velocity", "")
 
-    File(hyperparameters["outputfolder"] + '/Finalvelocity.pvd') << velocityField
-    File(hyperparameters["outputfolder"] + '/Finalcontrol.pvd') << current_control
+    # File(hyperparameters["outputfolder"] + '/Finalvelocity.pvd') << velocityField
+    # File(hyperparameters["outputfolder"] + '/Finalcontrol.pvd') << current_control
+
+    with XDMFFile(hyperparameters["outputfolder"] + "/Finalstate.xdmf") as xdmf:
+        xdmf.write_checkpoint(current_pde_solution, "Finalstate", 0.)
+    with XDMFFile(hyperparameters["outputfolder"] + "/Finalvelocity.xdmf") as xdmf:
+        xdmf.write_checkpoint(velocityField, "FinalV", 0.)
 
     print_overloaded("Stored final State, Control, Velocity to .pvd files")
 
 
-    shape = hyperparameters["input.shape"]
+    # shape = hyperparameters["input.shape"]
 
-    from mpi4py import MPI as pyMPI
+    # from mpi4py import MPI as pyMPI
 
-    def mpi4py_comm(comm):
-        '''Get mpi4py communicator'''
-        try:
-            return comm.tompi4py()
-        except AttributeError:
-            return comm
+    # def mpi4py_comm(comm):
+    #     '''Get mpi4py communicator'''
+    #     try:
+    #         return comm.tompi4py()
+    #     except AttributeError:
+    #         return comm
 
         
-    def peval(f, x):
-        '''Parallel synced eval'''
-        try:
-            yloc = f(x)
-        except RuntimeError:
-            yloc = np.inf*np.ones(f.value_shape())
+    # def peval(f, x):
+    #     '''Parallel synced eval'''
+    #     try:
+    #         yloc = f(x)
+    #     except RuntimeError:
+    #         yloc = np.inf*np.ones(f.value_shape())
 
-        comm = mpi4py_comm(f.function_space().mesh().mpi_comm())
-        yglob = np.zeros_like(yloc)
-        comm.Allreduce(yloc, yglob, op=pyMPI.MIN)
+    #     comm = mpi4py_comm(f.function_space().mesh().mpi_comm())
+    #     yglob = np.zeros_like(yloc)
+    #     comm.Allreduce(yloc, yglob, op=pyMPI.MIN)
 
-        return yglob
+    #     return yglob
 
-    if shape[-1] == 1:
+    # if shape[-1] == 1:
 
-        import matplotlib.pyplot as plt
-        import numpy as np
+    #     import matplotlib.pyplot as plt
+    #     import numpy as np
 
-        image = np.zeros((shape[0], shape[1]))
+    #     image = np.zeros((shape[0], shape[1]))
 
-        for nx in range(shape[0]):
-            for ny in range(shape[1]):
-                image[nx, ny] = peval(current_pde_solution, [nx / shape[0], ny / shape[1]])
+    #     for nx in range(shape[0]):
+    #         for ny in range(shape[1]):
+    #             image[nx, ny] = peval(current_pde_solution, [nx / shape[0], ny / shape[1]])
 
-        plt.title("State after " + str(current_iteration + 1) + "/" + str(hyperparameters["lbfgs_max_iterations"]) + " iterations")
-        plt.imshow(image)
-        plt.colorbar()
-        plt.savefig(hyperparameters["outputfolder"] + "/_finalsolution.png")
-        plt.close()
-
-
-
-        image = np.zeros((shape[0], shape[1]))
-
-        for nx in range(shape[0]):
-            for ny in range(shape[1]):
-                image[nx, ny] = peval(Img, [nx / shape[0], ny / shape[1]])
-        plt.title("Input")
-        plt.imshow(image)
-        plt.colorbar()
-        plt.savefig(hyperparameters["outputfolder"] + "/_input.png")
-        plt.close()
+    #     plt.title("State after " + str(current_iteration + 1) + "/" + str(hyperparameters["lbfgs_max_iterations"]) + " iterations")
+    #     plt.imshow(image)
+    #     plt.colorbar()
+    #     plt.savefig(hyperparameters["outputfolder"] + "/_finalsolution.png")
+    #     plt.close()
 
 
 
-        image = np.zeros((shape[0], shape[1]))
+    #     image = np.zeros((shape[0], shape[1]))
 
-        for nx in range(shape[0]):
-            for ny in range(shape[1]):
-                image[nx, ny] = peval(Img_goal, [nx / shape[0], ny / shape[1]])
+    #     for nx in range(shape[0]):
+    #         for ny in range(shape[1]):
+    #             image[nx, ny] = peval(Img, [nx / shape[0], ny / shape[1]])
+    #     plt.title("Input")
+    #     plt.imshow(image)
+    #     plt.colorbar()
+    #     plt.savefig(hyperparameters["outputfolder"] + "/_input.png")
+    #     plt.close()
 
-        plt.title("Target")
-        plt.imshow(image)
-        plt.colorbar()
-        plt.savefig(hyperparameters["outputfolder"] + "/_target.png")
-        plt.close()
 
 
-        image = np.zeros((shape[0], shape[1]))
+    #     image = np.zeros((shape[0], shape[1]))
 
-        for nx in range(shape[0]):
-            for ny in range(shape[1]):
-                image[nx, ny] = np.linalg.norm(peval(velocityField, [nx / shape[0], ny / shape[1]]))
+    #     for nx in range(shape[0]):
+    #         for ny in range(shape[1]):
+    #             image[nx, ny] = peval(Img_goal, [nx / shape[0], ny / shape[1]])
 
-        plt.title("Velocity after " + str(current_iteration + 1) + "/" + str(hyperparameters["lbfgs_max_iterations"]) + " iterations")
-        plt.imshow(image)
-        plt.colorbar()
-        plt.savefig(hyperparameters["outputfolder"] + "/_velocity.png")
-        plt.close()
+    #     plt.title("Target")
+    #     plt.imshow(image)
+    #     plt.colorbar()
+    #     plt.savefig(hyperparameters["outputfolder"] + "/_target.png")
+    #     plt.close()
+
+
+    #     image = np.zeros((shape[0], shape[1]))
+
+    #     for nx in range(shape[0]):
+    #         for ny in range(shape[1]):
+    #             image[nx, ny] = np.linalg.norm(peval(velocityField, [nx / shape[0], ny / shape[1]]))
+
+    #     plt.title("Velocity after " + str(current_iteration + 1) + "/" + str(hyperparameters["lbfgs_max_iterations"]) + " iterations")
+    #     plt.imshow(image)
+    #     plt.colorbar()
+    #     plt.savefig(hyperparameters["outputfolder"] + "/_velocity.png")
+    #     plt.close()
 
 
 

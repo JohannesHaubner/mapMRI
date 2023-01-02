@@ -1,8 +1,0 @@
-starting to run
- This problem is unconstrained.
- This problem is unconstrained.
- This problem is unconstrained.
- This problem is unconstrained.
-srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
-slurmstepd: error: *** JOB 422162 ON n020 CANCELLED AT 2022-12-23T09:55:59 ***
-slurmstepd: error: *** STEP 422162.0 ON n020 CANCELLED AT 2022-12-23T09:55:59 ***

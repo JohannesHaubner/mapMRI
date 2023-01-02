@@ -5,6 +5,7 @@
 output/*
 obsolete_outputs
 outputs/*
+*.out
 slurm*
 *.mgz
 outs/
