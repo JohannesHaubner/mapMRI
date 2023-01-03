@@ -1,19 +1,21 @@
 import os
 import pathlib
 import time
-jobpath = "/home/bastian/Oscar-Image-Registration-via-Transport-Equation/slurm/"
+jobpath = "/home/bastian/Oscar-Image-Registration-via-Transport-Equation/2dslurm/"
 
 while True:
     for job in sorted(os.listdir(jobpath)):
 
-        if not job.endswith(".out"):
-            
-            continue
-        # jobid = int(job.replace("_log_python_srun.txt", ""))
-        jobid = int(job.replace(".out", ""))
-        # print(jobid)
-        if jobid < 420480:
-            continue
+        # if not job.endswith(".out"):
+        #     continue
+
+        if job.endswith(".out"):
+            jobid = int(job.replace(".out", ""))
+            if jobid < 420480:
+                continue
+        else:
+            jobid = job
+
 
         jobfile = jobpath + job
 
@@ -27,15 +29,17 @@ while True:
         except UnicodeDecodeError:
             print("UnicodeDecodeError at job", job, "will continue to next job")
             continue
+        
         succes = False
         for line in Lines:
             # eprint(line)
 
-            if "error".lower() in line.lower():
+            if "    ".lower() in line.lower():
                 succes = True
 
-        #if not succes:
-        #    print(jobid)
+        if succes:
+            print(jobid)
+
         #    print(Lines[-5:])
     print("Sleeping for one hour")
     time.sleep(60 * 60)

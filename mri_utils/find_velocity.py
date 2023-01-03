@@ -221,6 +221,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
 
     with XDMFFile(hyperparameters["outputfolder"] + "/Finalstate.xdmf") as xdmf:
         xdmf.write_checkpoint(current_pde_solution, "Finalstate", 0.)
+    
     with XDMFFile(hyperparameters["outputfolder"] + "/Finalvelocity.xdmf") as xdmf:
         xdmf.write_checkpoint(velocityField, "FinalV", 0.)
 

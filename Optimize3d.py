@@ -49,6 +49,7 @@ parser.add_argument("--alpha", type=float, default=1e-4)
 parser.add_argument("--lbfgs_max_iterations", type=float, default=400)
 parser.add_argument("--dt_buffer", type=float, default=0.1)
 parser.add_argument("--max_timesteps", type=float, default=None)
+parser.add_argument("--state_functiondegree", type=int, default=1)
 
 
 parser.add_argument("--vinit", type=float, default=0)
@@ -85,7 +86,6 @@ hyperparameters["lbfgs_max_iterations"] = int(hyperparameters["lbfgs_max_iterati
 hyperparameters["MassConservation"] = False
 hyperparameters["velocity_functiondegree"] = 1
 hyperparameters["velocity_functionspace"] = "CG"
-hyperparameters["state_functiondegree"] = 1
 hyperparameters["state_functionspace"] = "DG"
 
 config.hyperparameters = hyperparameters
@@ -156,10 +156,11 @@ else:
     hyperparameters["max_timesteps"] = int(hyperparameters["max_timesteps"])
     hyperparameters["DeltaT"] = 1 / hyperparameters["max_timesteps"]
 
-with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as outfile:
-    json.dump(hyperparameters, outfile, sort_keys=True, indent=4)
-
-
+if MPI.rank(MPI.comm_world) == 0:
+    with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as outfile:
+        json.dump(hyperparameters, outfile, sort_keys=True, indent=4)
+else:
+    pass
 
 # print_overloaded("Normalizing input and target with")
 # print_overloaded("Img.vector()[:].max()", Img.vector()[:].max())
@@ -243,11 +244,11 @@ Img.rename("input", "")
 Img_goal.rename("target", "")
 # NumData = 1
 
-if not hyperparameters["debug"]:
-    File(hyperparameters["outputfolder"] + "/input.pvd") << Img
-    File(hyperparameters["outputfolder"] + "/target.pvd") << Img_goal
+# if not hyperparameters["debug"]:
+#     File(hyperparameters["outputfolder"] + "/input.pvd") << Img
+#     File(hyperparameters["outputfolder"] + "/target.pvd") << Img_goal
 
-    print_overloaded("Wrote input and target to pvd files")
+#     print_overloaded("Wrote input and target to pvd files")
 
 if hyperparameters["smoothen"]:
     _, M_lumped_inv = get_lumped_mass_matrices(vCG=vCG)
@@ -296,8 +297,10 @@ tcomp = (time.time()-t0) / 3600
 
 hyperparameters["optimization_time_hours"] = tcomp
 
-with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as outfile:
-    json.dump(hyperparameters, outfile, sort_keys=True, indent=4)
-
+if MPI.rank(MPI.comm_world) == 0:
+    with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as outfile:
+        json.dump(hyperparameters, outfile, sort_keys=True, indent=4)
+else:
+    pass
 
 print_overloaded("Optimize3d.py ran succesfully :-)")

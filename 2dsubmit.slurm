@@ -4,8 +4,8 @@
 #SBATCH --ntasks=4
 #################################################################
 ##SBATCH --partition=milanq
-##SBATCH --partition=fpgaq
-#SBATCH --partition=defq
+#SBATCH --partition=fpgaq
+## SBATCH --partition=defq
 ## SBATCH --partition=slowq
 ## SBATCH --partition=rome16q
 #################################################################
@@ -44,9 +44,11 @@ LOGOUTFILE=${SPATH}/2dslurm/${SLURM_JOB_ID}_log_python_srun.txt
 
 ITERS=$1
 ALPHA=$2
-LBFGS=100
+LBFGS=1000
 
 OUTFOLDERNAME=RK${ITERS}A${ALPHA}LBFGS${LBFGS}
+# DG0
+#NOSMOOTHEN
 #PIC2FEN
 
 OUTPUTDIR=/home/bastian/D1/registration/boxregistration_outputs/
@@ -59,15 +61,7 @@ srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --outpu
 --input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
 --max_timesteps ${ITERS} --alpha ${ALPHA} --timestepping RungeKutta \
 --lbfgs_max_iterations ${LBFGS} --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
-# --Pic2FEN
-
-# OUTFOLDERNAME=RK${ITERS}A${ALPHA}LBFGS${LBFGS}
-# OUTPUTDIR=/home/bastian/D1/imageregistration_outputs/
-
-# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
-# --max_timesteps ${ITERS} --alpha ${ALPHA} --timestepping RungeKutta \
-# --lbfgs_max_iterations ${LBFGS} --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
-
+#--state_functiondegree 0  --nosmoothen 
 
 OUTPATH=${OUTPUTDIR}/${OUTFOLDERNAME}/
 cp -v ${LOGOUTFILE} ${OUTPATH}
