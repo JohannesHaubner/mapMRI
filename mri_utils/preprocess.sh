@@ -13,6 +13,8 @@ else
    exit 
 fi
 
+CODEDIR=/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation
+
 MRI2FEMDATA=/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/mri2fem-dataset
 TARGETDIR=${MRI2FEMDATA}/processed
 
@@ -20,13 +22,26 @@ mkdir -vp ${TARGETDIR}
 
 subj1=abby
 subj2=ernie
-IMAGE=mri/brain.mgz
+IMAGENAME=brain.mgz
+IMAGE=mri/${IMAGENAME}
+
+INPUTDIR=${TARGETDIR}/input
+mkdir -vp ${INPUTDIR}
+
+IMG1PATH=${INPUTDIR}/${subj1}
+IMG2PATH=${INPUTDIR}/${subj2}
+
+mkdir -pv ${IMG1PATH}
+mkdir -pv ${IMG2PATH}
+
+IMG1=${IMG1PATH}/${subj1}_${IMAGENAME}
+IMG2=${IMG2PATH}/${subj2}_${IMAGENAME}
+
+cp -v ${MRI2FEMDATA}/freesurfer/${subj1}/${IMAGE} ${IMG1}
+cp -v ${MRI2FEMDATA}/freesurfer/${subj2}/${IMAGE} ${IMG2}
+
 REGDIR=${TARGETDIR}/registered
-
 mkdir -vp ${REGDIR}
-
-IMG1=${MRI2FEMDATA}/freesurfer/${subj1}/${IMAGE}
-IMG2=${MRI2FEMDATA}/freesurfer/${subj2}/${IMAGE}
 REGIMAGE=${REGDIR}/${subj1}to${subj2}.mgz
 
 if [ ! -f ${REGIMAGE} ]; then
@@ -41,4 +56,14 @@ else
     echo "not running Freesurfer registration"
 fi
 
+IMG1=${REGIMAGE}
+CROPDIR=${TARGETDIR}/cropped
+mkdir -vp ${CROPDIR}
 
+python ${CODEDIR}/mri_utils/mask_mri.py --images ${IMG1} ${IMG2} --targetfolder ${CROPDIR} --crop
+
+IMG1=${REGIMAGE}
+COARSECROPDIR=${TARGETDIR}/coarsecropped
+mkdir -vp ${COARSECROPDIR}
+
+python ${CODEDIR}/mri_utils/mask_mri.py --images ${IMG1} ${IMG2} --targetfolder ${COARSECROPDIR} --crop --coarsen

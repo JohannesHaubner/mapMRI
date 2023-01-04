@@ -1,8 +1,11 @@
 import nibabel
 import numpy as np
 import os
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import pathlib
+import argparse
+import json
+from scipy import ndimage
 
 def get_bounding_box(x):
     """ Calculates the bounding box of a ndarray"""
@@ -98,68 +101,98 @@ def cut_to_box(image, box):
     return cropped_image
 
 
+
+def pad_with(vector, pad_width, iloc, kwargs):
+
+    pad_value = kwargs.get('padder', 0)
+
+    vector[:pad_width[0]] = pad_value
+
+    vector[-pad_width[1]:] = pad_value
+
+
 if __name__ == "__main__":
         
-    # datapath = "/home/basti/Dropbox (UiO)/Sleep/"
-    # pats = ["091", "205"]
+    parser = argparse.ArgumentParser()
 
-    datapath = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/mri2fem-dataset/freesurfer/"
-    outpath = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/mri2fem-dataset/processed/"
-    pats = ["abby", "ernie"]
+    parser.add_argument("--images", type=str, nargs="+", required=True)
+    parser.add_argument("--targetfolder", required=True, type=str)
+    
+    parser.add_argument("--crop", action="store_true", default=False)
 
-    # filename = "mask_only"
-    # filename = "masked"
+    parser.add_argument("--coarsen", action="store_true", default=False)
+    parser.add_argument("--npad", default=4, type=int)
+    parser.add_argument("--zoom", default=0.5, type=float)
 
-    imagefiles = []
-    for pat in pats:
 
-        # cpath = os.path.join(datapath, pat, "CONFORM")
-        # cfile = os.path.join(cpath, sorted(os.listdir(cpath))[0])
+    parserargs = vars(parser.parse_args())
+
+    assert parserargs["crop"] or parserargs["coarsen"]
+
+    npad = parserargs["npad"]
+
+    print(parserargs)
+
+    targetfolder = pathlib.Path(parserargs["targetfolder"])
+
+    os.makedirs(targetfolder, exist_ok=True)
+
+    print("Will compute the largest bounding box for the following images:")
+
+    for imagefile in parserargs["images"]:
+
+        print("--", imagefile)
+
+        if not os.path.isfile(imagefile):
+            raise ValueError(imagefile + " does not exist")
+
+    largest_box = get_largest_box(parserargs["images"])
+
+    generic_affine = np.eye(4)
+
+    np.save(targetfolder / "box.npy", largest_box)
+
+    with open(targetfolder / "files.json", 'w') as outfile:
+        json.dump(parserargs, outfile, sort_keys=True, indent=4)
         
-        imagefiles.append(os.path.join(datapath, pat, "mri", "brain.mgz"))
-        assert os.path.isfile(imagefiles[-1])
+    freeview_command = "freeview "
 
-    largest_box = get_largest_box(imagefiles)
+    for imgfile in parserargs["images"]:
 
-    print("Box has shape", largest_box.shape)
+        image = nibabel.load(imgfile).get_fdata()
 
-    generic_affine = np.array([
-        [1, 0, 0, 0],
-        [0, 1, 0, 0],
-        [0, 0, 1, 0],
-        [0, 0, 0, 1]
-        ])
+        if parserargs["crop"]:
+            image = cut_to_box(image, largest_box)
+            outfile = str(targetfolder / ("cropped_" + pathlib.Path(imgfile).name))
+
+        if parserargs["coarsen"]:
+
+            padded_img = np.pad(image, npad, pad_with)
+
+            image = ndimage.zoom(padded_img, parserargs["zoom"])
+
+            print("Cropping images")
+
+            outfile = str(targetfolder / ("coarsened" + pathlib.Path(imgfile).name))
 
 
+        direc = pathlib.Path(imgfile).parent
 
-    for imgfile in imagefiles:
-
-        # cpath = os.path.join(datapath, pat, "CONFORM")
-        # cfile = os.path.join(cpath, sorted(os.listdir(cpath))[0])
+        os.makedirs(direc, exist_ok=True)            
         
-        # print(pat, cfile)
-        # mfile = os.path.join(datapath, pat, "MASKS", "parenchyma.mgz")
-        # aff = nibabel.load(mfile).affine
-        # mask = nibabel.load(mfile).get_fdata()# .astype(bool)
-
-        # if filename == "mask_only":
-        #     img1 = mask
-
-        # elif filename == "masked":
-
-        #     img1 = mask * nibabel.load(cfile).get_fdata()
-
-        #     img1 = img1 / img1.max()
-
-        img1 = nibabel.load(imgfile).get_fdata()
-        img2 = cut_to_box(img1, largest_box)
-
-        # breakpoint()
-
-        outfile = imgfile.replace(datapath, outpath)
-
-        breakpoint()
-        os.makedirs(pathlib.Path(outfile).parent, exist_ok=True)
-
         print("saving to", outfile)
-        nibabel.save(nibabel.Nifti1Image(img2, affine=generic_affine), outfile)
+
+        freeview_command += outfile + " "
+
+        
+
+        nibabel.save(nibabel.Nifti1Image(image, affine=generic_affine), outfile)
+    print("Final shape of images", image.shape)
+
+    print()
+    print(":"*100)
+    print("MRI processing done, to view files in freeview, run")
+    print()
+    print(freeview_command)
+    print()
+    print(":"*100)
