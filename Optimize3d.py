@@ -8,6 +8,8 @@ import numpy as np
 
 set_log_level(LogLevel.CRITICAL)
 
+# get_log_level()
+
 # PETScOptions.set("mat_mumps_use_omp_threads", 8)
 # PETScOptions.set("mat_mumps_icntl_35", True) # set use of BLR (Block Low-Rank) feature (0:off, 1:optimal)
 # PETScOptions.set("mat_mumps_cntl_7", 1e-8) # set BLR relaxation
@@ -72,7 +74,6 @@ assert "/" not in hyperparameters["outfoldername"]
 if hyperparameters["starting_guess"] is not None:
     assert os.path.isfile(hyperparameters["starting_guess"])
 
-set_log_level(20)
 
 if hyperparameters["nosmoothen"]:
     print_overloaded(".................................................................................................................................")
@@ -257,17 +258,16 @@ else:
 
 t0 = time.time()
 
-from mri_utils.find_velocity import find_velocity, CFLerror
+from mri_utils.find_velocity import find_velocity
 
 
 files["lossfile"] = hyperparameters["outputfolder"] + '/loss.txt'
 files["regularizationfile"] = hyperparameters["outputfolder"] + '/regularization.txt'
 
-# for n in range(1):
-    
-#     try:
+
 try:
     find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess=controlfun)
+
 except RuntimeError:
     print(":" * 100)
     print("Trying with LU solver")
@@ -281,17 +281,6 @@ except RuntimeError:
 
     find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess=controlfun)
     
-    #     break
-    # except CFLerror:
-
-    #     raise NotImplementedError("Something went wrong here before, 'exploding' gradients-like. Need to be checked")
-    #     hyperparameters["DeltaT"] *= 1 / 2
-    #     print_overloaded("CFL condition violated, reducing time step size and retry")
-    #     pass    
-    
-    # # sanity check
-    # if hyperparameters["starting_guess"] is None:
-    #     assert controlfun is None
 
 tcomp = (time.time()-t0) / 3600
 
