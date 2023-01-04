@@ -27,7 +27,9 @@ def get_folders() -> list:
             print("Jd_init not in keys for", folder)
             continue
 
-        folders.append([folder, params, None])
+        loss = np.genfromtxt(folder + "/loss.txt", delimiter=",")[:-1]
+
+        folders.append([folder, params, loss])
 
     return folders
 
@@ -39,7 +41,7 @@ def remove_nonconverged(folders: list) -> list:
     plt.figure()
 
     for folder, params, loss in folders:
-        loss = np.genfromtxt(folder + "/loss.txt", delimiter=",")[:-1]
+        
 
         if params["lbfgs_max_iterations"] == len(loss):
             print(folder, "not converged, removing")
@@ -50,7 +52,7 @@ def remove_nonconverged(folders: list) -> list:
 
         retval.append([folder, params, loss])
     plt.legend()
-    plt.show()
+    # plt.show()
 
     return retval
 
@@ -66,7 +68,12 @@ os.chdir("/home/basti/programming/Oscar-Image-Registration-via-Transport-Equatio
 
 folders = get_folders()
 
-folders= remove_nonconverged(folders)
+if "cuberegistration_outputs" not in os.getcwd():
+    folders = remove_nonconverged(folders)
+
+fig2, ax2 = plt.subplots()
+
+fig1, ax1 = plt.subplots()
 
 for folder, params, loss in folders:
     
@@ -136,33 +143,41 @@ for folder, params, loss in folders:
         
         marker = "d"
         color="k"
-        plt.plot([],[], linewidth=0, color="k", markersize=markersize, marker="d", label=folder + " (not converged)")
+        ax1.plot([],[], linewidth=0, color="k", markersize=markersize, marker="d", label=folder + " (not converged)")
     
     elif len(loss) == 1000 and "boxregistration_outputs" in os.getcwd():
         
         marker = "d"
-        plt.plot([],[], linewidth=0, color=color, marker=marker, markersize=markersize, label=folder + " (not converged)")
+        ax1.plot([],[], linewidth=0, color=color, marker=marker, markersize=markersize, label=folder + " (not converged)")
 
     elif len(loss) == 100:
         continue
 
-    plt.loglog(params["alpha"], 
+    ax1.loglog(params["alpha"], 
         # params["Jd_final"],
         abs(params["Jd_final"])/params["Jd_init"], 
         markersize=markersize, 
         marker=marker, color=color)
 
-    plt.xlabel("Alpha")
-    plt.ylabel("J_init / J_final")
+    ax2.loglog(params["alpha"], 
+        params["optimization_time_hours"],
+        markersize=markersize, 
+        marker=marker, color=color)
 
-for f, _, _ in folders:
+    ax1.set_xlabel("Alpha")
+    ax1.set_ylabel("J_init / J_final")
 
-    if "A1e-4" in f:
-        print("----", f)
+    ax2.set_xlabel("Alpha")
+    ax2.set_ylabel("Optimization time (hours)")
 
-# plt.axhline(params["Jd_init"])
-plt.plot([],[], linewidth=0, color="blue", marker="x", label="DG0")
-plt.plot([],[], linewidth=0, color="green", marker="o", label="DG1")
-plt.plot([],[], linewidth=0, color="red", marker="s", label="DG1, no smoothen")
-plt.legend()
+
+for ax in [ax1, ax2]:
+
+    plt.sca(ax)
+
+    # plt.axhline(params["Jd_init"])
+    plt.plot([],[], linewidth=0, color="blue", marker="x", label="DG0")
+    plt.plot([],[], linewidth=0, color="green", marker="o", label="DG1")
+    plt.plot([],[], linewidth=0, color="red", marker="s", label="DG1, no smoothen")
+    plt.legend()
 plt.show()

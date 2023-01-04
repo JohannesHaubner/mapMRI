@@ -2,7 +2,7 @@ import nibabel
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-
+import pathlib
 
 def get_bounding_box(x):
     """ Calculates the bounding box of a ndarray"""
@@ -104,6 +104,7 @@ if __name__ == "__main__":
     # pats = ["091", "205"]
 
     datapath = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/mri2fem-dataset/freesurfer/"
+    outpath = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/mri2fem-dataset/processed/"
     pats = ["abby", "ernie"]
 
     # filename = "mask_only"
@@ -150,9 +151,15 @@ if __name__ == "__main__":
 
         #     img1 = img1 / img1.max()
 
-        img1 = nibabel.load(imagefiles).get_fdata()
+        img1 = nibabel.load(imgfile).get_fdata()
         img2 = cut_to_box(img1, largest_box)
 
         # breakpoint()
 
-        nibabel.save(nibabel.Nifti1Image(img2, affine=generic_affine), NotImplementedError)
+        outfile = imgfile.replace(datapath, outpath)
+
+        breakpoint()
+        os.makedirs(pathlib.Path(outfile).parent, exist_ok=True)
+
+        print("saving to", outfile)
+        nibabel.save(nibabel.Nifti1Image(img2, affine=generic_affine), outfile)
