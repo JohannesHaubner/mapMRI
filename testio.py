@@ -14,8 +14,10 @@ print_overloaded("Setting parameters parameters['ghost_mode'] = 'shared_facet'")
 parameters['ghost_mode'] = 'shared_facet'
 
 hyperparameters = {}
-outpath = "/home/bastian/D1/registration/iotest3d/"
-hyperparameters["outputfolder"] = outpath + "parallel" + "MRI2FEM" # + "Project"
+# outpath = "/home/bastian/D1/registration/iotest3d/"
+outpath = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/iotest/"
+
+hyperparameters["outputfolder"] = outpath + "parallel" # + "Project"
 # hyperparameters["outputfolder"] = outpath + "parallel" + "Pic2FEN"
 # hyperparameters["outputfolder"] = outpath + "sequential" # + "Project"
 
@@ -35,11 +37,11 @@ if True not in [x in hyperparameters["outputfolder"] for x in ["MRI2FEM", "Pic2F
     V0 = FunctionSpace(domainmesh, "DG", 0)
 
     if "Project" in hyperparameters["outputfolder"]:
-        Img0 = interpolate(Expression("x[0] < 0.5 ? 1 : 0", degree=1), V0)
+        Img0 = interpolate(Expression("x[0] <= 0.5 ? 1 : 0", degree=1), V0)
         Img = project(Img0, V1)
         print_overloaded("Projecting")
     else:
-        Img = interpolate(Expression("x[0] < 0.5 ? 1 : 0", degree=1), V1)
+        Img = interpolate(Expression("x[0] <= 0.5 ? 1 : 0", degree=1), V1)
         print_overloaded("Directly interpolate to V1")
 
 else:
@@ -63,6 +65,7 @@ else:
         V1 = FunctionSpace(domainmesh, "DG", 1)
         Img = project(sqrt(inner(img1, img1)), V1)
 
+breakpoint()
 
 velocityFile = HDF5File(MPI.comm_world, hyperparameters["outputfolder"] + "/Imgh5.hdf", "w")
 velocityFile.write(domainmesh, "mesh")
