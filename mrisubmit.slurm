@@ -1,18 +1,17 @@
 #!/bin/bash
 #SBATCH --job-name=register
 #SBATCH --cpus-per-task=1
-## #### SBATCH --nodes=4
-#SBATCH --ntasks=4
+#SBATCH --ntasks=8
 #################################################################
 ##SBATCH --partition=milanq
-#SBATCH --partition=fpgaq
-## SBATCH --partition=defq
+## SBATCH --partition=fpgaq
+#SBATCH --partition=defq
 ## SBATCH --partition=slowq
 ## SBATCH --partition=rome16q
 #################################################################
 
 #SBATCH --time 6-24 ##--time=99:00:00
-#SBATCH -o /home/bastian/Oscar-Image-Registration-via-Transport-Equation/slurm/%j.out
+#SBATCH -o /home/bastian/Oscar-Image-Registration-via-Transport-Equation/mrislurm/%j.out
 #SBATCH --export=ALL
 #SBATCH --mail-user=bastian@simula.no
 #module load gcc
@@ -36,37 +35,33 @@ echo "starting to run"
 ## sbatch --dependency=afterany: submit.slurm
 #######################################################
 SPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation
-LOGOUTFILE=${SPATH}/slurm/${SLURM_JOB_ID}_log_python_srun.txt
-
-# OUTPUTDIR=/home/bastian/D1/mriregistration_outputs/
-
-
+LOGOUTFILE=${SPATH}/mrislurm/${SLURM_JOB_ID}_log_python_srun.txt
 
 
 ITERS=$1
 ALPHA=$2
-LBFGS=1
+LBFGS=10
 
-OUTFOLDERNAME=RK${ITERS}A${ALPHA}LBFGS${LBFGS}
-OUTPUTDIR=/home/bastian/D1/cuberegistration_outputs/
-DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_3d
 
-srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
---input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
+OUTFOLDERNAME=RK${ITERS}A${ALPHA}LBFGS${LBFGS}NODES8
+#NOSMOOTHEN
+#DG0
+#NOSMOOTHEN
+#PIC2FEN
+
+OUTPUTDIR=/home/bastian/D1/registration/mriregistration_outputs/
+DATAPATH=/home/bastian/D1/registration/mri2fem-data/
+
+srun -n 8 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+--input ${DATAPATH}/abby/brain.mgz --target ${DATAPATH}/ernie/brain.mgz \
 --max_timesteps ${ITERS} --alpha ${ALPHA} --timestepping RungeKutta \
 --lbfgs_max_iterations ${LBFGS} --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+#--state_functiondegree 0  --nosmoothen 
 
-# OUTFOLDERNAME=RK${ITERS}A${ALPHA}LBFGS${LBFGS}
-# OUTPUTDIR=/home/bastian/D1/imageregistration_outputs/
 
-# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
-# --max_timesteps ${ITERS} --alpha ${ALPHA} --timestepping RungeKutta \
-# --lbfgs_max_iterations ${LBFGS} --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 
 
 OUTPATH=${OUTPUTDIR}/${OUTFOLDERNAME}/
 cp -v ${LOGOUTFILE} ${OUTPATH}
-
-
 
 echo "success"

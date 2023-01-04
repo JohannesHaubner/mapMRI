@@ -21,14 +21,14 @@ def get_bounding_box(x):
     return bbox
 
 
-def get_largest_box(pats):
+def get_largest_box(imagefiles):
 
     largest_box = np.zeros((256, 256, 256))
 
 
-    for pat in pats:
+    for mfile in imagefiles:
 
-        mfile = os.path.join(datapath, pat, "MASKS", "parenchyma.mgz")
+        # mfile = os.path.join(datapath, pat, "MASKS", "parenchyma.mgz")
 
         mask = nibabel.load(mfile).get_fdata()# .astype(bool)
 
@@ -98,45 +98,61 @@ def cut_to_box(image, box):
     return cropped_image
 
 
-datapath = "/home/basti/Dropbox (UiO)/Sleep/"
+if __name__ == "__main__":
+        
+    # datapath = "/home/basti/Dropbox (UiO)/Sleep/"
+    # pats = ["091", "205"]
 
-# filename = "mask_only"
-filename = "masked"
+    datapath = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/mri2fem-dataset/freesurfer/"
+    pats = ["abby", "ernie"]
 
-pats = ["091", "205"]
+    # filename = "mask_only"
+    # filename = "masked"
 
-largest_box = get_largest_box(pats)
+    imagefiles = []
+    for pat in pats:
 
-generic_affine = np.array([
-    [1, 0, 0, 0],
-    [0, 1, 0, 0],
-    [0, 0, 1, 0],
-    [0, 0, 0, 1]
-    ])
+        # cpath = os.path.join(datapath, pat, "CONFORM")
+        # cfile = os.path.join(cpath, sorted(os.listdir(cpath))[0])
+        
+        imagefiles.append(os.path.join(datapath, pat, "mri", "brain.mgz"))
+        assert os.path.isfile(imagefiles[-1])
 
+    largest_box = get_largest_box(imagefiles)
 
+    print("Box has shape", largest_box.shape)
 
-for pat in pats:
-
-    cpath = os.path.join(datapath, pat, "CONFORM")
-    cfile = os.path.join(cpath, sorted(os.listdir(cpath))[0])
-    print(pat, cfile)
-    mfile = os.path.join(datapath, pat, "MASKS", "parenchyma.mgz")
-    aff = nibabel.load(mfile).affine
-    mask = nibabel.load(mfile).get_fdata()# .astype(bool)
-
-    if filename == "mask_only":
-        img1 = mask
-
-    elif filename == "masked":
-
-        img1 = mask * nibabel.load(cfile).get_fdata()
-
-        img1 = img1 / img1.max()
+    generic_affine = np.array([
+        [1, 0, 0, 0],
+        [0, 1, 0, 0],
+        [0, 0, 1, 0],
+        [0, 0, 0, 1]
+        ])
 
 
-    img2 = cut_to_box(img1, largest_box)
 
-    # breakpoint()
+    for imgfile in imagefiles:
 
-    nibabel.save(nibabel.Nifti1Image(img2, affine=generic_affine), pat + "_cropped.mgz")
+        # cpath = os.path.join(datapath, pat, "CONFORM")
+        # cfile = os.path.join(cpath, sorted(os.listdir(cpath))[0])
+        
+        # print(pat, cfile)
+        # mfile = os.path.join(datapath, pat, "MASKS", "parenchyma.mgz")
+        # aff = nibabel.load(mfile).affine
+        # mask = nibabel.load(mfile).get_fdata()# .astype(bool)
+
+        # if filename == "mask_only":
+        #     img1 = mask
+
+        # elif filename == "masked":
+
+        #     img1 = mask * nibabel.load(cfile).get_fdata()
+
+        #     img1 = img1 / img1.max()
+
+        img1 = nibabel.load(imagefiles).get_fdata()
+        img2 = cut_to_box(img1, largest_box)
+
+        # breakpoint()
+
+        nibabel.save(nibabel.Nifti1Image(img2, affine=generic_affine), NotImplementedError)

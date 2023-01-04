@@ -44,41 +44,33 @@ LOGOUTFILE=${SPATH}/2dslurm/${SLURM_JOB_ID}_log_python_srun.txt
 
 ITERS=$1
 ALPHA=$2
-LBFGS=1
+LBFGS=10000
 
 
-cd /home/bastian/Oscar-Image-Registration-via-Transport-Equation
+OUTFOLDERNAME=RK${ITERS}A${ALPHA}LBFGS${LBFGS}
+#NOSMOOTHEN
+#DG0
+#NOSMOOTHEN
+#PIC2FEN
 
-srun -n 4 python3 -u testoverwrite.py > ${LOGOUTFILE}
+OUTPUTDIR=/home/bastian/D1/registration/boxregistration_outputs/
+DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_2d
 
+# OUTPUTDIR=/home/bastian/D1/registration/cuberegistration_outputs/
+# DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_3d
 
-
-
-# OUTFOLDERNAME=RK${ITERS}A${ALPHA}LBFGS${LBFGS}
-# #NOSMOOTHEN
-# #DG0
-# #NOSMOOTHEN
-# #PIC2FEN
-
-# OUTPUTDIR=/home/bastian/D1/registration/tests/
-# #boxregistration_outputs/
-# DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_2d
-
-# # OUTPUTDIR=/home/bastian/D1/registration/cuberegistration_outputs/
-# # DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_3d
-
-# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
-# --input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
-# --max_timesteps ${ITERS} --alpha ${ALPHA} --timestepping RungeKutta \
-# --debug --lbfgs_max_iterations ${LBFGS} --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
-# #--state_functiondegree 0  --nosmoothen 
+srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+--input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
+--max_timesteps ${ITERS} --alpha ${ALPHA} --timestepping RungeKutta \
+--lbfgs_max_iterations ${LBFGS} --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+#--state_functiondegree 0  --nosmoothen 
 
 
 
 
 
 
-# OUTPATH=${OUTPUTDIR}/${OUTFOLDERNAME}/
-# cp -v ${LOGOUTFILE} ${OUTPATH}
+OUTPATH=${OUTPUTDIR}/${OUTFOLDERNAME}/
+cp -v ${LOGOUTFILE} ${OUTPATH}
 
 echo "success"

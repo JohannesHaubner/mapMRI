@@ -49,7 +49,6 @@ parser.add_argument("--Pic2FEN", default=False, action="store_true", help="Load 
 
 parser.add_argument("--alpha", type=float, default=1e-4)
 parser.add_argument("--lbfgs_max_iterations", type=float, default=400)
-parser.add_argument("--dt_buffer", type=float, default=0.1)
 parser.add_argument("--max_timesteps", type=float, default=None)
 parser.add_argument("--state_functiondegree", type=int, default=1)
 
@@ -144,18 +143,9 @@ h = float(assemble(h*dx))
 hyperparameters["mehsh"] = h
 hyperparameters["maxMeshCoordinate"] = np.max(domainmesh.coordinates())
 
-# hyperparameters["input.shape"]
-if hyperparameters["max_timesteps"] is None:
-    hyperparameters["expected_distance_covered"] = 0.25 # assume that voxels need to be moved over a distance of max. 25 % of the image size.
-    v_needed = hyperparameters["expected_distance_covered"] / T_final
-    hyperparameters["DeltaT"] = hyperparameters["dt_buffer"] * float(h) / v_needed #1e-3
-    print_overloaded("calculated initial time step size to", hyperparameters["DeltaT"])
-    hyperparameters["DeltaT_init"] = hyperparameters["DeltaT"]
 
-    hyperparameters["max_timesteps"] = int(1 / hyperparameters["DeltaT"])
-else:
-    hyperparameters["max_timesteps"] = int(hyperparameters["max_timesteps"])
-    hyperparameters["DeltaT"] = 1 / hyperparameters["max_timesteps"]
+hyperparameters["max_timesteps"] = int(hyperparameters["max_timesteps"])
+hyperparameters["DeltaT"] = 1 / hyperparameters["max_timesteps"]
 
 if MPI.rank(MPI.comm_world) == 0:
     with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as outfile:
