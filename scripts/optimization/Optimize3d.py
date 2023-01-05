@@ -30,7 +30,7 @@ print_overloaded("Setting parameters parameters['ghost_mode'] = 'shared_facet'")
 parameters['ghost_mode'] = 'shared_facet'
 
 from mri_utils.helpers import load_velocity, get_lumped_mass_matrices, interpolate_velocity
-from mri_utils.MRI2FEM import read_image
+from src.dgregister.MRI2FEM import read_image
 import config
 
 parser = argparse.ArgumentParser()
