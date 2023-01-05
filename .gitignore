@@ -6,7 +6,7 @@ output/*
 obsolete_outputs
 outputs/*
 *.out
-slurm*
+# slurm*
 *.mgz
 outs/
 mridata_3d/
