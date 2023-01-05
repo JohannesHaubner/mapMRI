@@ -49,7 +49,7 @@ def read_image(hyperparameters, name, mesh=None, printout=True, normalize=True):
 
             print_overloaded("Created rectangle mesh")
         else:
-            mesh = BoxMesh(MPI.comm_world, Point(0), Point(nx, ny, nz), nx, ny, nz)
+            mesh = BoxMesh(MPI.comm_world, Point(0.0, 0.0, 0.0), Point(nx, ny, nz), nx, ny, nz)
             print_overloaded("Created box mesh")
 
     space = FunctionSpace(mesh, hyperparameters["state_functionspace"], 0) #hyperparameters["state_functiondegree"])

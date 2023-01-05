@@ -62,10 +62,11 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
     state = Control(Img_deformed)  # The Control type enables easy access to tape values after replays.
     cont = Control(controlfun)
 
-    Jd = assemble(0.5 * (Img_deformed - Img_goal) ** 2 * dx(domain=Img.function_space().mesh()))
+    # Jd = assemble(0.5 * (Img_deformed - Img_goal) ** 2 * dx(domain=Img.function_space().mesh()))
+    Jd = assemble(0.5 * (Img_deformed - Img_goal) ** 2 * dx) # (domain=Img_goal.function_space().mesh()))
     print_overloaded("Assembled L2 error between transported image and target, Jdata=", Jd)
 
-    Jreg = assemble(alpha*(controlf)**2*dx(domain=Img.function_space().mesh()))
+    Jreg = assemble(alpha*(controlf)**2*dx) # (domain=Img.function_space().mesh()))
     
     J = Jd + Jreg
     

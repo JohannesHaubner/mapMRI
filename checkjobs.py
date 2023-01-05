@@ -11,15 +11,17 @@ while True:
 
         if job.endswith(".out"):
             jobid = int(job.replace(".out", ""))
-            if jobid < 420480:
+            if jobid < 429720:
                 continue
         else:
+            # continue
             jobid = job
 
 
         jobfile = jobpath + job
 
         jobid = str(pathlib.Path(job).stem)
+        jobid = jobid.replace("_log_python_srun", "")
 
         file1 = open(jobfile, 'r')
 
@@ -31,14 +33,28 @@ while True:
             continue
         
         succes = False
+        RK = False
+        ELINE = False
+        foldername = ""
         for line in Lines:
-            # eprint(line)
 
-            if "    ".lower() in line.lower():
+            if "timestepping : RungeKutta" in line:
+                RK = True
+
+            if "outfoldername : E" in line:
+                # print(jobid)
+                ELINE = True
+                foldername = line
+
+            if "error".lower() in line.lower():
+                # print(line)
                 succes = True
 
-        if succes:
-            print(jobid)
+        # if succes:
+        #     print(jobid)
+
+
+
 
         #    print(Lines[-5:])
     print("Sleeping for one hour")

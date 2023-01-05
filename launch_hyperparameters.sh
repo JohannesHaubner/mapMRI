@@ -1,9 +1,8 @@
 #!/bin/bash
 
-ITERS=1000
+ITERS=100
 
-for ALPHA in 1e-6 1e-8
-#1e-0 1e-2 1e-4 1e-6
+for ALPHA in 1e-2 1e-4 1e-6 
 do
     if [ -z ${jobid+x} ]; 
     then
@@ -17,3 +16,9 @@ do
     
     echo $jobid $sentence
 done
+
+sentence=$(sbatch 2dsubmit.slurm ${ITERS} 1e-8)
+stringarray=($sentence)
+jobid=(${stringarray[3]});
+
+echo $jobid $sentence

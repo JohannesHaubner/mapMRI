@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=mriregister
+#SBATCH --job-name=ocdregister
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks=4
 #################################################################
@@ -38,19 +38,14 @@ SPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation
 LOGOUTFILE=${SPATH}/mrislurm/${SLURM_JOB_ID}_log_python_srun.txt
 
 
-ITERS=$1
-ALPHA=$2
-LBFGS=10
+ITERS=99999
+ALPHA=$1
+LBFGS=99999
 
 echo "ITERS=" ${ITERS}
 echo "ALPHA=" ${ALPHA}
 
-OUTFOLDERNAME=
-
-#NOSMOOTHEN
-#DG0
-#NOSMOOTHEN
-#PIC2FEN
+OUTFOLDERNAME=OCDA${ALPHA}
 
 
 
@@ -66,12 +61,14 @@ IMG2=${DATAPATH}coarsenedernie_brain.mgz
 echo "IMG1=" ${IMG1}
 echo "IMG2=" ${IMG2}
 
-srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
---input ${IMG1} --target ${IMG2} \
+srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+--input ${IMG1} --target ${IMG2} --ocd \
 --max_timesteps ${ITERS} --alpha ${ALPHA} \
 --lbfgs_max_iterations ${LBFGS} --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 #--state_functiondegree 0  --nosmoothen 
 #  --timestepping explicitEuler --solver lu
 
+OUTPATH=${OUTPUTDIR}/${OUTFOLDERNAME}/
+cp -v ${LOGOUTFILE} ${OUTPATH}
 
 echo "success"

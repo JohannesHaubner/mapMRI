@@ -140,7 +140,7 @@ def Transport(Img, Wind, MaxIter, DeltaT, hyperparameters, MassConservation = Tr
     for i in range(MaxIter):
         #solve(a==0, Img_next)
 
-        print_overloaded("Iteration ", i + 1, "/", MaxIter + 1, "in Transport()")
+        print_overloaded("Iteration ", i + 1, "/", MaxIter, "in Transport()")
 
         if timestepping == "RungeKutta" or timestepping == "RungeKuttaBug":
             dImg = TrialFunction(Img_deformed.function_space())
