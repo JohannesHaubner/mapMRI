@@ -2,10 +2,10 @@ from fenics import *
 from fenics_adjoint import *
 
 # from mri_utils.helpers import load_velocity, interpolate_velocity
-from DGTransport import Transport
-from transformation_overloaded import transformation
+from dgregister.DGTransport import Transport
+from dgregister.transformation_overloaded import transformation
 # from preconditioning_overloaded import Overloaded_Preconditioning # 
-from preconditioning_overloaded import preconditioning
+from dgregister.preconditioning_overloaded import preconditioning
 
 set_log_level(LogLevel.CRITICAL)
 

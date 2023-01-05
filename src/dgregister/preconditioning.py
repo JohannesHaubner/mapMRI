@@ -3,7 +3,7 @@ from dolfin_adjoint import *
 
 import numpy as np
 
-from config import hyperparameters
+from dgregister.config import hyperparameters
 assert len(hyperparameters) > 1
 
 def print_overloaded(*args):

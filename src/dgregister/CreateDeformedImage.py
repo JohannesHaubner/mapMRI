@@ -2,8 +2,8 @@
 
 from dolfin import *
 from dolfin_adjoint import *
-from DGTransport import Transport
-from Pic2Fen import Pic2FEM, FEM2Pic
+from dgregister.DGTransport import Transport
+from dgregister.Pic2Fen import Pic2FEM, FEM2Pic
 import numpy
 
 import time

@@ -21,7 +21,7 @@ def print_overloaded(*args):
         pass
 
 
-from helpers import load_velocity, interpolate_velocity
+from dgregister.helpers import load_velocity, interpolate_velocity
 
 parser = argparse.ArgumentParser()
 

@@ -4,7 +4,7 @@ from dolfin_adjoint import *
 from pyadjoint import Block
 from pyadjoint.overloaded_function import overload_function
 
-from transformation import transformation
+from dgregister.transformation import transformation
 
 backend_transformation = transformation
 

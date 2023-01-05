@@ -8,16 +8,6 @@ import numpy as np
 
 set_log_level(LogLevel.CRITICAL)
 
-# get_log_level()
-
-# PETScOptions.set("mat_mumps_use_omp_threads", 8)
-# PETScOptions.set("mat_mumps_icntl_35", True) # set use of BLR (Block Low-Rank) feature (0:off, 1:optimal)
-# PETScOptions.set("mat_mumps_cntl_7", 1e-8) # set BLR relaxation
-# PETScOptions.set("mat_mumps_icntl_4", 3)   # verbosity
-# PETScOptions.set("mat_mumps_icntl_24", 1)  # detect null pivot rows
-# PETScOptions.set("mat_mumps_icntl_22", 0)  # out of core
-# #PETScOptions.set("mat_mumps_icntl_14", 250) # max memory increase in %
-
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
         # set_log_level(PROGRESS)
@@ -29,9 +19,9 @@ def print_overloaded(*args):
 print_overloaded("Setting parameters parameters['ghost_mode'] = 'shared_facet'")
 parameters['ghost_mode'] = 'shared_facet'
 
-from mri_utils.helpers import load_velocity, get_lumped_mass_matrices, interpolate_velocity
-from src.dgregister.MRI2FEM import read_image
-import config
+from dgregister.helpers import load_velocity, get_lumped_mass_matrices, interpolate_velocity
+from dgregister.MRI2FEM import read_image
+import dgregister.config as config
 
 parser = argparse.ArgumentParser()
 
@@ -44,9 +34,6 @@ parser.add_argument("--solver", default="krylov", choices=["lu", "krylov"])
 parser.add_argument("--timestepping", default="RungeKutta", choices=["RungeKutta", "CrankNicolson", "explicitEuler"])
 parser.add_argument("--smoothen", default=True, action="store_true", help="Obsolete flag. Use proper scalar product")
 parser.add_argument("--nosmoothen", default=False, action="store_true", help="Sets smoothen=False")
-
-parser.add_argument("--Pic2FEN", default=False, action="store_true", help="Load images using old code")
-
 parser.add_argument("--alpha", type=float, default=1e-4)
 parser.add_argument("--lbfgs_max_iterations", type=float, default=400)
 parser.add_argument("--max_timesteps", type=float, default=None)
@@ -133,9 +120,9 @@ hyperparameters["state_functionspace"] = "DG"
 config.hyperparameters = hyperparameters
 
 if hyperparameters["ocd"]:
-    from mri_utils.find_velocity_ocd import find_velocity
+    from dgregister.find_velocity_ocd import find_velocity
 else:
-    from mri_utils.find_velocity import find_velocity
+    from dgregister.find_velocity import find_velocity
 
 print_overloaded("Setting config.hyperparameters")
 
@@ -156,22 +143,10 @@ else:
     domainmesh = None
     controlfun = None
 
-if hyperparameters["Pic2FEN"]:
 
-    from Pic2Fen import Pic2FEM
-    (domainmesh, Img, NumData) = Pic2FEM(hyperparameters["input"], mesh=None)
-    (mesh_goal, Img_goal, NumData_goal) = Pic2FEM(hyperparameters["target"], mesh=domainmesh)
 
-    Space = FunctionSpace(domainmesh, "DG", 1)
-    Img = project(sqrt(inner(Img, Img)), Space)
-    Img.rename("img", "")
-    Img_goal = project(sqrt(inner(Img_goal, Img_goal)), Space)
-    NumData = 1
-
-else:
-
-    (domainmesh, Img, NumData) = read_image(hyperparameters, name="input", mesh=domainmesh, normalize=hyperparameters["normalize"])
-    (mesh_goal, Img_goal, NumData_goal) = read_image(hyperparameters, name="target", mesh=domainmesh, normalize=hyperparameters["normalize"])
+(domainmesh, Img, NumData) = read_image(hyperparameters, name="input", mesh=domainmesh, normalize=hyperparameters["normalize"])
+(mesh_goal, Img_goal, NumData_goal) = read_image(hyperparameters, name="target", mesh=domainmesh, normalize=hyperparameters["normalize"])
 
 
 if hyperparameters["starting_guess"] is None:
@@ -232,23 +207,6 @@ files["lossfile"] = hyperparameters["outputfolder"] + '/loss.txt'
 files["regularizationfile"] = hyperparameters["outputfolder"] + '/regularization.txt'
 
 find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess=controlfun)
-
-# try:
-#     find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess=controlfun)
-
-# except RuntimeError:
-#     print(":" * 100)
-#     print("Trying with LU solver")
-#     print(":" * 100)
-#     hyperparameters["solver"] = "lu"
-    
-#     hyperparameters["krylov_failed"] = True
-
-#     with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as outfile:
-#         json.dump(hyperparameters, outfile, sort_keys=True, indent=4)
-
-#     find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess=controlfun)
-    
 
 tcomp = (time.time()-t0) / 3600
 
