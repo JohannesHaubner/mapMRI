@@ -1,8 +1,9 @@
 #!/bin/bash
 #SBATCH --job-name=testregister
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=4
 #################################################################
+#SBATCH --ntasks=8
+################################################################
 ## SBATCH --partition=milanq
 #SBATCH --partition=fpgaq
 ## SBATCH --partition=defq
@@ -14,15 +15,9 @@
 #SBATCH -o /home/bastian/Oscar-Image-Registration-via-Transport-Equation/2dslurm/%j.out
 #SBATCH --export=ALL
 #SBATCH --mail-user=bastian@simula.no
-#module load gcc
-#module load anaconda3/x86_64
-#export LD_LIBRARY_PATH=/home/bastian/.conda/envs/mri_inverse/lib
-# conda init bash
 
 eval "$(conda shell.bash hook)"
 conda activate mri_inverse
-
-# module load ipopt-3.13.3
 
 set -o errexit # Exit the script on any error
 set -o nounset # Treat any unset variables as an error
@@ -37,41 +32,49 @@ echo "starting to run"
 SPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation
 LOGOUTFILE=${SPATH}/2dslurm/${SLURM_JOB_ID}_log_python_srun.txt
 
-# OUTPUTDIR=/home/bastian/D1/mriregistration_outputs/
-
-
 
 
 ITERS=$1
 ALPHA=$2
-LBFGS=2
 
-OUTFOLDERNAME=None
+NP=8
+LBFGS=20
+OUTFOLDERNAME=${NP}
+OUTPUTDIR=/home/bastian/D1/registration/timing3d/
+DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_3d
 
-OUTPUTDIR=/home/bastian/D1/registration/timing/
-DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_2d
-
+# LBFGS=10000
+# OUTFOLDERNAME=None
 # OUTPUTDIR=/home/bastian/D1/registration/boxregistration_outputs/
 # DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_2d
 
+# OUTFOLDERNAME=None
 # OUTPUTDIR=/home/bastian/D1/registration/cuberegistration_outputs/
 # DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_3d
 
-srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
+srun -n ${NP} python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
 --max_timesteps ${ITERS} --alpha ${ALPHA} \
 --lbfgs_max_iterations ${LBFGS} --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 #--state_functiondegree 0  --nosmoothen --timestepping explicitEuler
 
-srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
---input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
---max_timesteps ${ITERS} --alpha ${ALPHA} --nosmoothen \
---lbfgs_max_iterations ${LBFGS} --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+# # --timestepping explicitEuler
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
+# --input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
+# --max_timesteps ${ITERS} --alpha ${ALPHA} --timestepping explicitEuler --nosmoothen \
+# --lbfgs_max_iterations ${LBFGS} --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 
-srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
---input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
---max_timesteps ${ITERS} --alpha ${ALPHA} --state_functiondegree 0 \
---lbfgs_max_iterations ${LBFGS} --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+# # --nosmoothen
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
+# --input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
+# --max_timesteps ${ITERS} --alpha ${ALPHA} --nosmoothen \
+# --lbfgs_max_iterations ${LBFGS} --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+
+# # --state_functiondegree 0 
+# srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
+# --input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
+# --max_timesteps ${ITERS} --alpha ${ALPHA} --state_functiondegree 0 \
+# --lbfgs_max_iterations ${LBFGS} --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 
 
 

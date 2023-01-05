@@ -109,7 +109,7 @@ if hyperparameters["state_functiondegree"] == 0:
 
 hyperparameters["outfoldername"] += suffix
 
-print("Generated outfoldername", hyperparameters["outfoldername"])
+print_overloaded("Generated outfoldername", hyperparameters["outfoldername"])
 
 if hyperparameters["starting_guess"] is not None:
     assert os.path.isfile(hyperparameters["starting_guess"])
@@ -251,6 +251,8 @@ find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting
     
 
 tcomp = (time.time()-t0) / 3600
+
+print_overloaded("Done with optimization, took", format(tcomp, ".1f"), "hours")
 
 hyperparameters["optimization_time_hours"] = tcomp
 
