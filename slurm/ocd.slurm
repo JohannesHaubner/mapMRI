@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH --job-name=ocdregister
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=4
+#SBATCH --ntasks=8
 #################################################################
-##SBATCH --partition=milanq
-#SBATCH --partition=fpgaq
+#SBATCH --partition=milanq
+## SBATCH --partition=fpgaq
 ## SBATCH --partition=defq
 ## SBATCH --partition=slowq
 ## SBATCH --partition=rome16q
@@ -40,16 +40,14 @@ LOGOUTFILE=${GPATH}slurm/mrislurm/${SLURM_JOB_ID}_log_python_srun.txt
 
 
 
-ITERS=99999
+ITERS=1
 ALPHA=$1
-LBFGS=99999
+LBFGS=100
 
 echo "ITERS=" ${ITERS}
 echo "ALPHA=" ${ALPHA}
 
-OUTFOLDERNAME=OCDA${ALPHA}
-
-
+OUTFOLDERNAME=None
 
 OUTPUTDIR=/home/bastian/D1/registration/mriregistration_outputs/
 DPATH=/home/bastian/D1/registration
@@ -64,12 +62,11 @@ IMG2=${DATAPATH}coarsenedernie_brain.mgz
 echo "IMG1=" ${IMG1}
 echo "IMG2=" ${IMG2}
 
-srun -n 4 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+srun -n 8 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --ocd \
 --max_timesteps ${ITERS} --alpha ${ALPHA} \
 --lbfgs_max_iterations ${LBFGS} --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
-#--state_functiondegree 0  --nosmoothen 
-#  --timestepping explicitEuler --solver lu
+
 
 OUTPATH=${OUTPUTDIR}/${OUTFOLDERNAME}/
 cp -v ${LOGOUTFILE} ${OUTPATH}

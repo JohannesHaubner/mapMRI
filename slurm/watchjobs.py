@@ -2,21 +2,24 @@ import os
 import pathlib
 import time
 jobpaths = ["/home/bastian/Oscar-Image-Registration-via-Transport-Equation/2dslurm/",
-"/home/bastian/Oscar-Image-Registration-via-Transport-Equation/mrislurm/",
+"/home/bastian/Oscar-Image-Registration-via-Transport-Equation/slurm/mrislurm/",
 ]
 
 while True:
 
     for jobpath in jobpaths:
 
-        for job in sorted(os.listdir(jobpath)):
+        os.chdir(jobpath)
 
+        for job in sorted(os.listdir(jobpath)):
+            
+            
             # if not job.endswith(".out"):
             #     continue
 
             if job.endswith(".out"):
                 jobid = int(job.replace(".out", ""))
-                if jobid < 429700:
+                if jobid < 430047:
                     continue
             else:
                 continue
@@ -39,7 +42,8 @@ while True:
 
                 if "error".lower() in line.lower():
                     errormessage = True
-
+                    print(jobid)
+                    break
             if errormessage:
                 if (os.system('scontrol show jobid -dd ' + str(jobid))) == 0:
                     print("Killed", jobid)

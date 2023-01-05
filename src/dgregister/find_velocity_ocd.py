@@ -23,7 +23,7 @@ def csvwrite(name, values, header, mode=None, debug=True):
        writer.writerow(values)     
 
 
-def compute_ocd_reduced(c0, c1, tau, alpha, results_dir, space="CG", reg="H1"):
+def compute_ocd_reduced(c0, c1, tau, alpha, results_dir, hyperparameters, space="CG", reg="H1"):
     # c0:
     # c1:
     # tau:   time step
@@ -144,7 +144,7 @@ def compute_ocd_reduced(c0, c1, tau, alpha, results_dir, space="CG", reg="H1"):
     tol = 1.0e-8
     phi_opt = minimize(Jhat,
                        tol=tol, 
-                       options={"gtol": tol, "maxiter": 80, "disp": True})
+                       options={"gtol": tol, "maxiter": int(hyperparameters["lbfgs_max_iterations"]), "disp": True})
     pause_annotation()
 
     # Update phi, and do a final solve to compute c
@@ -184,7 +184,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
     Img = project(Img, VCG)
     Img_goal = project(Img_goal, VCG)
 
-    c, phi = compute_ocd_reduced(c0=Img, c1=Img_goal, tau=1,
+    c, phi = compute_ocd_reduced(c0=Img, c1=Img_goal, tau=1, hyperparameters=hyperparameters,
     alpha=hyperparameters["alpha"], results_dir=hyperparameters["outputfolder"], space="CG", reg="H1")
     
     with XDMFFile(hyperparameters["outputfolder"] + "/Finalstate.xdmf") as xdmf:

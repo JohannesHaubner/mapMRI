@@ -82,6 +82,8 @@ elif hyperparameters["timestepping"] == "CrankNicolson":
     hyperparameters["outfoldername"] = "CN"
 elif hyperparameters["timestepping"] == "explicitEuler":
     hyperparameters["outfoldername"] = "E"
+elif hyperparameters["ocd"]:
+    hyperparameters["outfoldername"] = "OCD"
 
 hyperparameters["outfoldername"] += str(int(hyperparameters["max_timesteps"]))
 hyperparameters["outfoldername"] += "A" + str(hyperparameters["alpha"])
