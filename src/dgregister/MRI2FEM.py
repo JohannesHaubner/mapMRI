@@ -5,6 +5,10 @@ import numpy as np
 from nibabel.affines import apply_affine
 import pathlib
 
+# from mpi4py import MPI
+
+comm = MPI.comm_world
+nprocs = comm.Get_size()
 
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
@@ -12,6 +16,52 @@ def print_overloaded(*args):
         print(*args)
     else:
         pass
+
+# The dof coordinates for DG0 are in the middle of the cell. 
+# Shift everything by -0.5 so that the rounded dof coordinate corresponds to the voxel idx.
+dxyz = 0.5 
+
+
+def fem2mri(function, imagepath=None):
+    
+    V0 = FunctionSpace(function.function_space().mesh(), "DG", 0)
+
+    function0 = project(function, V0)
+    
+    dof_vals = function0.vector()[:]
+
+    xyz = V0.tabulate_dof_coordinates()
+
+    xyz = xyz.transpose()
+
+    i, j, k = np.rint(xyz - dxyz).astype("int")
+    assert len(dof_vals.shape) == 1
+    assert xyz.shape[-1] == dof_vals.shape[-1]
+
+    if imagepath is not None:
+        image = nibabel.load(imagepath).get_fdata()
+
+        if nprocs == 1:
+            assert i.max() == image.shape[0] - 1
+            assert j.max() == image.shape[1] - 1
+            assert k.max() == image.shape[2] - 1
+
+        retimage = np.zeros_like(image) + np.nan
+
+    else:
+        # build image based on mesh size
+        retimage = np.zeros((int(i.max()), int(j.max()), int(k.max())))
+
+    retimage[i, j, k] = dof_vals
+
+    if imagepath is not None:
+        
+
+        reldiff = np.mean(np.abs(image-retimage)) / np.mean(np.abs(image))
+
+        print("Rel difference between image and backprojected function", format(reldiff, ".2e"))
+
+    return retimage
 
 
 def read_image(hyperparameters, name, mesh=None, printout=True, normalize=True):
@@ -37,9 +87,7 @@ def read_image(hyperparameters, name, mesh=None, printout=True, normalize=True):
     ny = data.shape[1]
     nz = data.shape[2]
 
-    # The dof coordinates for DG0 are in the middle of the cell. 
-    # Shift everything by -0.5 so that the rounded dof coordinate corresponds to the voxel idx.
-    dx = 0.5 
+
     
     if mesh is None:
         if nz == 1:
@@ -65,7 +113,7 @@ def read_image(hyperparameters, name, mesh=None, printout=True, normalize=True):
 
     # The dof coordinates for DG0 are in the middle of the cell. 
     # Shift everything by -0.5 so that the rounded dof coordinate corresponds to the voxel idx.
-    i, j, k = np.rint(xyz - dx).astype("int")
+    i, j, k = np.rint(xyz - dxyz).astype("int")
 
     if normalize:
         print_overloaded("Normalizing data")

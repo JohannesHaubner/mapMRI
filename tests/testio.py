@@ -49,7 +49,7 @@ else:
     FName = "/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_3d/input.mgz"
 
     if "MRI2FEM" in hyperparameters["outputfolder"]:
-        from src.dgregister.MRI2FEM import read_image
+        from dgregister.MRI2FEM import read_image
 
         normalize = False
 

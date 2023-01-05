@@ -1,6 +1,5 @@
 import json
 from fenics import *
-from src.dgregister import MRI2FEM
 from fenics_adjoint import *
 import os
 import numpy as np
