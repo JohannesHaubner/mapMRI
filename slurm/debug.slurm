@@ -12,7 +12,7 @@
 #################################################################
 
 #SBATCH --time 6-24 ##--time=99:00:00
-#SBATCH -o /home/bastian/Oscar-Image-Registration-via-Transport-Equation/cubedebugging/%j.out
+#SBATCH -o /home/bastian/Oscar-Image-Registration-via-Transport-Equation/slurm/cubedebugging/%j.out
 #SBATCH --export=ALL
 #SBATCH --mail-user=bastian@simula.no
 #module load gcc
@@ -35,8 +35,9 @@ echo "starting to run"
 ## EXECUTE AFTER ANOTHER JOB IS DONE:
 ## sbatch --dependency=afterany: submit.slurm
 #######################################################
-SPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation
-LOGOUTFILE=${SPATH}/cubedebugging/${SLURM_JOB_ID}_log_python_srun.txt
+SPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/scripts/optimization
+
+LOGOUTFILE=${SPATH}/slurm/cubedebugging/${SLURM_JOB_ID}_log_python_srun.txt
 OUTPUTDIR=/home/bastian/D1/mriregistration_outputs/
 DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/mridata_3d
 

@@ -11,7 +11,7 @@
 #################################################################
 
 #SBATCH --time 0-1 ##--time=99:00:00
-#SBATCH -o /home/bastian/Oscar-Image-Registration-via-Transport-Equation/iotests/%j.out
+#SBATCH -o /home/bastian/Oscar-Image-Registration-via-Transport-Equation/slurm/iotests/%j.out
 #SBATCH --export=ALL
 #SBATCH --mail-user=bastian@simula.no
 #module load gcc
@@ -34,8 +34,8 @@ echo "starting to run"
 ## EXECUTE AFTER ANOTHER JOB IS DONE:
 ## sbatch --dependency=afterany: submit.slurm
 #######################################################
-SPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation
-LOGOUTFILE=${SPATH}/iotests/${SLURM_JOB_ID}_log_python_srun.txt
+SPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/scripts/optimization
+LOGOUTFILE=${SPATH}/slurm/iotests/${SLURM_JOB_ID}_log_python_srun.txt
 
 cd /home/bastian/Oscar-Image-Registration-via-Transport-Equation
 
