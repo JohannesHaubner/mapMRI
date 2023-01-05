@@ -12,7 +12,7 @@
 #################################################################
 
 #SBATCH --time 6-24 ##--time=99:00:00
-#SBATCH -o /home/bastian/Oscar-Image-Registration-via-Transport-Equation/slurm/slurm/2dslurm/%j.out
+#SBATCH -o /home/bastian/Oscar-Image-Registration-via-Transport-Equation/slurm/2dslurm/%j.out
 #SBATCH --export=ALL
 #SBATCH --mail-user=bastian@simula.no
 
@@ -29,8 +29,11 @@ echo "starting to run"
 ## EXECUTE AFTER ANOTHER JOB IS DONE:
 ## sbatch --dependency=afterany: submit.slurm
 #######################################################
-SPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/scripts/optimization
-LOGOUTFILE=${SPATH}/slurm/2dslurm/${SLURM_JOB_ID}_log_python_srun.txt
+GPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/
+
+SPATH=${GPATH}scripts/optimization
+
+LOGOUTFILE=${GPATH}slurm/2dslurm/${SLURM_JOB_ID}_log_python_srun.txt
 
 
 
@@ -40,17 +43,17 @@ ALPHA=$2
 NP=8
 LBFGS=20
 OUTFOLDERNAME=${NP}
-OUTPUTDIR=/home/bastian/D1/registration/timing3d/
-DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_3d
+OUTPUTDIR=/home/bastian/D1/registration/test/
+
+DPATH=/home/bastian/D1/registration
+DATAPATH=${DPATH}/testdata_2d
 
 # LBFGS=10000
 # OUTFOLDERNAME=None
 # OUTPUTDIR=/home/bastian/D1/registration/boxregistration_outputs/
-# DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_2d
 
 # OUTFOLDERNAME=None
 # OUTPUTDIR=/home/bastian/D1/registration/cuberegistration_outputs/
-# DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/testdata_3d
 
 srun -n ${NP} python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \

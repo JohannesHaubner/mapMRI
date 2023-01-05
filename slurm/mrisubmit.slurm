@@ -34,9 +34,12 @@ echo "starting to run"
 ## EXECUTE AFTER ANOTHER JOB IS DONE:
 ## sbatch --dependency=afterany: submit.slurm
 #######################################################
-SPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/scripts/optimization
 
-LOGOUTFILE=${SPATH}/slurm/mrislurm/${SLURM_JOB_ID}_log_python_srun.txt
+
+GPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/
+SPATH=${GPATH}scripts/optimization
+LOGOUTFILE=${GPATH}slurm/mrislurm/${SLURM_JOB_ID}_log_python_srun.txt
+
 
 
 ITERS=$1
@@ -56,7 +59,9 @@ OUTFOLDERNAME=
 
 
 OUTPUTDIR=/home/bastian/D1/registration/mriregistration_outputs/
-DATAPATH=/home/bastian/D1/registration/mri2fem-data/processed/coarsecropped/
+
+DPATH=/home/bastian/D1/registration
+DATAPATH=${DPATH}/mri2fem-data/processed/coarsecropped/
 
 echo "OUTPUTDIR=" $OUTPUTDIR
 echo "OUTFOLDERNAME=" $OUTFOLDERNAME

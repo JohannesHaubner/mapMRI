@@ -35,9 +35,13 @@ echo "starting to run"
 ## EXECUTE AFTER ANOTHER JOB IS DONE:
 ## sbatch --dependency=afterany: submit.slurm
 #######################################################
-SPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/scripts/optimization
 
-LOGOUTFILE=${SPATH}/slurm/cubedebugging/${SLURM_JOB_ID}_log_python_srun.txt
+
+GPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/
+SPATH=${GPATH}scripts/optimization
+LOGOUTFILE=${GPATH}slurm/cubedebugging/${SLURM_JOB_ID}_log_python_srun.txt
+
+
 OUTPUTDIR=/home/bastian/D1/mriregistration_outputs/
 DATAPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/mridata_3d
 

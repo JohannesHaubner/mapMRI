@@ -34,8 +34,11 @@ echo "starting to run"
 ## EXECUTE AFTER ANOTHER JOB IS DONE:
 ## sbatch --dependency=afterany: submit.slurm
 #######################################################
-SPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/scripts/optimization
-LOGOUTFILE=${SPATH}/slurm/iotests/${SLURM_JOB_ID}_log_python_srun.txt
+GPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/
+SPATH=${GPATH}scripts/optimization
+LOGOUTFILE=${GPATH}slurm/iotests/${SLURM_JOB_ID}_log_python_srun.txt
+
+
 
 cd /home/bastian/Oscar-Image-Registration-via-Transport-Equation
 

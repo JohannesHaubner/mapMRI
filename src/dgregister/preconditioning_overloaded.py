@@ -13,9 +13,9 @@ def print_overloaded(*args):
 
 import numpy as np
 
-from preconditioning import preconditioning
+from dgregister.preconditioning import preconditioning
 
-from config import hyperparameters
+from dgregister.config import hyperparameters
 
 
 assert len(hyperparameters) > 1
