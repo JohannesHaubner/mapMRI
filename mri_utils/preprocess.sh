@@ -15,7 +15,7 @@ fi
 
 CODEDIR=/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation
 
-MRI2FEMDATA=/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/mri2fem-dataset
+MRI2FEMDATA=${CODEDIR}/mri2fem-dataset
 TARGETDIR=${MRI2FEMDATA}/processed
 
 mkdir -vp ${TARGETDIR}

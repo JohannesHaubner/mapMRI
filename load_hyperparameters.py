@@ -24,11 +24,17 @@ def get_folders() -> list:
             continue
         
         if "Jd_init" not in params.keys():
-            print("Jd_init not in keys for", folder)
+            print("Jd_init not in keys for", folder, "slurmid = ", params["slurmid"])
+            assert True not in ["log" in x for x in os.listdir(folder)]
             continue
 
-        loss = np.genfromtxt(folder + "/loss.txt", delimiter=",")[:-1]
+        if folder[0] == "E":
+            assert params["timestepping"] == "explicitEuler"
 
+        loss = np.genfromtxt(folder + "/loss.txt", delimiter=",")[:-1]
+        
+        # print(params["timestepping"])
+        
         folders.append([folder, params, loss])
 
     return folders
@@ -49,7 +55,7 @@ def remove_nonconverged(folders: list) -> list:
             
             continue
 
-
+        
         retval.append([folder, params, loss])
     plt.legend()
     # plt.show()
@@ -68,7 +74,7 @@ os.chdir("/home/basti/programming/Oscar-Image-Registration-via-Transport-Equatio
 
 folders = get_folders()
 
-if "cuberegistration_outputs" not in os.getcwd():
+if "boxregistration_outputs" in os.getcwd():
     folders = remove_nonconverged(folders)
 
 fig2, ax2 = plt.subplots()
@@ -129,6 +135,8 @@ for folder, params, loss in folders:
 
     marker="o"
     color="green"
+    markersize = 10
+
 
     if "DG0" in folder:
         color="blue"
@@ -137,21 +145,19 @@ for folder, params, loss in folders:
         marker="s"
         color="red"
 
-    markersize = 10
+    if "E" == folder[0]:
+        marker = "x"
+        color="k"
+        markersize = 15
 
-    if len(loss) == 100 and "cuberegistration_outputs" in os.getcwd():
+
+    
+    if params["lbfgs_max_iterations"] == len(loss):
         
         marker = "d"
         color="k"
         ax1.plot([],[], linewidth=0, color="k", markersize=markersize, marker="d", label=folder + " (not converged)")
-    
-    elif len(loss) == 1000 and "boxregistration_outputs" in os.getcwd():
-        
-        marker = "d"
-        ax1.plot([],[], linewidth=0, color=color, marker=marker, markersize=markersize, label=folder + " (not converged)")
 
-    elif len(loss) == 100:
-        continue
 
     ax1.loglog(params["alpha"], 
         # params["Jd_final"],
@@ -159,7 +165,7 @@ for folder, params, loss in folders:
         markersize=markersize, 
         marker=marker, color=color)
 
-    ax2.loglog(params["alpha"], 
+    ax2.semilogx(params["alpha"], 
         params["optimization_time_hours"],
         markersize=markersize, 
         marker=marker, color=color)
@@ -180,4 +186,9 @@ for ax in [ax1, ax2]:
     plt.plot([],[], linewidth=0, color="green", marker="o", label="DG1")
     plt.plot([],[], linewidth=0, color="red", marker="s", label="DG1, no smoothen")
     plt.legend()
+
+ax2.set_title("Note! Different machines were used!", fontsize=16)
+plt.close(fig2)
+
 plt.show()
+plt.close()
