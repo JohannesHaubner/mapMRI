@@ -2,12 +2,19 @@ from fenics import *
 from dgregister.MRI2FEM import read_image, fem2mri
 import nibabel
 import numpy as np
+import os
 
-PATH = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/mri2fem-dataset/processed/coarsecropped/"
-FName = PATH + "coarsenedernie_brain.mgz"
 
-# PATH = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/testdata_3d/"
-# FName = PATH + "input.mgz"
+if "/home/bastian" in os.getcwd():
+    
+    PATH = "/home/bastian/D1/registration/mri2fem-data/processed/coarsecropped/"
+    FName = PATH + "coarsenedernie_brain.mgz"
+else:
+    PATH = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/mri2fem-dataset/processed/coarsecropped/"
+    FName = PATH + "coarsenedernie_brain.mgz"
+
+    # PATH = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/testdata_3d/"
+    # FName = PATH + "input.mgz"
 
 domainmesh, Img, N1 = read_image(hyperparameters={"image": FName, "state_functionspace": "DG", "state_functiondegree":1}, 
                 name="image", mesh=None, normalize=False)
