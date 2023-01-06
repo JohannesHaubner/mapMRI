@@ -1,14 +1,24 @@
 import os
 import json
 
-path = "/home/bastian/D1/registration/timing"
+paths = {"2d:": "/home/bastian/D1/registration/timing", "3d:": "/home/bastian/D1/registration/timing3d",}
 
-os.chdir(path)
 
-for f in os.listdir(path):
-
+for dim, path in paths.items():
+    os.chdir(path)
     
+    print("-"*80)
+    print("Dimension:", dim)
 
-    par = json.load(open(f + "/hyperparameters.json"))
+    for f in sorted(os.listdir(path), key=lambda x: int(x[19:])):
 
-    print(f, par["optimization_time_hours"], par["Jd_init"], par["Jd_final"])
+
+        cores = f[19:]
+
+        par = json.load(open(f + "/hyperparameters.json"))
+
+        if "optimization_time_hours" not in par.keys():
+            print(f, "not done")
+            continue
+
+        print(f, "cores=", cores, "compute time:", par["optimization_time_hours"]) # , par["Jd_init"], par["Jd_final"])

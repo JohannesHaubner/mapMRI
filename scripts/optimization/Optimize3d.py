@@ -5,6 +5,7 @@ import json
 import time
 import argparse
 import numpy as np
+import nibabel
 
 set_log_level(LogLevel.CRITICAL)
 
@@ -20,7 +21,7 @@ print_overloaded("Setting parameters parameters['ghost_mode'] = 'shared_facet'")
 parameters['ghost_mode'] = 'shared_facet'
 
 from dgregister.helpers import load_velocity, get_lumped_mass_matrices, interpolate_velocity
-from dgregister.MRI2FEM import read_image
+from dgregister.MRI2FEM import read_image, fem2mri
 import dgregister.config as config
 
 parser = argparse.ArgumentParser()
@@ -57,6 +58,9 @@ hyperparameters = vars(parser.parse_args())
 os.chdir(hyperparameters["code_dir"])
 print_overloaded("Setting pwd to", hyperparameters["code_dir"])
 
+
+if not hyperparameters["output_dir"].endswith("/"):
+    hyperparameters["output_dir"] += "/"
 
 
 if (hyperparameters["outfoldername"] is not None) or len(hyperparameters["outfoldername"]) == 0:
@@ -208,7 +212,26 @@ t0 = time.time()
 files["lossfile"] = hyperparameters["outputfolder"] + '/loss.txt'
 files["regularizationfile"] = hyperparameters["outputfolder"] + '/regularization.txt'
 
-find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess=controlfun)
+
+
+if min(hyperparameters["input.shape"]) > 1 and len(hyperparameters["input.shape"]) == 3:
+    
+    if MPI.comm_world.rank == 0:
+
+        os.makedirs(hyperparameters["outputfolder"] + '/mri', exist_ok=True)
+
+FinalImg, FinalVelocity = find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess=controlfun)
+
+
+if min(hyperparameters["input.shape"]) > 1 and len(hyperparameters["input.shape"]) == 3:
+    
+    retimage = fem2mri(function=FinalImg, shape=hyperparameters["input.shape"])
+    if MPI.comm_world.rank == 0:
+        nifti = nibabel.Nifti1Image(retimage, nibabel.load(hyperparameters["input"]).affine)
+
+        nibabel.save(nifti, hyperparameters["outputfolder"] + '/mri/Finalstate.mgz')
+
+        print_overloaded("Stored mgz image of transformed image")
 
 tcomp = (time.time()-t0) / 3600
 

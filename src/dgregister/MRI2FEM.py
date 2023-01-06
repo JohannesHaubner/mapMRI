@@ -22,7 +22,7 @@ def print_overloaded(*args):
 dxyz = 0.5 
 
 
-def fem2mri(function: Function, shape) -> np.ndarray:
+def fem2mri(function, shape):
     
     V0 = FunctionSpace(function.function_space().mesh(), "DG", 0)
 
@@ -34,7 +34,7 @@ def fem2mri(function: Function, shape) -> np.ndarray:
     gathered_coordinates = MPI.comm_world.gather(coordinates, root=0)
     gathered_values = MPI.comm_world.gather(dof_values, root=0)
 
-    if MPI.comm_world.rank == 0:
+    if MPI.rank(MPI.comm_world) == 0:
         xy = np.vstack(gathered_coordinates)
 
         vals = np.hstack(gathered_values)

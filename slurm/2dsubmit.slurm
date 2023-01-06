@@ -2,7 +2,7 @@
 #SBATCH --job-name=testregister
 #SBATCH --cpus-per-task=1
 #################################################################
-#SBATCH --ntasks=8
+#SBATCH --ntasks=16
 ################################################################
 ## SBATCH --partition=milanq
 #SBATCH --partition=fpgaq
@@ -40,13 +40,14 @@ LOGOUTFILE=${GPATH}slurm/2dslurm/${SLURM_JOB_ID}_log_python_srun.txt
 ITERS=$1
 ALPHA=$2
 
-NP=8
-LBFGS=20
+NP=16
+LBFGS=3
 OUTFOLDERNAME=${NP}
 OUTPUTDIR=/home/bastian/D1/registration/test/
+#timing3d/
 
 DPATH=/home/bastian/D1/registration
-DATAPATH=${DPATH}/testdata_2d
+DATAPATH=${DPATH}/testdata_3d
 
 # LBFGS=10000
 # OUTFOLDERNAME=None

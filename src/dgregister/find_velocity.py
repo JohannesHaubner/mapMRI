@@ -7,6 +7,10 @@ from dgregister.transformation_overloaded import transformation
 # from preconditioning_overloaded import Overloaded_Preconditioning # 
 from dgregister.preconditioning_overloaded import preconditioning
 
+
+from dgregister.MRI2FEM import fem2mri
+import nibabel
+
 set_log_level(LogLevel.CRITICAL)
 
 
@@ -157,6 +161,18 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
             xdmf.write_checkpoint(velocityField, "CurrentV", 0.)
 
 
+        if min(hyperparameters["input.shape"]) > 1 and len(hyperparameters["input.shape"]) == 3 and (current_iteration % 10 == 0):
+
+            retimage = fem2mri(function=current_pde_solution, shape=hyperparameters["input.shape"])
+            
+            if MPI.rank(MPI.comm_world) == 0:
+                nifti = nibabel.Nifti1Image(retimage, nibabel.load(hyperparameters["input"]).affine)
+
+                nibabel.save(nifti, hyperparameters["outputfolder"] + '/mri/state_at_' + str(current_iteration) + '.mgz')
+
+                print_overloaded("Stored mgz image of transformed image at iteration", current_iteration)
+
+
     minimize(Jhat,  method = 'L-BFGS-B', options = {"iprint": 0, "disp": None, "maxiter": hyperparameters["lbfgs_max_iterations"]}, tol=1e-08, callback = cb)
 
     hyperparameters["Jd_final"] = hyperparameters["Jd_current"]
@@ -193,3 +209,6 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
     files["stateFile"].write(current_pde_solution, "-1")
 
     print_overloaded("Stored final State, Control, Velocity to .hdf files")
+
+
+    return current_pde_solution, velocityField
