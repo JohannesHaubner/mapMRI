@@ -22,49 +22,44 @@ def print_overloaded(*args):
 dxyz = 0.5 
 
 
-def fem2mri(function, imagepath=None):
+def fem2mri(function: Function, shape) -> np.ndarray:
     
     V0 = FunctionSpace(function.function_space().mesh(), "DG", 0)
 
     function0 = project(function, V0)
-    
-    dof_vals = function0.vector()[:]
 
-    xyz = V0.tabulate_dof_coordinates()
+    dof_values = function0.vector()[:]
+    coordinates = V0.tabulate_dof_coordinates()
 
-    xyz = xyz.transpose()
+    gathered_coordinates = MPI.comm_world.gather(coordinates, root=0)
+    gathered_values = MPI.comm_world.gather(dof_values, root=0)
 
-    i, j, k = np.rint(xyz - dxyz).astype("int")
-    assert len(dof_vals.shape) == 1
-    assert xyz.shape[-1] == dof_vals.shape[-1]
+    if MPI.comm_world.rank == 0:
+        xy = np.vstack(gathered_coordinates)
 
-    if imagepath is not None:
-        image = nibabel.load(imagepath).get_fdata()
+        vals = np.hstack(gathered_values)
 
-        if nprocs == 1:
-            assert i.max() == image.shape[0] - 1
-            assert j.max() == image.shape[1] - 1
-            assert k.max() == image.shape[2] - 1
+        dxyz = 0.5
+        ijk = np.rint(xy - dxyz).astype("int")
 
-        retimage = np.zeros_like(image) + np.nan
-
-    else:
-        # build image based on mesh size
-        retimage = np.zeros((int(i.max()), int(j.max()), int(k.max())))
-
-    retimage[i, j, k] = dof_vals
-
-    if imagepath is not None:
+        i = ijk[:, 0]
+        j = ijk[:, 1]
+        k = ijk[:, 2]
         
+        retimage = np.zeros(shape=shape) + np.nan
 
-        reldiff = np.mean(np.abs(image-retimage)) / np.mean(np.abs(image))
+        vals = np.squeeze(vals)
 
-        print("Rel difference between image and backprojected function", format(reldiff, ".2e"))
+        assert np.isnan(vals).sum() == 0, "nan in fenics function after gathering?"
 
-    return retimage
+        retimage[i, j, k] = vals
 
 
-def read_image(hyperparameters, name, mesh=None, printout=True, normalize=True):
+        return retimage
+
+
+def read_image(hyperparameters, name, mesh=None, printout=True, threshold=True, normalize=True):
+    
     if printout:
         print_overloaded("Loading", hyperparameters[name])
     
@@ -86,15 +81,11 @@ def read_image(hyperparameters, name, mesh=None, printout=True, normalize=True):
     nx = data.shape[0] 
     ny = data.shape[1]
     nz = data.shape[2]
-
-
     
     if mesh is None:
         if nz == 1:
 
             mesh = RectangleMesh(MPI.comm_world, Point(0.0, 0.0), Point(nx, ny), nx, ny)
-
-
             print_overloaded("Created rectangle mesh")
         else:
             mesh = BoxMesh(MPI.comm_world, Point(0.0, 0.0, 0.0), Point(nx, ny, nz), nx, ny, nz)
@@ -104,23 +95,29 @@ def read_image(hyperparameters, name, mesh=None, printout=True, normalize=True):
 
     u_data = Function(space)
 
-    xyz = space.tabulate_dof_coordinates().transpose()
+    xyz = space.tabulate_dof_coordinates()
+    
+    # xyz = xyz.transpose()
+    # if nz == 1:
+    #     xyz = np.stack((xyz[0, :], xyz[1, :], np.zeros_like(xyz[0, :])), axis=0)
+    # # The dof coordinates for DG0 are in the middle of the cell. 
+    # # Shift everything by -0.5 so that the rounded dof coordinate corresponds to the voxel idx.
+    # i, j, k = np.rint(xyz - dxyz).astype("int")
 
     if nz == 1:
-        xyz = np.stack((xyz[0, :], xyz[1, :], np.zeros_like(xyz[0, :])), axis=0)
+        raise NotImplementedError
 
-
-
-    # The dof coordinates for DG0 are in the middle of the cell. 
-    # Shift everything by -0.5 so that the rounded dof coordinate corresponds to the voxel idx.
-    i, j, k = np.rint(xyz - dxyz).astype("int")
+    ijk = np.rint(xyz - dxyz).astype("int")
+    i = ijk[:, 0]
+    j = ijk[:, 1]
+    k = ijk[:, 2]
 
     if normalize:
         print_overloaded("Normalizing data")
         print_overloaded("data.max()", data.max())
         data /= data.max()
 
-    if np.min(data) < 0:
+    if threshold and np.min(data) < 0:
         
         mask = np.where(data < 0, True, False)
         print_overloaded("-"*80)
@@ -134,19 +131,11 @@ def read_image(hyperparameters, name, mesh=None, printout=True, normalize=True):
         data = np.where(data < 0, 0, data)
 
         
-
-
     u_data.vector()[:] = data[i, j, k]
-
 
     space = FunctionSpace(mesh, hyperparameters["state_functionspace"], hyperparameters["state_functiondegree"])
     
-    # if "outputfolder" in hyperparameters.keys():
-    #     with XDMFFile(hyperparameters["outputfolder"] + "/" + str(pathlib.Path(hyperparameters[name]).stem) +"_DG0.xdmf") as xdmf:
-    #         xdmf.write_checkpoint(u_data, "ImgDG0", 0.)
-
     u_data = project(u_data, space)
-
 
     return mesh, u_data, 1  
 

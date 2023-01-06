@@ -4,7 +4,6 @@ import nibabel
 import numpy as np
 import os
 
-
 if "/home/bastian" in os.getcwd():
     
     PATH = "/home/bastian/D1/registration/mri2fem-data/processed/coarsecropped/"
@@ -16,43 +15,39 @@ else:
     # PATH = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/testdata_3d/"
     # FName = PATH + "input.mgz"
 
-domainmesh, Img, N1 = read_image(hyperparameters={"image": FName, "state_functionspace": "DG", "state_functiondegree":1}, 
-                name="image", mesh=None, normalize=False)
+    # PATH = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/testdata_3d/"
+    # FName = PATH + "mpi_testimage.mgz"
+
+domainmesh, Img, _ = read_image(hyperparameters={"image": FName, "state_functionspace": "DG", "state_functiondegree":1}, 
+                name="image", mesh=None, normalize=False, threshold=False)
 
 
 image = nibabel.load(FName)
+affine = image.affine
+image = image.get_fdata()
+shape = nibabel.load(FName).get_fdata().shape
 
-retimage = fem2mri(function=Img, imagepath=FName)
+retimage = fem2mri(function=Img, shape=shape)
 
-assert np.sum(np.isnan(retimage)) == 0
 
-# OUTNAME=FName.replace(".mgz", "loaded_and_backprojected.mgz")
-# nibabel.save(nibabel.Nifti1Image(retimage, affine=image.affine), OUTNAME)
+if MPI.comm_world.rank == 0:
 
-# from mpi4py import MPI
-# amode = MPI.MODE_WRONLY|MPI.MODE_CREATE
-# # amode = MPI.mode_wronly|MPI.mode_create
-# comm = MPI.COMM_WORLD
+    reldiff = np.mean(np.abs(image-retimage)) / np.mean(np.abs(image))
 
-# OUTNAME=FName.replace(".mgz", "loaded_and_backprojected.npy")
-# fh = MPI.File.Open(comm, OUTNAME, amode)
+    print("np.sum(retimage)=", np.sum(retimage))
+    print("np.sum(image)   =", np.sum(image))
 
-# buffer = np.zeros_like(image.get_fdata())
-# buffer[:] = comm.Get_rank()
+    print("np.max(retimage)=", np.max(retimage))
+    print("np.max(image)   =", np.max(image))
 
-# offset = comm.Get_rank()*buffer.nbytes
-# fh.Write_at_all(offset, buffer)
+    print("np.min(retimage)=", np.min(retimage))
+    print("np.min(image)   =", np.min(image))
 
-# fh.Close()
+    OUTNAME=FName.replace(".mgz", "loaded_and_backprojected.mgz")
+    nibabel.save(nibabel.Nifti1Image(retimage, affine=affine), OUTNAME)
 
-# if comm.Get_rank() == 0:
-#     # set_log_level(PROGRESS)
-#     print(OUTNAME)
-#     img = np.load(OUTNAME)
-#     OUTNAME=FName.replace(".npy", ".mgz")
-#     nibabel.save(nibabel.Nifti1Image(img, affine=image.affine), OUTNAME)
-#     print("freeview ", FName, OUTNAME)
 
-# else:
-#     pass
+    print("Stored image, to view the result run")
+    print("freeview ", FName, OUTNAME)
 
+    assert reldiff < 1e-15, "Reldiff is =" + str(reldiff)
