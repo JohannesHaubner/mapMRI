@@ -48,11 +48,20 @@ def remove_nonconverged(folders: list) -> list:
     for folder, params, loss in folders:
         
 
+
+
         if params["lbfgs_max_iterations"] == len(loss):
-            print(folder, "not converged, removing")
-            plt.semilogy(loss, label=folder)
             
-            continue
+            if len(loss) == 10000:
+                print("10000 iterations are counted as converged")
+
+            elif len(loss) == 4000:
+                print("4000 iterations are counted as converged")
+
+            else:
+                plt.semilogy(loss, label=folder)
+                print(folder, "not converged, removing")
+                continue
 
         
         retval.append([folder, params, loss])

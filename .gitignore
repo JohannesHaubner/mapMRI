@@ -8,6 +8,7 @@ outputs/*
 *.out
 # slurm*
 *.mgz
+scripts/preprocessing/chp4/outs/
 outs/
 mridata_3d/
 braindata*
