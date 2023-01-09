@@ -34,6 +34,9 @@ def fem2mri(function, shape):
     gathered_coordinates = MPI.comm_world.gather(coordinates, root=0)
     gathered_values = MPI.comm_world.gather(dof_values, root=0)
 
+    if shape.max() > 200:
+        raise NotImplementedError("You are probably trying to map back to original size, this requires vox2ras")
+
     if MPI.rank(MPI.comm_world) == 0:
         xy = np.vstack(gathered_coordinates)
 

@@ -23,7 +23,7 @@ def csvwrite(name, values, header, mode=None, debug=True):
        writer.writerow(values)     
 
 
-def compute_ocd_reduced(c0, c1, tau, alpha, results_dir, hyperparameters, space="CG", reg="H1"):
+def compute_ocd_reduced(c0, c1, tau, alpha, results_dir, hyperparameters, space="CG", reg="H1", phi_eval=None):
     # c0:
     # c1:
     # tau:   time step
@@ -43,7 +43,11 @@ def compute_ocd_reduced(c0, c1, tau, alpha, results_dir, hyperparameters, space=
         Q = VectorFunctionSpace(mesh, "CG", 1)
     else:
         Q = FunctionSpace(mesh, space, 1)
-    phi = Function(Q, name="Control")
+    
+    if phi_eval is not None:
+        phi = phi_eval
+    else:
+        phi = Function(Q, name="Control")
 
     # Regularization term
     def R(phi, alpha, mesh):
@@ -70,6 +74,9 @@ def compute_ocd_reduced(c0, c1, tau, alpha, results_dir, hyperparameters, space=
     # ... and solve it once
     c = Function(C, name="State")
     solve(a == L, c, bc, solver_parameters={"linear_solver": "mumps"})
+
+    if phi_eval is not None:
+        return c, phi_eval
 
     # Output max values of target and current solution for progress
     # purposes
@@ -177,21 +184,24 @@ parameters['ghost_mode'] = 'shared_facet'
 
 current_iteration = 0
 
-def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting_guess):
+def find_velocity(Img, Img_goal, hyperparameters, phi_eval=None, vCG=None, M_lumped=None, files=None, starting_guess=None, projection=True):
 
-    VCG = FunctionSpace(Img.function_space().mesh(), "CG", 1)
+    if projection:
+        VCG = FunctionSpace(Img.function_space().mesh(), "CG", 1)
 
-    Img = project(Img, VCG)
-    Img_goal = project(Img_goal, VCG)
+        Img = project(Img, VCG)
+        Img_goal = project(Img_goal, VCG)
 
-    c, phi = compute_ocd_reduced(c0=Img, c1=Img_goal, tau=1, hyperparameters=hyperparameters,
+    c, phi = compute_ocd_reduced(c0=Img, c1=Img_goal, tau=1, hyperparameters=hyperparameters, phi_eval=phi_eval,
     alpha=hyperparameters["alpha"], results_dir=hyperparameters["outputfolder"], space="CG", reg="H1")
     
-    with XDMFFile(hyperparameters["outputfolder"] + "/Finalstate.xdmf") as xdmf:
-        xdmf.write_checkpoint(c, "Finalstate", 0.)
-    
-    with XDMFFile(hyperparameters["outputfolder"] + "/Finalvelocity.xdmf") as xdmf:
-        xdmf.write_checkpoint(phi, "FinalV", 0.)
+    if phi_eval is None:
+
+        with XDMFFile(hyperparameters["outputfolder"] + "/Finalstate.xdmf") as xdmf:
+            xdmf.write_checkpoint(c, "Finalstate", 0.)
+        
+        with XDMFFile(hyperparameters["outputfolder"] + "/Finalvelocity.xdmf") as xdmf:
+            xdmf.write_checkpoint(phi, "FinalV", 0.)
 
 
     return c, phi

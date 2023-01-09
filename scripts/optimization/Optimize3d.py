@@ -220,7 +220,7 @@ if min(hyperparameters["input.shape"]) > 1 and len(hyperparameters["input.shape"
 
         os.makedirs(hyperparameters["outputfolder"] + '/mri', exist_ok=True)
 
-FinalImg, FinalVelocity = find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess=controlfun)
+FinalImg, FinalVelocity = find_velocity(Img=Img, Img_goal=Img_goal, vCG=vCG, M_lumped_inv=M_lumped_inv, hyperparameters=hyperparameters, files=files, starting_guess=controlfun)
 
 
 if min(hyperparameters["input.shape"]) > 1 and len(hyperparameters["input.shape"]) == 3:
