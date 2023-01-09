@@ -3,6 +3,7 @@ import pathlib
 import time
 jobpaths = ["/home/bastian/Oscar-Image-Registration-via-Transport-Equation/2dslurm/",
 "/home/bastian/Oscar-Image-Registration-via-Transport-Equation/slurm/mrislurm/",
+"/home/bastian/Oscar-Image-Registration-via-Transport-Equation/slurm/transportslurm/",
 ]
 
 while True:
@@ -19,7 +20,7 @@ while True:
 
             if job.endswith(".out"):
                 jobid = int(job.replace(".out", ""))
-                if jobid < 430047:
+                if jobid < 431544:
                     continue
             else:
                 continue

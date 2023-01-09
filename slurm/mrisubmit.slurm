@@ -1,11 +1,11 @@
 #!/bin/bash
 #SBATCH --job-name=mriregister
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=8
+#SBATCH --ntasks=12
 #################################################################
-##SBATCH --partition=milanq
+#SBATCH --partition=milanq
 ## SBATCH --partition=fpgaq
-#SBATCH --partition=defq
+## SBATCH --partition=defq
 ## SBATCH --partition=slowq
 ## SBATCH --partition=rome16q
 #################################################################
@@ -51,25 +51,28 @@ echo "ALPHA=" ${ALPHA}
 
 OUTFOLDERNAME=None
 
-OUTPUTDIR=/home/bastian/D1/registration/mriregistration_outputs/
 
-DPATH=/home/bastian/D1/registration
-DATAPATH=${DPATH}/mri2fem-data/processed/coarsecropped/
+# OUTPUTDIR=/home/bastian/D1/registration/mriregistration_outputs/
+# DPATH=/home/bastian/D1/registration
+# DATAPATH=${DPATH}/mri2fem-data/processed/coarsecropped/
+# IMG1=${DATAPATH}coarsenedabbytoernie.mgz
+# IMG2=${DATAPATH}coarsenedernie_brain.mgz
 
+OUTPUTDIR=/home/bastian/D1/registration/fullmriregistration_outputs/
+IMG1=/home/bastian/D1/registration/mri2fem-data/processed/registered/abbytoernie.mgz
+IMG2=/home/bastian/D1/registration/mri2fem-data/ernie/brain.mgz
+
+mkdir -pv ${OUTPUTDIR}
 echo "OUTPUTDIR=" $OUTPUTDIR
 echo "OUTFOLDERNAME=" $OUTFOLDERNAME
-
-IMG1=${DATAPATH}coarsenedabbytoernie.mgz
-IMG2=${DATAPATH}coarsenedernie_brain.mgz
-
 echo "IMG1=" ${IMG1}
 echo "IMG2=" ${IMG2}
 
-srun -n 8 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
+srun -n 12 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} \
---max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
---timestepping explicitEuler --nosmoothen --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
-#--state_functiondegree 0  --nosmoothen 
+--max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} --timestepping explicitEuler \
+--nosmoothen --timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+#--state_functiondegree 0  --nosmoothen  --nosmoothen
 #  --timestepping explicitEuler --solver lu
 
 
