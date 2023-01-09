@@ -184,7 +184,7 @@ parameters['ghost_mode'] = 'shared_facet'
 
 current_iteration = 0
 
-def find_velocity(Img, Img_goal, hyperparameters, phi_eval=None, vCG=None, M_lumped=None, files=None, starting_guess=None, projection=True):
+def find_velocity(Img, Img_goal, hyperparameters, phi_eval=None, vCG=None, M_lumped_inv=None, files=None, starting_guess=None, projection=True):
 
     if projection:
         VCG = FunctionSpace(Img.function_space().mesh(), "CG", 1)

@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=ocdregister
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=12
+#SBATCH --ntasks=16
 #################################################################
 #SBATCH --partition=milanq
 ## SBATCH --partition=fpgaq
@@ -55,14 +55,14 @@ OUTFOLDERNAME=None
 # IMG1=${DATAPATH}coarsenedabbytoernie.mgz
 # IMG2=${DATAPATH}coarsenedernie_brain.mgz
 
-# OUTPUTDIR=/home/bastian/D1/registration/fullmriregistration_outputs/
-# IMG1=/home/bastian/D1/registration/mri2fem-data/processed/registered/abbytoernie.mgz
-# IMG2=/home/bastian/D1/registration/mri2fem-data/ernie/brain.mgz
+OUTPUTDIR=/home/bastian/D1/registration/fullmriregistration_outputs/
+IMG1=/home/bastian/D1/registration/mri2fem-data/processed/registered/abbytoernie.mgz
+IMG2=/home/bastian/D1/registration/mri2fem-data/ernie/brain.mgz
 
 
-OUTPUTDIR=/home/bastian/D1/registration/croppedmriregistration_outputs/
-IMG1=/home/bastian/D1/registration/mri2fem-data/processed/cropped/cropped_abbytoernie.mgz
-IMG2=/home/bastian/D1/registration/mri2fem-data/processed/cropped/cropped_ernie_brain.mgz
+# OUTPUTDIR=/home/bastian/D1/registration/croppedmriregistration_outputs/
+# IMG1=/home/bastian/D1/registration/mri2fem-data/processed/cropped/cropped_abbytoernie.mgz
+# IMG2=/home/bastian/D1/registration/mri2fem-data/processed/cropped/cropped_ernie_brain.mgz
 
 
 mkdir -pv ${OUTPUTDIR}
@@ -72,7 +72,7 @@ echo "IMG1=" ${IMG1}
 echo "IMG2=" ${IMG2}
 
 
-srun -n 12 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+srun -n 16 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --ocd \
 --max_timesteps ${ITERS} --alpha ${ALPHA} \
 --lbfgs_max_iterations ${LBFGS} --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
