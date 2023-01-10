@@ -1,7 +1,7 @@
 import json
 import os
 import pathlib
-
+from tqdm import tqdm
 import nibabel
 import numpy
 import numpy as np
@@ -11,7 +11,7 @@ from nibabel.affines import apply_affine
 from dgregister.helpers import get_largest_box, pad_with, cut_to_box, get_bounding_box, get_lumped_mass_matrices
 from dgregister import find_velocity_ocd
 
-
+from IPython import embed
 
 def store2mgz(imgfile1, imgfile2, ijk1, outfolder):
     assert os.path.isdir(outfolder)
@@ -20,8 +20,7 @@ def store2mgz(imgfile1, imgfile2, ijk1, outfolder):
 
     for idx, img in enumerate([imgfile1, imgfile2]):
         image1 = nibabel.load(img)
-        
-         
+                 
         i1, j1, k1 = numpy.rint(ijk1).astype("int")
 
         data[i1, j1, k1] = 1.
@@ -29,12 +28,13 @@ def store2mgz(imgfile1, imgfile2, ijk1, outfolder):
         assert data.sum() > 100
 
         nii = nibabel.Nifti1Image(data, image1.affine)
-        # breakpoint()
         nibabel.save(nii, outfolder + pathlib.Path(imgfile1).name.replace(".mgz", "affine" + str(idx) + "_meshindices.mgz"))
 
-# from IPython import embed
 
-def map_mesh(xmlfile1, imgfile1, imgfile2, mapping, box=None, coarsening_factor=2, outfolder=None):
+def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,  
+    coarsening_factor: int, npad: int, box: np.ndarray=None, outfolder=None):
+
+    assert norm(mapping) != 0
 
     comm = MPI.comm_world
     nprocs = comm.Get_size()
@@ -42,7 +42,10 @@ def map_mesh(xmlfile1, imgfile1, imgfile2, mapping, box=None, coarsening_factor=
     if nprocs != 1:
         raise NotImplementedError
 
-    if int(coarsening_factor) not in [1, 2]:
+    if coarsening_factor not in [1, 2]:
+        raise ValueError
+
+    if npad not in [0, 4]:
         raise ValueError
 
     if xmlfile1.endswith(".xml"):
@@ -53,88 +56,84 @@ def map_mesh(xmlfile1, imgfile1, imgfile2, mapping, box=None, coarsening_factor=
         hdf.read(brainmesh, "/mesh", False)
 
     image1 = nibabel.load(imgfile1)
+    image2 = nibabel.load(imgfile2)
 
-    ras2vox_tkr_inv1 = numpy.linalg.inv(image1.header.get_vox2ras_tkr())
-    ras2vox1 = ras2vox_tkr_inv1
+    tkr = True
+
+    if tkr:
+        print("Using trk RAS")
+        ras2vox1 = numpy.linalg.inv(image1.header.get_vox2ras_tkr())
+    else:
+        ras2vox1 = numpy.linalg.inv(image1.header.get_vox2ras())
+    
+    if tkr:
+        vox2ras2 = image2.header.get_vox2ras_tkr()
+    else:
+        vox2ras2 = image2.header.get_vox2ras()
 
     xyz1 = brainmesh.coordinates()
 
-    ijk1 = apply_affine(ras2vox1, xyz1).T
-    # i1, j1, k1 = numpy.rint(ijk1).astype("int")
-
-    store2mgz(imgfile1, imgfile2, ijk1, outfolder)
-
-    i1, j1, k1 = ijk1
-
-    print("Maximum values of indices before transform", i1.max(), j1.max(), k1.max())
+    ijk1 = apply_affine(ras2vox1, xyz1)# .T
 
     if box is not None:
-    
         bounds = get_bounding_box(box)
-
         dxyz = [bounds[x].start for x in range(3)]
-        # TODO FIXME is this correct ? 
     else:
 
         dxyz = [0, 0, 0]
 
-    npad = 4 #  + 1
+    def downscale(points):
 
-    ijk2 = []
-    for i,j, k in zip(i1, j1, k1):
-        i = (i + npad - dxyz[0]) / coarsening_factor
-        j = (j + npad - dxyz[1]) / coarsening_factor
-        k = (k + npad - dxyz[2]) / coarsening_factor
+        points += npad
+        points -= dxyz
+        points /= coarsening_factor
+
+        return points
+
+    def upscale(points):
+
+        points *= coarsening_factor
+        points -= npad
+        points += dxyz
+
+        return points
+
+    assert np.allclose(downscale(upscale(np.array([42, -3.1415, 1e6]))), [42, -3.1415, 1e6])
+
+    transformed_points = np.zeros_like(ijk1) - np.inf
+    
+    points = downscale(ijk1)    
+
+    print("Iterating over all mesh nodes")
+
+    progress = tqdm(total=points.shape[0])
+    for idx in range(points.shape[0]):
         
-        point = (i,j,k)
         try:
-            i2, j2, k2 = mapping(point)
+            transformed_point = mapping(points[idx, :])
         except RuntimeError:
-            print(point, "not in BoxMesh")
-            exit()
-
-        if max([i2, j2, k2]) > 256:
-            point = (i,j,k)
-            print(point, "-->", (i2, j2, k2))
+            print(points[idx, :], "not in BoxMesh")
             exit()
         
-        ijk2.append([i2, j2, k2])
+        transformed_points[idx, :] = transformed_point
 
-
-    print("Maximum values of indices after transform", np.max(ijk2, axis=0))
-
-    if np.max(ijk2) > 255:
+        progress.update(1)
+    
+    if np.max(transformed_point) > 255:
         raise ValueError
 
+    transformed_points = upscale(transformed_points)
 
+    if np.max(transformed_points) > 255:
+        raise ValueError
 
-    image2 = nibabel.load(imgfile2)
+    transformed_points = np.array(transformed_points)
 
-    # ras2vox2 = image2.header.get_ras2vox()
-    vox2ras2 = image2.header.get_vox2ras_tkr()
-    # ras2vox_tkr_inv2 = numpy.linalg.inv(vox2ras2)
+    xyz2 = apply_affine(vox2ras2, transformed_points)
 
+    brainmesh.coordinates()[:] = xyz2
 
-
-
-
-    ijk2 = np.array(ijk2)
-
-    print(ijk2.dtype, ijk2.shape)
-
-    xyz2 = apply_affine(vox2ras2, ijk2)
-
-    if xmlfile1.endswith(".xml"):
-        brainmesh2 = Mesh(xmlfile1)
-    else:
-        brainmesh2 = Mesh()
-        hdf = HDF5File(brainmesh2.mpi_comm(), xmlfile1, "r")
-        hdf.read(brainmesh2, "/mesh", False)
-
-
-    brainmesh2.coordinates()[:] = xyz2
-
-    return brainmesh2
+    return brainmesh
 
 
 
@@ -145,39 +144,19 @@ def make_mapping(cubemesh, v, jobfile, hyperparameters, ocd):
 
     for coordinate in ["x[0]", "x[1]", "x[2]"]:
 
-        # if os.path.isfile(jobfile + "postprocessing/" + coordinate + ".hdf"):
-
-        #     coordinate_mapping = Function(V1)
-
-        #     hdf = HDF5File(cubemesh.mpi_comm(), jobfile + "postprocessing/" + coordinate + ".hdf", "r")
-        #     hdf.read(coordinate_mapping, "out")
-        #     hdf.close()
-
-        #     assert norm(coordinate_mapping) != 0
-
-        #     mappings.append(coordinate_mapping)
-
-        # else:
-
-        
-
-        # print("Inverting velocity for backtransport")
-        # v.vector()[:] *= (-1)
-
         assert norm(v) > 0
 
         print("Transporting, ", coordinate, "coordinate")
 
         if ocd:
             V1 = FunctionSpace(cubemesh, "CG", 1)
-
             
             unity2 = Function(V1) #¤ cubeimg.function_space())
             unity2.vector()[:] = 0
 
-
             xin = interpolate(Expression(coordinate, degree=1), V1) # cubeimg.function_space())
             xout, _ = find_velocity_ocd.find_velocity(Img=xin, Img_goal=unity2, hyperparameters=hyperparameters, phi_eval=-v, projection=False)
+
         else:
             import dgregister.config as config
             
@@ -198,10 +177,8 @@ def make_mapping(cubemesh, v, jobfile, hyperparameters, ocd):
             xout = Transport(Img=xin, Wind=-v, hyperparameters=hyperparameters,
                             MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
                             solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
-            # find_velocity.find_velocity(Img=xin, Img_goal=unity2, hyperparameters=hyperparameters, phi_eval=-v, files=[], projection=False)
-            # find_velocity(Img=Img, Img_goal=Img_goal, vCG=vCG, M_lumped_inv=M_lumped_inv, hyperparameters=hyperparameters, files=files, starting_guess=controlfun)
-            V1_CG = FunctionSpace(cubemesh, "CG", 1)
 
+            V1_CG = FunctionSpace(cubemesh, "CG", 1)
             xout = project(xout, V1_CG)
             print("Projected xout to CG1")
 
@@ -228,7 +205,6 @@ def make_mapping(cubemesh, v, jobfile, hyperparameters, ocd):
 
     assert True not in [norm(x) == 0 for x in mappings]
 
-    # for coordinate in ["x[0]", "x[1]", "x[2]"]:
     vxyz = Function(v.function_space())
 
     arr = np.zeros_like(vxyz.vector()[:])
