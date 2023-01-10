@@ -6,7 +6,7 @@ import nibabel
 import numpy
 import numpy as np
 from fenics import *
-from fenics_adjoint import *
+# from fenics_adjoint import *
 from nibabel.affines import apply_affine
 from dgregister.helpers import get_largest_box, pad_with, cut_to_box, get_bounding_box, get_lumped_mass_matrices
 from dgregister import find_velocity_ocd
@@ -107,6 +107,7 @@ def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,
     print("Iterating over all mesh nodes")
 
     progress = tqdm(total=points.shape[0])
+    
     for idx in range(points.shape[0]):
         
         try:
