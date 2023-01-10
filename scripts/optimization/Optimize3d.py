@@ -11,11 +11,9 @@ set_log_level(LogLevel.CRITICAL)
 
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
-        # set_log_level(PROGRESS)
         print(*args)
     else:
         pass
-        # print("passed")
 
 print_overloaded("Setting parameters parameters['ghost_mode'] = 'shared_facet'")
 parameters['ghost_mode'] = 'shared_facet'
@@ -40,15 +38,12 @@ parser.add_argument("--lbfgs_max_iterations", type=float, default=400)
 parser.add_argument("--max_timesteps", type=float, default=None)
 parser.add_argument("--state_functiondegree", type=int, default=1)
 
-
-parser.add_argument("--vinit", type=float, default=0)
 parser.add_argument("--readname", type=str, default="-1")
 parser.add_argument("--starting_guess", type=str, default=None)
-# parser.add_argument("--interpolate", default=False, action="store_true", help="Interpolate coarse v to fine mesh; required if the images for --starting_guess and --input are not the same")
+parser.add_argument("--interpolate", default=False, action="store_true", help="Interpolate to finer mesh")
+
 parser.add_argument("--debug", default=False, action="store_true", help="Debug")
-
 parser.add_argument("--ocd", default=False, action="store_true")
-
 parser.add_argument("--input", default="mridata_3d/091registeredto205_padded_coarsened.mgz")
 parser.add_argument("--target", default="mridata_3d/205_cropped_padded_coarsened.mgz")
 
@@ -62,34 +57,36 @@ print_overloaded("Setting pwd to", hyperparameters["code_dir"])
 if not hyperparameters["output_dir"].endswith("/"):
     hyperparameters["output_dir"] += "/"
 
+suffix = ""
+
 
 if (hyperparameters["outfoldername"] is not None) or len(hyperparameters["outfoldername"]) == 0:
-    
+    print("Here")
     # Workaround since None is not interpreted as None by argparse
     if hyperparameters["outfoldername"].lower() != "none":
 
         suffix = hyperparameters["outfoldername"]
         
-        assert "E" != hyperparameters["outfoldername"][0]
-        assert "/" not in hyperparameters["outfoldername"]
-        assert "LBFGS" not in hyperparameters["outfoldername"]
-        assert "RK" not in hyperparameters["outfoldername"]
+        if len(hyperparameters["outfoldername"]) > 0:
+            assert "E" != hyperparameters["outfoldername"][0]
+            assert "/" not in hyperparameters["outfoldername"]
+            assert "LBFGS" not in hyperparameters["outfoldername"]
+            assert "RK" not in hyperparameters["outfoldername"]
 
-    else:
-        suffix = ""
-else:
-    suffix = ""
+hyperparameters["outfoldername"] = ""
 
-if hyperparameters["timestepping"] == "RungeKutta":
+if hyperparameters["ocd"]:
+    hyperparameters["outfoldername"] = "OCD"
+elif hyperparameters["timestepping"] == "RungeKutta":
     hyperparameters["outfoldername"] = "RK"
 elif hyperparameters["timestepping"] == "CrankNicolson":
     hyperparameters["outfoldername"] = "CN"
 elif hyperparameters["timestepping"] == "explicitEuler":
     hyperparameters["outfoldername"] = "E"
-elif hyperparameters["ocd"]:
-    hyperparameters["outfoldername"] = "OCD"
 
-hyperparameters["outfoldername"] += str(int(hyperparameters["max_timesteps"]))
+
+if not hyperparameters["ocd"]:
+    hyperparameters["outfoldername"] += str(int(hyperparameters["max_timesteps"]))
 hyperparameters["outfoldername"] += "A" + str(hyperparameters["alpha"])
 hyperparameters["outfoldername"] += "LBFGS" + str(int(hyperparameters["lbfgs_max_iterations"]))
 
@@ -213,29 +210,46 @@ files["lossfile"] = hyperparameters["outputfolder"] + '/loss.txt'
 files["regularizationfile"] = hyperparameters["outputfolder"] + '/regularization.txt'
 
 
+#####################################################################
+# Optimization
 
-if min(hyperparameters["input.shape"]) > 1 and len(hyperparameters["input.shape"]) == 3:
-    
-    if MPI.comm_world.rank == 0:
-
-        os.makedirs(hyperparameters["outputfolder"] + '/mri', exist_ok=True)
-
-FinalImg, FinalVelocity = find_velocity(Img=Img, Img_goal=Img_goal, vCG=vCG, M_lumped_inv=M_lumped_inv, hyperparameters=hyperparameters, files=files, starting_guess=controlfun)
-
-
-if min(hyperparameters["input.shape"]) > 1 and len(hyperparameters["input.shape"]) == 3:
-    
-    retimage = fem2mri(function=FinalImg, shape=hyperparameters["input.shape"])
-    if MPI.comm_world.rank == 0:
-        nifti = nibabel.Nifti1Image(retimage, nibabel.load(hyperparameters["input"]).affine)
-
-        nibabel.save(nifti, hyperparameters["outputfolder"] + '/mri/Finalstate.mgz')
-
-        print_overloaded("Stored mgz image of transformed image")
+FinalImg, FinalVelocity, FinalControl = find_velocity(Img=Img, Img_goal=Img_goal, vCG=vCG, M_lumped_inv=M_lumped_inv, hyperparameters=hyperparameters, files=files, starting_guess=controlfun)
 
 tcomp = (time.time()-t0) / 3600
-
 print_overloaded("Done with optimization, took", format(tcomp, ".1f"), "hours")
+
+#####################################################################
+
+hyperparameters["Jd_final"] = hyperparameters["Jd_current"]
+hyperparameters["Jreg_final"] = hyperparameters["Jreg_current"]
+
+with XDMFFile(hyperparameters["outputfolder"] + "/Finalstate.xdmf") as xdmf:
+    xdmf.write_checkpoint(FinalImg, "Finalstate", 0.)
+
+with XDMFFile(hyperparameters["outputfolder"] + "/Finalvelocity.xdmf") as xdmf:
+    xdmf.write_checkpoint(FinalVelocity, "FinalV", 0.)
+
+files["velocityFile"].write(FinalVelocity, "-1")
+if FinalControl is not None:
+    files["controlFile"].write(FinalControl, "-1")
+files["stateFile"].write(FinalImg, "-1")
+
+print_overloaded("Stored final State, Control, Velocity to .hdf files")
+
+try:
+    if min(hyperparameters["input.shape"]) > 1 and len(hyperparameters["input.shape"]) == 3:
+        
+        retimage = fem2mri(function=FinalImg, shape=hyperparameters["input.shape"])
+        if MPI.comm_world.rank == 0:
+            nifti = nibabel.Nifti1Image(retimage, nibabel.load(hyperparameters["input"]).affine)
+
+            nibabel.save(nifti, hyperparameters["outputfolder"] + '/Finalstate.mgz')
+
+            print_overloaded("Stored mgz image of transformed image")
+except:
+    print("Something went wrong when storing final image to mgz")
+    pass
+
 
 hyperparameters["optimization_time_hours"] = tcomp
 

@@ -20,7 +20,7 @@ while True:
 
             if job.endswith(".out"):
                 jobid = int(job.replace(".out", ""))
-                if jobid < 431544:
+                if jobid < 431694:
                     continue
             else:
                 continue
@@ -46,9 +46,9 @@ while True:
                     print(jobid)
                     break
             if errormessage:
-                if (os.system('scontrol show jobid -dd ' + str(jobid))) == 0:
-                    print("Killed", jobid)
-                    os.system("scancel " + str(jobid))
+                #if (os.system('scontrol show jobid -dd ' + str(jobid))) == 0:
+                print("Killed", jobid)
+                os.system("scancel " + str(jobid))
 
 
 

@@ -2,6 +2,9 @@ from fenics import *
 from fenics_adjoint import *
 import os
 import csv
+from dgregister.helpers import store_during_callback
+
+
 
 set_log_level(LogLevel.CRITICAL)
 counter = 0
@@ -23,7 +26,7 @@ def csvwrite(name, values, header, mode=None, debug=True):
        writer.writerow(values)     
 
 
-def compute_ocd_reduced(c0, c1, tau, alpha, results_dir, hyperparameters, space="CG", reg="H1", phi_eval=None):
+def compute_ocd_reduced(c0, c1, tau, alpha, results_dir, hyperparameters, files, space="CG", reg="H1", phi_eval=None):
     # c0:
     # c1:
     # tau:   time step
@@ -84,22 +87,28 @@ def compute_ocd_reduced(c0, c1, tau, alpha, results_dir, hyperparameters, space=
     info("\max c = %f" % c.vector().max())
 
     # Define the objective functional
-    j = 0.5*(c - c2)**2*dx(domain=mesh) + R(phi, alpha, mesh)
-    J = assemble(j)
+    Jd = assemble(0.5*(c - c2)**2*dx(domain=mesh))
+    Jreg = assemble(R(phi, alpha, mesh)) # assemble(R(phi, alpha, mesh)*dx(domain=mesh))
+    # print(type(jd), type(jreg))
+    J = Jd + Jreg
+    # J = assemble(j)
     info("J (initial) = %f" % J)
-    
+    hyperparameters["Jd_init"] = float(Jd)
+    hyperparameters["Jreg_init"] = float(Jreg)
     # Define control field
     m = Control(phi)
 
-    # Define call-back for output at each iteration of the optimization algorithm
-    name = lambda s: os.path.join(results_dir, "opts", s)
-    dirname = os.path.join(results_dir, "opts")
-    if not os.path.isdir(dirname):
-        try:
-            os.mkdir(dirname)
-        except FileExistsError:
-            pass
-    header = ("j", "\max \phi")
+    state = Control(c) 
+
+    # # Define call-back for output at each iteration of the optimization algorithm
+    # name = lambda s: os.path.join(results_dir, "opts", s)
+    # dirname = os.path.join(results_dir, "opts")
+    # if not os.path.isdir(dirname):
+    #     try:
+    #         os.mkdir(dirname)
+    #     except FileExistsError:
+    #         pass
+    # header = ("j", "\max \phi")
 
     
 
@@ -109,40 +118,49 @@ def compute_ocd_reduced(c0, c1, tau, alpha, results_dir, hyperparameters, space=
     #     writer.writerow((counter,))  
 
     def eval_cb(j, phi):
-
         global counter
         counter += 1
 
-        values = (j, phi.vector().max())
-        # mem = resource.getrusage(resource.RUSAGE_SELF)[2]
-        # info("Current memory usage: %g (MB)" % (mem/1024))
-        info("\tj = %f, \max phi = %f (mm/h)" % values)
-        csvwrite(name("optimization_values.csv"), values, header, mode="a")
+        current_pde_solution = state.tape_value()
+        current_pde_solution.rename("Img", "")
 
-        # Read the optimization counter file, update counter, and
-        # write it back, geez. 
+        store_during_callback(current_iteration=counter, hyperparameters=hyperparameters, files=files, Jd=Jd, Jreg=Jreg, 
+                    domainmesh=mesh, velocityField=phi, 
+                    current_pde_solution=current_pde_solution, control=None)
+
+
+
+
+        # values = (j, phi.vector().max())
+        # # mem = resource.getrusage(resource.RUSAGE_SELF)[2]
+        # # info("Current memory usage: %g (MB)" % (mem/1024))
+        # info("\tj = %f, \max phi = %f (mm/h)" % values)
+        # csvwrite(name("optimization_values.csv"), values, header, mode="a")
+
+        # # Read the optimization counter file, update counter, and
+        # # write it back, geez. 
         
 
-        assert os.path.isdir(results_dir)
+        # assert os.path.isdir(results_dir)
 
-        # with open(os.path.join(results_dir, "counter.csv"), "r") as f:
-        #     reader = csv.reader(f)
-        #     # assert len(reader) > 0
+        # # with open(os.path.join(results_dir, "counter.csv"), "r") as f:
+        # #     reader = csv.reader(f)
+        # #     # assert len(reader) > 0
 
-        #     for row in reader:
-        #         counter = int(row[0])
+        # #     for row in reader:
+        # #         counter = int(row[0])
         
-        # counter += 1
+        # # counter += 1
 
-        # with open(os.path.join(results_dir, "counter.csv"), "w") as f:
-        #     info("Updating counter file, counter is now %d " % counter)
-        #     writer = csv.writer(f)
-        #     writer.writerow((counter,))     
+        # # with open(os.path.join(results_dir, "counter.csv"), "w") as f:
+        # #     info("Updating counter file, counter is now %d " % counter)
+        # #     writer = csv.writer(f)
+        # #     writer.writerow((counter,))     
 
-        # Write current control variable to file in HDF5 and PVD formats
-        file = HDF5File(mesh.mpi_comm(), name("opt_phi_%d.h5" % counter), "w")
-        file.write(phi, "function")
-        file.close()
+        # # Write current control variable to file in HDF5 and PVD formats
+        # file = HDF5File(mesh.mpi_comm(), name("opt_phi_%d.h5" % counter), "w")
+        # file.write(phi, "function")
+        # file.close()
 
     # Define reduced functional in terms of J and m
     Jhat = ReducedFunctional(J, m, eval_cb_post=eval_cb)
@@ -156,16 +174,8 @@ def compute_ocd_reduced(c0, c1, tau, alpha, results_dir, hyperparameters, space=
 
     # Update phi, and do a final solve to compute c
     phi.assign(phi_opt)
-    solve(a == L, c, bc, solver_parameters={"linear_solver": "mumps"})
 
-    J = assemble(j)
-    j0 = 0.5*(c - c2)**2*dx(domain=mesh)
-    jr = R(phi, alpha, mesh)
-    J0 = assemble(j0)
-    Jr = assemble(jr)
-    info("J  = %f" % J)
-    info("J0 = %f" % J0)
-    info("Jr = %f" % Jr)
+    solve(a == L, c, bc, solver_parameters={"linear_solver": "mumps"})
     
     return (c, phi) 
 
@@ -184,7 +194,7 @@ parameters['ghost_mode'] = 'shared_facet'
 
 current_iteration = 0
 
-def find_velocity(Img, Img_goal, hyperparameters, phi_eval=None, vCG=None, M_lumped_inv=None, files=None, starting_guess=None, projection=True):
+def find_velocity(Img, Img_goal, hyperparameters, files, phi_eval=None, vCG=None, M_lumped_inv=None, starting_guess=None, projection=True):
 
     if projection:
         VCG = FunctionSpace(Img.function_space().mesh(), "CG", 1)
@@ -192,16 +202,16 @@ def find_velocity(Img, Img_goal, hyperparameters, phi_eval=None, vCG=None, M_lum
         Img = project(Img, VCG)
         Img_goal = project(Img_goal, VCG)
 
-    c, phi = compute_ocd_reduced(c0=Img, c1=Img_goal, tau=1, hyperparameters=hyperparameters, phi_eval=phi_eval,
-    alpha=hyperparameters["alpha"], results_dir=hyperparameters["outputfolder"], space="CG", reg="H1")
+    c, phi = compute_ocd_reduced(c0=Img, c1=Img_goal, tau=1, files=files, hyperparameters=hyperparameters, phi_eval=phi_eval,
+                                alpha=hyperparameters["alpha"], results_dir=hyperparameters["outputfolder"], space="CG", reg="H1")
     
-    if phi_eval is None:
+    # if phi_eval is None:
 
-        with XDMFFile(hyperparameters["outputfolder"] + "/Finalstate.xdmf") as xdmf:
-            xdmf.write_checkpoint(c, "Finalstate", 0.)
+    #     with XDMFFile(hyperparameters["outputfolder"] + "/Finalstate.xdmf") as xdmf:
+    #         xdmf.write_checkpoint(c, "Finalstate", 0.)
         
-        with XDMFFile(hyperparameters["outputfolder"] + "/Finalvelocity.xdmf") as xdmf:
-            xdmf.write_checkpoint(phi, "FinalV", 0.)
+    #     with XDMFFile(hyperparameters["outputfolder"] + "/Finalvelocity.xdmf") as xdmf:
+    #         xdmf.write_checkpoint(phi, "FinalV", 0.)
 
 
-    return c, phi
+    return c, phi, None

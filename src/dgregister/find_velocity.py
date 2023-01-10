@@ -8,8 +8,11 @@ from dgregister.transformation_overloaded import transformation
 from dgregister.preconditioning_overloaded import preconditioning
 
 
-from dgregister.MRI2FEM import fem2mri
-import nibabel
+# import nibabel
+# from dgregister.MRI2FEM import fem2mri
+
+from dgregister.helpers import store_during_callback
+
 
 set_log_level(LogLevel.CRITICAL)
 
@@ -29,16 +32,12 @@ parameters['ghost_mode'] = 'shared_facet'
 
 current_iteration = 0
 
-def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting_guess):
+def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess):
 
     set_working_tape(Tape())
 
     # initialize control
     controlfun = Function(vCG)
-
-    if hyperparameters["vinit"] > 0:
-        controlfun.vector()[:] += hyperparameters["vinit"]
-        print_overloaded("----------------------------------- Setting v += vinit as starting guess")
 
     if hyperparameters["starting_guess"] is not None:
         controlfun.assign(starting_guess)
@@ -46,7 +45,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
 
     if hyperparameters["smoothen"]:
         print_overloaded("Transforming l2 control to L2 control")
-        controlf = transformation(controlfun, M_lumped)
+        controlf = transformation(controlfun, M_lumped_inv)
     else:
         controlf = controlfun
 
@@ -103,13 +102,11 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
         global current_iteration
         current_iteration += 1
 
-
         current_pde_solution = state.tape_value()
         current_pde_solution.rename("Img", "")
         current_control = cont.tape_value()
         current_pde_solution.vector().update_ghost_values()
         current_control.vector().update_ghost_values()
-
         current_control.rename("control", "")
 
         if current_pde_solution.vector()[:].max() > 10:
@@ -117,18 +114,6 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
 
         Jd = assemble(0.5 * (current_pde_solution - Img_goal)**2 * dx(domain=Img.function_space().mesh()))
         Jreg = assemble(alpha*(current_control)**2*dx(domain=Img.function_space().mesh()))
-
-        if MPI.rank(MPI.comm_world) == 0:
-       
-            with open(files["lossfile"], "a") as myfile:
-                myfile.write(str(float(Jd))+ ", ")
-            with open(files["regularizationfile"], "a") as myfile:
-                myfile.write(str(float(Jreg))+ ", ")
-        
-        hyperparameters["Jd_current"] = float(Jd)
-        hyperparameters["Jreg_current"] = float(Jreg)
-        
-        print_overloaded("Iter", format(current_iteration, ".0f"), "Jd =", format(Jd, ".2e"), "Reg =", format(Jreg, ".2e"))
 
         domainmesh = current_pde_solution.function_space().mesh()
         
@@ -141,42 +126,23 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
             raise CFLerror("DGTransport: WARNING: CFL = %le", CFL)
                 
         if hyperparameters["smoothen"]:
-            scaledControl = transformation(current_control, M_lumped)
+            controlfunction = current_control
+            scaledControl = transformation(current_control, M_lumped_inv)
         else:
             scaledControl = current_control
+            controlfunction = None
 
         velocityField = preconditioning(scaledControl)
         velocityField.rename("velocity", "")
-
-        # # This does not overwrite the files (bug warning supressed due to import of h5py)        
-        # files["velocityFile"].write(velocityField, "-1") # str(current_iteration))
-        # files["controlFile"].write(current_control, "-1") #str(current_iteration))
-        # files["stateFile"].write(current_pde_solution, "-1") # str(current_iteration))
-
-        # File(hyperparameters["outputfolder"] + '/Currentstate.pvd') << current_pde_solution
-
-        with XDMFFile(hyperparameters["outputfolder"] + "/State_checkpoint.xdmf") as xdmf:
-            xdmf.write_checkpoint(current_pde_solution, "CurrentState", 0.)
-        with XDMFFile(hyperparameters["outputfolder"] + "/Velocity_checkpoint.xdmf") as xdmf:
-            xdmf.write_checkpoint(velocityField, "CurrentV", 0.)
-
-
-        if min(hyperparameters["input.shape"]) > 1 and len(hyperparameters["input.shape"]) == 3 and (current_iteration % 10 == 0):
-
-            retimage = fem2mri(function=current_pde_solution, shape=hyperparameters["input.shape"])
-            
-            if MPI.rank(MPI.comm_world) == 0:
-                nifti = nibabel.Nifti1Image(retimage, nibabel.load(hyperparameters["input"]).affine)
-
-                nibabel.save(nifti, hyperparameters["outputfolder"] + '/mri/state_at_' + str(current_iteration) + '.mgz')
-
-                print_overloaded("Stored mgz image of transformed image at iteration", current_iteration)
+        
+        store_during_callback(current_iteration=current_iteration, hyperparameters=hyperparameters, files=files, Jd=Jd, Jreg=Jreg, 
+                            domainmesh=domainmesh, velocityField=velocityField, 
+                            current_pde_solution=current_pde_solution, control=controlfunction)
 
 
     minimize(Jhat,  method = 'L-BFGS-B', options = {"iprint": 0, "disp": None, "maxiter": hyperparameters["lbfgs_max_iterations"]}, tol=1e-08, callback = cb)
 
-    hyperparameters["Jd_final"] = hyperparameters["Jd_current"]
-    hyperparameters["Jreg_final"] = hyperparameters["Jreg_current"]
+
 
 
     current_pde_solution = state.tape_value()
@@ -187,28 +153,13 @@ def find_velocity(Img, Img_goal, vCG, M_lumped, hyperparameters, files, starting
     current_control.rename("control", "")
 
     if hyperparameters["smoothen"]:
-        scaledControl = transformation(current_control, M_lumped)
-
+        scaledControl = transformation(current_control, M_lumped_inv)
+        returncontrol = current_control
     else:
         scaledControl = current_control
+        returncontrol = None
 
     velocityField = preconditioning(scaledControl)
     velocityField.rename("velocity", "")
 
-    # File(hyperparameters["outputfolder"] + '/Finalvelocity.pvd') << velocityField
-    # File(hyperparameters["outputfolder"] + '/Finalcontrol.pvd') << current_control
-
-    with XDMFFile(hyperparameters["outputfolder"] + "/Finalstate.xdmf") as xdmf:
-        xdmf.write_checkpoint(current_pde_solution, "Finalstate", 0.)
-    
-    with XDMFFile(hyperparameters["outputfolder"] + "/Finalvelocity.xdmf") as xdmf:
-        xdmf.write_checkpoint(velocityField, "FinalV", 0.)
-
-    files["velocityFile"].write(velocityField, "-1")
-    files["controlFile"].write(current_control, "-1")
-    files["stateFile"].write(current_pde_solution, "-1")
-
-    print_overloaded("Stored final State, Control, Velocity to .hdf files")
-
-
-    return current_pde_solution, velocityField
+    return current_pde_solution, velocityField, returncontrol

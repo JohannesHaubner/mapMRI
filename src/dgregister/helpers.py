@@ -1,9 +1,16 @@
 from fenics import *
 from fenics_adjoint import *
 import os
-import h5py
+# import h5py
 import numpy as np
 import nibabel
+
+def print_overloaded(*args):
+    if MPI.rank(MPI.comm_world) == 0:
+        # set_log_level(PROGRESS)
+        print(*args)
+    else:
+        pass
 
 def get_bounding_box(x):
     """ Calculates the bounding box of a ndarray"""
@@ -140,9 +147,9 @@ def load_velocity(hyperparameters, controlfun):
     assert os.path.isfile(hyperparameters["starting_guess"])
 
     print_overloaded("Will try to read starting guess")
-    h5file = h5py.File(hyperparameters["starting_guess"])
+    # h5file = h5py.File(hyperparameters["starting_guess"])
 
-    print_overloaded("keys in h5file", list(h5file.keys()))
+    # print_overloaded("keys in h5file", list(h5file.keys()))
 
     if controlfun is not None:
         print_overloaded("max before loading", controlfun.vector()[:].max())
@@ -238,3 +245,50 @@ def interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun, store_pvd
         exit()
 
     return domainmesh, vCG, controlfun_fine
+
+
+def store_during_callback(current_iteration, hyperparameters, files, Jd, Jreg, 
+                            domainmesh, velocityField, current_pde_solution, control=None):
+
+    print_overloaded("Iter", format(current_iteration, ".0f"), "Jd =", format(Jd, ".2e"), "Reg =", format(Jreg, ".2e"))
+
+
+
+    if MPI.rank(MPI.comm_world) == 0:
+    
+        with open(files["lossfile"], "a") as myfile:
+            myfile.write(str(float(Jd))+ ", ")
+        with open(files["regularizationfile"], "a") as myfile:
+            myfile.write(str(float(Jreg))+ ", ")
+    
+    hyperparameters["Jd_current"] = float(Jd)
+    hyperparameters["Jreg_current"] = float(Jreg)
+    
+    
+    with XDMFFile(hyperparameters["outputfolder"] + "/State_checkpoint.xdmf") as xdmf:
+        xdmf.write_checkpoint(current_pde_solution, "CurrentState", 0.)
+    with XDMFFile(hyperparameters["outputfolder"] + "/Velocity_checkpoint.xdmf") as xdmf:
+        xdmf.write_checkpoint(velocityField, "CurrentV", 0.)
+
+    file = HDF5File(domainmesh.mpi_comm(), hyperparameters["outputfolder"] + "/CurrentV.hdf", "w")
+    file.write(velocityField, "function")
+    file.close()        
+
+    if control is not None:
+        file = HDF5File(domainmesh.mpi_comm(), hyperparameters["outputfolder"] + "/CurrentControl.hdf", "w")
+        file.write(control, "function")
+        file.close()    
+
+    # DO NOT DELETE 
+    # ROUTINE TO STORE TRANSFORMED BRAIN DURING OPTIMIZATION
+    # COULD BE USEFUL FOR PLOTTING IN THE FUTURE
+    # if min(hyperparameters["input.shape"]) > 1 and len(hyperparameters["input.shape"]) == 3 and (current_iteration % 10 == 0):
+
+    #     retimage = fem2mri(function=current_pde_solution, shape=hyperparameters["input.shape"])
+        
+    #     if MPI.rank(MPI.comm_world) == 0:
+    #         nifti = nibabel.Nifti1Image(retimage, nibabel.load(hyperparameters["input"]).affine)
+
+    #         nibabel.save(nifti, hyperparameters["outputfolder"] + '/mri/state_at_' + str(current_iteration) + '.mgz')
+
+    #         print_overloaded("Stored mgz image of transformed image at iteration", current_iteration)

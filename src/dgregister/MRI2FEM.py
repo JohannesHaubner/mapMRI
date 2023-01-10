@@ -34,7 +34,7 @@ def fem2mri(function, shape):
     gathered_coordinates = MPI.comm_world.gather(coordinates, root=0)
     gathered_values = MPI.comm_world.gather(dof_values, root=0)
 
-    if shape.max() > 200:
+    if np.max(shape) > 250:
         raise NotImplementedError("You are probably trying to map back to original size, this requires vox2ras")
 
     if MPI.rank(MPI.comm_world) == 0:
@@ -113,7 +113,8 @@ def read_image(hyperparameters, name, mesh=None, printout=True, threshold=True, 
     ijk = np.rint(xyz - dxyz).astype("int")
     i = ijk[:, 0]
     j = ijk[:, 1]
-    k = ijk[:, 2]
+    if nz != 1:
+        k = ijk[:, 2]
 
     if normalize:
         print_overloaded("Normalizing data")
@@ -133,8 +134,10 @@ def read_image(hyperparameters, name, mesh=None, printout=True, threshold=True, 
         
         data = np.where(data < 0, 0, data)
 
-        
-    u_data.vector()[:] = data[i, j, k]
+    if nz != 1:
+        u_data.vector()[:] = data[i, j, k]
+    else:
+        u_data.vector()[:] = data[i, j]
 
     space = FunctionSpace(mesh, hyperparameters["state_functionspace"], hyperparameters["state_functiondegree"])
     

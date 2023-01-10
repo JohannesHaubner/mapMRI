@@ -2,7 +2,7 @@
 #SBATCH --job-name=testregister
 #SBATCH --cpus-per-task=1
 #################################################################
-#SBATCH --ntasks=16
+#SBATCH --ntasks=4
 ################################################################
 ## SBATCH --partition=milanq
 #SBATCH --partition=fpgaq
@@ -40,9 +40,9 @@ LOGOUTFILE=${GPATH}slurm/2dslurm/${SLURM_JOB_ID}_log_python_srun.txt
 ITERS=$1
 ALPHA=$2
 
-NP=16
-LBFGS=3
-OUTFOLDERNAME=${NP}
+NP=4
+LBFGS=1
+OUTFOLDERNAME=${NP}OCD
 OUTPUTDIR=/home/bastian/D1/registration/test/
 #timing3d/
 
@@ -58,7 +58,7 @@ DATAPATH=${DPATH}/testdata_3d
 
 srun -n ${NP} python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${DATAPATH}/input.mgz --target ${DATAPATH}/target.mgz \
---max_timesteps ${ITERS} --alpha ${ALPHA} \
+--max_timesteps ${ITERS} --alpha ${ALPHA} --ocd \
 --lbfgs_max_iterations ${LBFGS} --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 #--state_functiondegree 0  --nosmoothen --timestepping explicitEuler
 
