@@ -6,20 +6,20 @@ import numpy
 import numpy as np
 from fenics import *
 # from fenics_adjoint import *
-from dgregister.meshtransform import map_mesh, make_mapping
+
 
 # from IPython import embed
 
 if "home/bastian" in os.getcwd():
-    resultpath = "/home/bastian/D1/registration/mriregistration_outputs/"
+        resultpath = "/home/bastian/D1/registration/mriregistration_outputs/"
 
 else:
     path_to_data = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/mri2fem-dataset/processed/coarsecropped/"
-    resultpath = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mriregistration_outputs/"
+
+    # resultpath = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mriregistration_outputs/"
+    resultpath = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/croppedmriregistration_outputs/"
     path_to_meshes = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/scripts/preprocessing/chp4/outs/"
-    # if debug:
-    #     path_to_data = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/mri2fem-dataset/processed/cropped/"
-    
+
     def path_to_wmparc(subj):
 
         if subj == "abby":
@@ -34,16 +34,16 @@ else:
         else:
             raise ValueError
 
-# # jobfoldername = "OCDRK1A1e-05LBFGS1000"
-# jobfoldername = "OCDRK1A0.001LBFGS1000"
-# jobfile = resultpath + jobfoldername + "/"
-# velocityfilename = "opts/opt_phi_204.h5"
-# readname = "function"
-
-jobfoldername = "E100A0.0001LBFGS100NOSMOOTHEN"
+# jobfoldername = "OCDRK1A1e-05LBFGS1000"
+jobfoldername = "OCDRK1A0.001LBFGS1000"
 jobfile = resultpath + jobfoldername + "/"
-velocityfilename = "VelocityField.hdf"
-readname = "-1"
+velocityfilename = "opts/opt_phi_204.h5"
+readname = "function"
+
+# jobfoldername = "E100A0.0001LBFGS100NOSMOOTHEN"
+# jobfile = resultpath + jobfoldername + "/"
+# velocityfilename = "VelocityField.hdf"
+# readname = "-1"
 
 hyperparameters = json.load(open(jobfile + "hyperparameters.json"))
 
@@ -55,6 +55,12 @@ if "OCD" not in jobfile:
 else:
     ocd = True
     assert hyperparameters["max_timesteps"] == 1
+
+import dgregister.config as config
+# if ocd:
+config.hyperparameters = {"optimize": False}
+
+from dgregister.meshtransform import map_mesh, make_mapping
 
 res = 16
 
@@ -123,8 +129,12 @@ else:
     coarsening_factor=2
     npad = 4
 
+raise_errors = True
+if ocd:
+    raise_errors = False
+
 brainmesh2 = map_mesh(xmlfile1, imgfile1, imgfile2, mapping, box=box, 
-                    outfolder=jobfile + "postprocessing/", npad=npad,
+                    outfolder=jobfile + "postprocessing/", npad=npad, raise_errors=raise_errors,
                     coarsening_factor=coarsening_factor)
 
 
@@ -132,10 +142,15 @@ inputmesh = Mesh(xmlfile1)
 
 # embed()
 
-# Store as xdmf file for paraview visualization
-xmlfile3 = jobfile + "postprocessing/" + "transformed_input_mesh.xdmf"
-with XDMFFile(xmlfile3) as xdmf:
-    xdmf.write(brainmesh2) # , "mesh")
+# # Store as xdmf file for paraview visualization
+xmlfile3 = jobfile + "postprocessing/" + "transformed_input_mesh.xml"
+# with XDMFFile(xmlfile3) as xdmf:
+#     xdmf.write(brainmesh2) # , "mesh")
+
+File(xmlfile3) << brainmesh2
+
+os.system("meshio-convert " + xmlfile3 + " " + xmlfile3.replace(".xml", ".xdmf"))
+
 
 # Store as hdf File for use in further FEniCS simulation
 hdf = HDF5File(brainmesh2.mpi_comm(), xmlfile3.replace(".xdmf", ".h5"), "w")

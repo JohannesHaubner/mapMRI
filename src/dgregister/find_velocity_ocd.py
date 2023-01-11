@@ -1,5 +1,11 @@
 from fenics import *
-from fenics_adjoint import *
+import dgregister.config as config
+# if ocd:
+if "optimize" in config.hyperparameters.keys() and (not config.hyperparameters["optimize"]):
+    print("Not importing dolfin-adjoint")
+else:
+    print("Importing dolfin-adjoint")
+    from fenics_adjoint import *
 import os
 import csv
 from dgregister.helpers import store_during_callback

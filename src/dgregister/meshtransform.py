@@ -32,7 +32,7 @@ def store2mgz(imgfile1, imgfile2, ijk1, outfolder):
 
 
 def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,  
-    coarsening_factor: int, npad: int, box: np.ndarray=None, outfolder=None):
+    coarsening_factor: int, npad: int, box: np.ndarray=None, outfolder=None, raise_errors: bool = True):
 
     assert norm(mapping) != 0
 
@@ -119,16 +119,34 @@ def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,
         transformed_points[idx, :] = transformed_point
 
         progress.update(1)
+
+    def in_mri(x):
+        return (np.max(x) < 256) and (np.min(x) >= 0)
     
-    if np.max(transformed_point) > 255:
+    if (not in_mri(transformed_points)) and raise_errors:
         raise ValueError
+
+
+    if (not in_mri(transformed_points)) and (not raise_errors):
+        print("Before upscaling")
+        idx = np.sum(transformed_points>255, axis=1).astype(bool)
+        print(transformed_points[idx, :])
+        print(idx.sum(), "/", idx.size, "points are outside of [0, 256]")
 
     transformed_points = upscale(transformed_points)
 
-    if np.max(transformed_points) > 255:
+    if (not in_mri(transformed_points)) and raise_errors:
         raise ValueError
 
-    transformed_points = np.array(transformed_points)
+    if (not in_mri(transformed_points)) and (not raise_errors):
+        print("After upscaling")
+        idx = np.sum(transformed_points>255, axis=1).astype(bool)
+
+        print(idx.sum(), "/", idx.size, "points are outside of [0, 256]")
+        print(transformed_points[idx, :])
+
+    # breakpoint()
+    # transformed_points = np.array(transformed_points)
 
     xyz2 = apply_affine(vox2ras2, transformed_points)
 
@@ -156,7 +174,7 @@ def make_mapping(cubemesh, v, jobfile, hyperparameters, ocd):
             unity2.vector()[:] = 0
 
             xin = interpolate(Expression(coordinate, degree=1), V1) # cubeimg.function_space())
-            xout, _ = find_velocity_ocd.find_velocity(Img=xin, Img_goal=unity2, hyperparameters=hyperparameters, phi_eval=-v, projection=False)
+            xout, _, _ = find_velocity_ocd.find_velocity(Img=xin, Img_goal=unity2, hyperparameters=hyperparameters, files=[], phi_eval=-v, projection=False)
 
         else:
             import dgregister.config as config
@@ -190,17 +208,17 @@ def make_mapping(cubemesh, v, jobfile, hyperparameters, ocd):
 
         assert os.path.isdir(jobfile + "postprocessing/")
 
-        hdf = HDF5File(cubemesh.mpi_comm(), jobfile + "postprocessing/" + coordinate + ".hdf", "w")
-        hdf.write(xin, "in")
-        hdf.write(xout, "out")
-        hdf.close()
+        # hdf = HDF5File(cubemesh.mpi_comm(), jobfile + "postprocessing/" + coordinate + ".hdf", "w")
+        # hdf.write(xin, "in")
+        # hdf.write(xout, "out")
+        # hdf.close()
 
-        with XDMFFile(jobfile + "postprocessing/" + coordinate + "_in.xdmf") as xdmf:
-            xdmf.write_checkpoint(xin, "xin", 0.)
+        # with XDMFFile(jobfile + "postprocessing/" + coordinate + "_in.xdmf") as xdmf:
+        #     xdmf.write_checkpoint(xin, "xin", 0.)
 
 
-        with XDMFFile(jobfile + "postprocessing/" + coordinate + "_out.xdmf") as xdmf:
-            xdmf.write_checkpoint(xout, "xout", 0.)
+        # with XDMFFile(jobfile + "postprocessing/" + coordinate + "_out.xdmf") as xdmf:
+        #     xdmf.write_checkpoint(xout, "xout", 0.)
 
     assert len(mappings) == 3
 
