@@ -22,9 +22,11 @@ resultpaths = ["mriregistration_outputs",
 
 superfolder = pathlib.Path(superfolder)
 
-
+interesting_hyperparameters = ["ocd", "smoothen", "alpha", "max_timesteps", "lbfgs_max_iterations"]
 
 for resultpath in resultpaths:
+
+    results = {} # set()
 
     bestlist = [1e16, 1e16, None]
     configs = [
@@ -123,6 +125,31 @@ for resultpath in resultpaths:
                 
 
         if not running:
+            
+            key=""
+
+            for name in interesting_hyperparameters:
+                if name == "alpha":
+                    key += name + ":" + format(float(hyperparameters[name]), ".0e") + ","
+                elif name == "ocd":
+                    if hyperparameters[name] == True:
+                        key += "ocd"
+                    else:
+                        key += "   "
+                elif name == "smoothen":
+                    if "OCD" in str(folder):
+                        key += "           "
+                    elif hyperparameters[name] == True:
+                        key += "--smoothen "
+                    else:
+                        key += "           "
+
+                else:
+                    key += name + ":" + str(hyperparameters[name]) + ","
+
+            assert hyperparameters["smoothen"] == (not hyperparameters["nosmoothen"])
+
+            results[key] = int(Jdinit), int(Jdfinal)
 
             for config in configs:
                 best = None
@@ -141,6 +168,7 @@ for resultpath in resultpaths:
         print(folder.name)
 
 
+            
         if (not running): # and "Finalstate.xdmf" in os.listdir(folder):
             print("done.")
             print("Jd=", format(Jdinit, ".2e"), "-->", format(Jdfinal, ".4e"),  "(", hyperparameters["lbfgs_max_iterations"], " LBFGS)")
@@ -153,8 +181,15 @@ for resultpath in resultpaths:
 
         print()
 
+    print("All results") #  (merging different LBFGS settings)")
+    for key, r in sorted(results.items()):
+        print(key, r[0], "-->", r[1])
+
     def print_best(x):
         print("** best for setting:", x[2].name, format(x[0], ".1e"), "-->", format(x[1], ".1e"))
+
+        if "postprocessing" in os.listdir(x[2]) and len(os.listdir(x[2] / "postprocessing")) > 0:
+            print("-- has postprocessing")
 
 
     for config in configs:

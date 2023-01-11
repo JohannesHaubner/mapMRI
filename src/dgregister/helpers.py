@@ -142,7 +142,10 @@ def get_lumped_mass_matrices(vCG):
     return M_lumped, M_lumped_inv
 
 
-def load_velocity(hyperparameters, controlfun):
+def load_velocity(hyperparameters, vCG):
+
+    if not hyperparameters["ocd"]:
+        assert "Control.hdf" in hyperparameters["starting_guess"]
 
     assert os.path.isfile(hyperparameters["starting_guess"])
 
@@ -151,30 +154,37 @@ def load_velocity(hyperparameters, controlfun):
 
     # print_overloaded("keys in h5file", list(h5file.keys()))
 
-    if controlfun is not None:
-        print_overloaded("max before loading", controlfun.vector()[:].max())
-        working_mesh = controlfun.function_space().mesh()
-        print_overloaded("trying to read velocity without loading mesh")
-        hdf = HDF5File(working_mesh.mpi_comm(), hyperparameters["starting_guess"], 'r')
-
-        
-    else:
-        print_overloaded("Reading mesh")
-        working_mesh = Mesh()
-        hdf = HDF5File(working_mesh.mpi_comm(), hyperparameters["starting_guess"], 'r')
-        hdf.read(working_mesh, "/mesh", False)
-        
-        vCG = VectorFunctionSpace(working_mesh, hyperparameters["velocity_functionspace"], hyperparameters["functiondegree"])
-        controlfun = Function(vCG)
-
-    print_overloaded("trying to read", hyperparameters["readname"])
-    hdf.read(controlfun, hyperparameters["readname"])
+    v = Function(vCG)
+    hdf = HDF5File(vCG.mesh().mpi_comm(), hyperparameters["starting_guess"], "r")
+    hdf.read(v, hyperparameters["readname"])
     hdf.close()
 
-    print_overloaded("max after loading", controlfun.vector()[:].max())
-    print_overloaded("Succesfully read starting guess")
 
-    return working_mesh, vCG, controlfun
+    # if controlfun is not None:
+    #     print_overloaded("max before loading", controlfun.vector()[:].max())
+    #     working_mesh = controlfun.function_space().mesh()
+    #     print_overloaded("trying to read velocity without loading mesh")
+    #     hdf = HDF5File(working_mesh.mpi_comm(), hyperparameters["starting_guess"], 'r')
+
+        
+    # else:
+    #     print_overloaded("Reading mesh")
+    #     working_mesh = Mesh()
+    #     hdf = HDF5File(working_mesh.mpi_comm(), hyperparameters["starting_guess"], 'r')
+    #     hdf.read(working_mesh, "/mesh", False)
+        
+    #     vCG = VectorFunctionSpace(working_mesh, hyperparameters["velocity_functionspace"], hyperparameters["functiondegree"])
+    #     controlfun = Function(vCG)
+
+    # print_overloaded("trying to read", hyperparameters["readname"])
+    # hdf.read(controlfun, hyperparameters["readname"])
+    # hdf.close()
+
+    print_overloaded("max after loading", v.vector()[:].max())
+    # print_overloaded()
+    print_overloaded("Succesfully read starting guess", hyperparameters["starting_guess"])
+
+    return v
 
 
 

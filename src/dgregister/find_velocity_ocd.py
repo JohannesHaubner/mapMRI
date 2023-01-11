@@ -32,7 +32,7 @@ def csvwrite(name, values, header, mode=None, debug=True):
        writer.writerow(values)     
 
 
-def compute_ocd_reduced(c0, c1, tau, alpha, results_dir, hyperparameters, files, space="CG", reg="H1", phi_eval=None):
+def compute_ocd_reduced(c0, c1, tau, alpha, results_dir, hyperparameters, files, starting_guess=None, space="CG", reg="H1", phi_eval=None):
     # c0:
     # c1:
     # tau:   time step
@@ -55,6 +55,12 @@ def compute_ocd_reduced(c0, c1, tau, alpha, results_dir, hyperparameters, files,
     
     if phi_eval is not None:
         phi = phi_eval
+
+    elif starting_guess is not None:
+        print("-"*80)
+        print("Using starting guess")
+        phi = starting_guess
+
     else:
         phi = Function(Q, name="Control")
 
@@ -208,7 +214,7 @@ def find_velocity(Img, Img_goal, hyperparameters, files, phi_eval=None, vCG=None
         Img = project(Img, VCG)
         Img_goal = project(Img_goal, VCG)
 
-    c, phi = compute_ocd_reduced(c0=Img, c1=Img_goal, tau=1, files=files, hyperparameters=hyperparameters, phi_eval=phi_eval,
+    c, phi = compute_ocd_reduced(c0=Img, c1=Img_goal, tau=1, files=files, hyperparameters=hyperparameters, phi_eval=phi_eval, starting_guess=starting_guess,
                                 alpha=hyperparameters["alpha"], results_dir=hyperparameters["outputfolder"], space="CG", reg="H1")
     
     # if phi_eval is None:

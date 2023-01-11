@@ -61,7 +61,6 @@ suffix = ""
 
 
 if (hyperparameters["outfoldername"] is not None) or len(hyperparameters["outfoldername"]) == 0:
-    print("Here")
     # Workaround since None is not interpreted as None by argparse
     if hyperparameters["outfoldername"].lower() != "none":
 
@@ -135,26 +134,25 @@ for key, item in hyperparameters.items():
 if not os.path.isdir(hyperparameters["outputfolder"]):
     os.makedirs(hyperparameters["outputfolder"], exist_ok=True)
 
+(domainmesh, Img, NumData) = read_image(hyperparameters, name="input", mesh=None, normalize=hyperparameters["normalize"])
+
+vCG = VectorFunctionSpace(domainmesh, hyperparameters["velocity_functionspace"], hyperparameters["velocity_functiondegree"])
+
+
 if hyperparameters["starting_guess"] is not None:
-    domainmesh, vCG, controlfun = load_velocity(hyperparameters, controlfun=None)
-    
+    controlfun = load_velocity(hyperparameters, vCG)
+
     if hyperparameters["interpolate"]:
+        raise NotImplementedError
         domainmesh, vCG, controlfun = interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun)
 
 else:
-    # mesh will be created from first image
-    domainmesh = None
     controlfun = None
 
 
 
-(domainmesh, Img, NumData) = read_image(hyperparameters, name="input", mesh=domainmesh, normalize=hyperparameters["normalize"])
 (mesh_goal, Img_goal, NumData_goal) = read_image(hyperparameters, name="target", mesh=domainmesh, normalize=hyperparameters["normalize"])
 
-
-if hyperparameters["starting_guess"] is None:
-    # Can now create function space after mesh is created from image
-    vCG = VectorFunctionSpace(domainmesh, hyperparameters["velocity_functionspace"], hyperparameters["velocity_functiondegree"])
 
 T_final = 1
 

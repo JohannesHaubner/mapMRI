@@ -42,18 +42,31 @@ LOGOUTFILE=${GPATH}slurm/transportslurm/${SLURM_JOB_ID}_log_python_srun.txt
 
 cd $SPATH
 
-FOLDER=croppedmriregistration_outputs
-JOBNAME=OCDA10.0LBFGS5
+# FOLDER=croppedmriregistration_outputs
+# JOBNAME=OCDA10.0LBFGS5
+# VFILE=opts/opt_phi_6.h5
+# READNAME="function"
+# FOLDER=mriregistration_outputs
+# JOBNAME=OCDA0.001LBFGS1000
+# VFILE=opts/opt_phi_204.h5
+# READNAME="function"
+
+
+FOLDER=mriregistration_outputs
+JOBNAME=OCDA0.0001LBFGS100RS1e-4
+VFILE=VelocityField.hdf
+READNAME="-1"
+
+srun -n 8 python3 -u transform.py --mapping_only --folder ${FOLDER} --job ${JOBNAME} --velocityfilename ${VFILE} --readname ${READNAME} > ${LOGOUTFILE}
+echo "Computed mapping, now running transform with only one core"
+srun -n 1 python3 -u transform.py --folder ${FOLDER} --job ${JOBNAME} --velocityfilename ${VFILE} --readname ${READNAME} >> ${LOGOUTFILE}
+echo "success"
+
 
 # FOLDER=mriregistration_outputs
-# JOBNAME=E100A0.001LBFGS100
-# OCDA0.001LBFGS1000
+# JOBNAME=E100A0.0001LBFGS100NOSMOOTHEN
 
-
-srun -n 8 python3 -u transform.py --mapping_only --folder ${FOLDER} --job ${JOBNAME} --velocityfilename opts/opt_phi_6.h5 --readname "function" > ${LOGOUTFILE}
-
-echo "Computed mapping, now running transform with only one core"
-
-srun -n 1 python3 -u transform.py --folder ${FOLDER} --job ${JOBNAME} --velocityfilename opts/opt_phi_6.h5 --readname "function" >> ${LOGOUTFILE}
-
-echo "success"
+# srun -n 8 python3 -u transform.py --mapping_only --folder ${FOLDER} --job ${JOBNAME} --velocityfilename opts/opt_phi_6.h5 --readname "function" > ${LOGOUTFILE}
+# echo "Computed mapping, now running transform with only one core"
+# srun -n 1 python3 -u transform.py --folder ${FOLDER} --job ${JOBNAME} --velocityfilename opts/opt_phi_6.h5 --readname "function" >> ${LOGOUTFILE}
+# echo "success"

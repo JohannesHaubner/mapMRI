@@ -144,6 +144,13 @@ def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,
 
     transformed_points = upscale(transformed_points)
 
+    distance = np.linalg.norm(points-transformed_points, ord=2, axis=-1)
+    
+    print_overloaded("Minimum distance travelled ", np.min(distance))
+    print_overloaded("Maximum distance travelled ", np.max(distance))
+
+    print_overloaded("Compare to mesh size:", brainmesh.hmin(), brainmesh.hmax(), )
+
     if (not in_mri(transformed_points)) and raise_errors:
         raise ValueError
 

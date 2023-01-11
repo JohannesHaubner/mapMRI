@@ -5,6 +5,7 @@ import numpy as np
 from fenics import *
 # from fenics_adjoint import *
 import h5py
+import meshio
 
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
@@ -31,20 +32,22 @@ if parserargs["mapping_only"]:
     print_overloaded("--mapping_only is set, will only create the mapping and exit()")
 
 if "home/bastian" in os.getcwd():
-    resultpath = "/home/bastian/D1/registration/" 
-    path_to_data = "/home/bastian/D1/registration/"
+    path_to_stuff = "/home/bastian/D1/registration/"
+    resultpath = path_to_stuff
+    path_to_data = path_to_stuff
     path_to_meshes = "/home/bastian/"
 else:
-    path_to_data = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/"
-    resultpath =   "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/"
+    path_to_stuff = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/"
+    path_to_data = path_to_stuff
+    resultpath = path_to_stuff
     path_to_meshes = "/home/basti/programming/"
 
 def path_to_wmparc(subj):
 
     if subj == "abby":
-        return path_to_data + "mri2fem-dataset/freesurfer/abby/mri/wmparc.mgz"
+        return path_to_stuff + "mri2fem-dataset/freesurfer/abby/mri/wmparc.mgz"
     elif subj == "ernie":
-        return path_to_data + "mri2fem-dataset/freesurfer/ernie/mri/wmparc.mgz"
+        return path_to_stuff + "mri2fem-dataset/freesurfer/ernie/mri/wmparc.mgz"
 
     else:
         raise ValueError
@@ -158,13 +161,14 @@ if not (nx == 75 and ny == 79 and nz == 98):
     coarsening_factor = 1
     npad = 0
 else:
+    assert "mriregistration_outputs/" == parserargs["folder"]
     coarsening_factor = 2
     npad = 4
 
 raise_errors = True
 
-if ocd:
-    raise_errors = False
+# if ocd:
+#     raise_errors = False
 
 
 
@@ -184,8 +188,10 @@ xmlfile3 = jobfile + "postprocessing/" + "transformed_input_mesh.xml"
 
 File(xmlfile3) << brainmesh2
 
-os.system("meshio-convert " + xmlfile3 + " " + xmlfile3.replace(".xml", ".xdmf"))
+# os.system("conda activate mri_inverse ; meshio-convert " + xmlfile3 + " " + xmlfile3.replace(".xml", ".xdmf"))
 
+transormed_xmlmesh = meshio.read(xmlfile3)
+transormed_xmlmesh.write(xmlfile3.replace(".xml", ".xdmf"))
 
 # Store as hdf File for use in further FEniCS simulation
 hdf = HDF5File(brainmesh2.mpi_comm(), xmlfile3.replace(".xdmf", ".h5"), "w")

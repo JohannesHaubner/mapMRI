@@ -54,13 +54,17 @@ OUTFOLDERNAME=None
 
 OUTPUTDIR=/home/bastian/D1/registration/mriregistration_outputs/
 DPATH=/home/bastian/D1/registration
-DATAPATH=${DPATH}/mri2fem-data/processed/coarsecropped/
+DATAPATH=${DPATH}/mri2fem-dataset/processed/coarsecropped/
 IMG1=${DATAPATH}coarsenedabbytoernie.mgz
 IMG2=${DATAPATH}coarsenedernie_brain.mgz
 
 # OUTPUTDIR=/home/bastian/D1/registration/fullmriregistration_outputs/
-# IMG1=/home/bastian/D1/registration/mri2fem-data/processed/registered/abbytoernie.mgz
-# IMG2=/home/bastian/D1/registration/mri2fem-data/ernie/brain.mgz
+# IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/registered/abbytoernie.mgz
+# IMG2=/home/bastian/D1/registration/mri2fem-dataset/ernie/brain.mgz
+
+# --starting_guess /home/bastian/D1/registration/mriregistration_outputs/E100A0.0001LBFGS10/Control.hdf --readname "-1" \
+# OUTFOLDERNAME=RS1e-4
+OUTFOLDERNAME=RSNone
 
 mkdir -pv ${OUTPUTDIR}
 echo "OUTPUTDIR=" $OUTPUTDIR

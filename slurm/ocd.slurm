@@ -1,16 +1,16 @@
 #!/bin/bash
 #SBATCH --job-name=ocdregister
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=20
+#SBATCH --ntasks=12
 #################################################################
-#SBATCH --partition=milanq
+## SBATCH --partition=milanq
 ## SBATCH --partition=fpgaq
-## SBATCH --partition=defq
+#SBATCH --partition=defq
 ## SBATCH --partition=slowq
 ## SBATCH --partition=rome16q
 #################################################################
 
-#SBATCH --time 0-24 ##--time=99:00:00
+#SBATCH --time 6-24 ##--time=99:00:00
 #SBATCH -o /home/bastian/Oscar-Image-Registration-via-Transport-Equation/slurm/mrislurm/%j.out
 #SBATCH --export=ALL
 #SBATCH --mail-user=bastian@simula.no
@@ -49,21 +49,23 @@ echo "ALPHA=" ${ALPHA}
 
 OUTFOLDERNAME=None
 
-# OUTPUTDIR=/home/bastian/D1/registration/mriregistration_outputs/
-# DPATH=/home/bastian/D1/registration
-# DATAPATH=${DPATH}/mri2fem-data/processed/coarsecropped/
-# IMG1=${DATAPATH}coarsenedabbytoernie.mgz
-# IMG2=${DATAPATH}coarsenedernie_brain.mgz
-
-# OUTPUTDIR=/home/bastian/D1/registration/fullmriregistration_outputs/
-# IMG1=/home/bastian/D1/registration/mri2fem-data/processed/registered/abbytoernie.mgz
-# IMG2=/home/bastian/D1/registration/mri2fem-data/ernie/brain.mgz
+OUTPUTDIR=/home/bastian/D1/registration/mriregistration_outputs/
+# OUTPUTDIR=/home/bastian/D1/registration/readtest/
 
 
-OUTPUTDIR=/home/bastian/D1/registration/croppedmriregistration_outputs/
-IMG1=/home/bastian/D1/registration/mri2fem-data/processed/cropped/cropped_abbytoernie.mgz
-IMG2=/home/bastian/D1/registration/mri2fem-data/processed/cropped/cropped_ernie_brain.mgz
+DPATH=/home/bastian/D1/registration
+DATAPATH=${DPATH}/mri2fem-dataset/processed/coarsecropped/
+IMG1=${DATAPATH}coarsenedabbytoernie.mgz
+IMG2=${DATAPATH}coarsenedernie_brain.mgz
+# --starting_guess /home/bastian/D1/registration/mriregistration_outputs/OCDA0.0001LBFGS1000/opts/opt_phi_529.h5 --readname "function" \
+# OUTFOLDERNAME=RS1e-4
+OUTFOLDERNAME=RSNone
 
+# OUTPUTDIR=/home/bastian/D1/registration/croppedmriregistration_outputs/
+# OUTFOLDERNAME=RS10
+# IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/cropped/cropped_abbytoernie.mgz
+# IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/cropped/cropped_ernie_brain.mgz
+# --starting_guess /home/bastian/D1/registration/croppedmriregistration_outputs/OCDA10.0LBFGS5/opts/opt_phi_6.h5 --readname "function" \
 
 mkdir -pv ${OUTPUTDIR}
 echo "OUTPUTDIR=" $OUTPUTDIR
@@ -72,13 +74,8 @@ echo "IMG1=" ${IMG1}
 echo "IMG2=" ${IMG2}
 
 
-srun -n 20 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
---input ${IMG1} --target ${IMG2} --ocd \
---max_timesteps ${ITERS} --alpha ${ALPHA} \
---lbfgs_max_iterations ${LBFGS} --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
-
-
-OUTPATH=${OUTPUTDIR}/${OUTFOLDERNAME}/
-cp -v ${LOGOUTFILE} ${OUTPATH}
+srun -n 12 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --output_dir ${OUTPUTDIR} \
+--input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --logfile ${LOGOUTFILE} \
+--ocd --lbfgs_max_iterations ${LBFGS} --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 
 echo "success"
