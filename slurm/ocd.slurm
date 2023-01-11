@@ -42,7 +42,7 @@ LOGOUTFILE=${GPATH}slurm/mrislurm/${SLURM_JOB_ID}_log_python_srun.txt
 
 ITERS=1
 ALPHA=$1
-LBFGS=5
+LBFGS=100
 
 echo "ITERS=" ${ITERS}
 echo "ALPHA=" ${ALPHA}

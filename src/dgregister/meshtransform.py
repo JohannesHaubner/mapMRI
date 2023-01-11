@@ -8,10 +8,19 @@ import numpy as np
 from fenics import *
 # from fenics_adjoint import *
 from nibabel.affines import apply_affine
-from dgregister.helpers import get_largest_box, pad_with, cut_to_box, get_bounding_box, get_lumped_mass_matrices
+from dgregister.helpers import get_bounding_box, get_lumped_mass_matrices # get_largest_box, pad_with, cut_to_box, 
 from dgregister import find_velocity_ocd
 
-from IPython import embed
+# from IPython import embed
+
+
+def print_overloaded(*args):
+    if MPI.rank(MPI.comm_world) == 0:
+        # set_log_level(PROGRESS)
+        print(*args)
+    else:
+        pass
+
 
 def store2mgz(imgfile1, imgfile2, ijk1, outfolder):
     assert os.path.isdir(outfolder)
@@ -61,7 +70,7 @@ def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,
     tkr = True
 
     if tkr:
-        print("Using trk RAS")
+        print_overloaded("Using trk RAS")
         ras2vox1 = numpy.linalg.inv(image1.header.get_vox2ras_tkr())
     else:
         ras2vox1 = numpy.linalg.inv(image1.header.get_vox2ras())
@@ -104,7 +113,7 @@ def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,
     
     points = downscale(ijk1)    
 
-    print("Iterating over all mesh nodes")
+    print_overloaded("Iterating over all mesh nodes")
 
     progress = tqdm(total=points.shape[0])
     
@@ -113,7 +122,7 @@ def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,
         try:
             transformed_point = mapping(points[idx, :])
         except RuntimeError:
-            print(points[idx, :], "not in BoxMesh")
+            print_overloaded(points[idx, :], "not in BoxMesh")
             exit()
         
         transformed_points[idx, :] = transformed_point
@@ -128,10 +137,10 @@ def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,
 
 
     if (not in_mri(transformed_points)) and (not raise_errors):
-        print("Before upscaling")
+        print_overloaded("Before upscaling")
         idx = np.sum(transformed_points>255, axis=1).astype(bool)
-        print(transformed_points[idx, :])
-        print(idx.sum(), "/", idx.size, "points are outside of [0, 256]")
+        print_overloaded(transformed_points[idx, :])
+        print_overloaded(idx.sum(), "/", idx.size, "points are outside of [0, 256]")
 
     transformed_points = upscale(transformed_points)
 
@@ -139,11 +148,11 @@ def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,
         raise ValueError
 
     if (not in_mri(transformed_points)) and (not raise_errors):
-        print("After upscaling")
+        print_overloaded("After upscaling")
         idx = np.sum(transformed_points>255, axis=1).astype(bool)
 
-        print(idx.sum(), "/", idx.size, "points are outside of [0, 256]")
-        print(transformed_points[idx, :])
+        print_overloaded(idx.sum(), "/", idx.size, "points are outside of [0, 256]")
+        print_overloaded(transformed_points[idx, :])
 
     # breakpoint()
     # transformed_points = np.array(transformed_points)
@@ -165,7 +174,7 @@ def make_mapping(cubemesh, v, jobfile, hyperparameters, ocd):
 
         assert norm(v) > 0
 
-        print("Transporting, ", coordinate, "coordinate")
+        print_overloaded("Transporting, ", coordinate, "coordinate")
 
         if ocd:
             V1 = FunctionSpace(cubemesh, "CG", 1)
@@ -174,6 +183,7 @@ def make_mapping(cubemesh, v, jobfile, hyperparameters, ocd):
             unity2.vector()[:] = 0
 
             xin = interpolate(Expression(coordinate, degree=1), V1) # cubeimg.function_space())
+            print_overloaded("Running OCD forward pass")
             xout, _, _ = find_velocity_ocd.find_velocity(Img=xin, Img_goal=unity2, hyperparameters=hyperparameters, files=[], phi_eval=-v, projection=False)
 
         else:
@@ -186,12 +196,14 @@ def make_mapping(cubemesh, v, jobfile, hyperparameters, ocd):
             V1 = FunctionSpace(cubemesh, hyperparameters["state_functionspace"], hyperparameters["state_functiondegree"])
             xin = interpolate(Expression(coordinate, degree=1), V1) # cubeimg.function_space())
             
+            print_overloaded("Interpolated x")
+
             if hyperparameters["smoothen"]:
                 raise NotImplementedError
                 _, M_lumped_inv = get_lumped_mass_matrices(vCG=vCG)
             else:
                 M_lumped_inv = None
-            print("Calling Transport()")
+            print_overloaded("Calling Transport()")
 
             xout = Transport(Img=xin, Wind=-v, hyperparameters=hyperparameters,
                             MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
@@ -199,7 +211,7 @@ def make_mapping(cubemesh, v, jobfile, hyperparameters, ocd):
 
             V1_CG = FunctionSpace(cubemesh, "CG", 1)
             xout = project(xout, V1_CG)
-            print("Projected xout to CG1")
+            print_overloaded("Projected xout to CG1")
 
 
         assert norm(xout) != 0

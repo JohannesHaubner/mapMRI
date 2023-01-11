@@ -42,7 +42,7 @@ ALPHA=$2
 
 NP=4
 LBFGS=1
-OUTFOLDERNAME=${NP}OCD
+OUTFOLDERNAME=NP${NP}
 OUTPUTDIR=/home/bastian/D1/registration/test/
 #timing3d/
 

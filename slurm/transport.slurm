@@ -37,12 +37,23 @@ echo "starting to run"
 
 
 GPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/
-SPATH=${GPATH}scripts/preprocessing
+SPATH=${GPATH}scripts/postprocessing
 LOGOUTFILE=${GPATH}slurm/transportslurm/${SLURM_JOB_ID}_log_python_srun.txt
 
 cd $SPATH
 
-srun -n 8 python3 -u transform.py > ${LOGOUTFILE}
+FOLDER=croppedmriregistration_outputs
+JOBNAME=OCDA10.0LBFGS5
 
+# FOLDER=mriregistration_outputs
+# JOBNAME=E100A0.001LBFGS100
+# OCDA0.001LBFGS1000
+
+
+srun -n 8 python3 -u transform.py --mapping_only --folder ${FOLDER} --job ${JOBNAME} --velocityfilename opts/opt_phi_6.h5 --readname "function" > ${LOGOUTFILE}
+
+echo "Computed mapping, now running transform with only one core"
+
+srun -n 1 python3 -u transform.py --folder ${FOLDER} --job ${JOBNAME} --velocityfilename opts/opt_phi_6.h5 --readname "function" >> ${LOGOUTFILE}
 
 echo "success"
