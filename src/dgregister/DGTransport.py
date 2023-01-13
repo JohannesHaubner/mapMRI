@@ -1,6 +1,14 @@
 #solver for transporting images
 from fenics import *
-from fenics_adjoint import *
+
+import dgregister.config as config
+# if ocd:
+if "optimize" in config.hyperparameters.keys() and (not config.hyperparameters["optimize"]):
+    print("Not importing dolfin-adjoint")
+else:
+    print("Importing dolfin-adjoint")
+
+    from fenics_adjoint import *
 
 
 def print_overloaded(*args):
@@ -19,8 +27,70 @@ parameters['ghost_mode'] = 'shared_facet'
 
 
 
+def CGTransport(Img, Wind, MaxIter, DeltaT, hyperparameters, MassConservation=False, StoreHistory=False, FNameOut="",
+                solver=None, timestepping=None):
 
-def Transport(Img, Wind, MaxIter, DeltaT, hyperparameters, MassConservation = True, StoreHistory=False, FNameOut="",
+    print_overloaded("Calling CGTransport")
+
+    if not timestepping == "explicitEuler":
+        raise NotImplementedError
+    
+    Space = Img.function_space()
+    v = TestFunction(Space)
+    Img_next = TrialFunction(Img.function_space())
+    Img_deformed = Function(Img.function_space())
+    Img_deformed.assign(Img)
+
+    def Form(f):
+        #a = inner(v, div(outer(f, Wind)))*dx
+    
+        a = -inner(grad(v), outer(f, Wind))*dx
+        # a += inner(jump(v), jump(Flux(f, Wind, n)))*dS
+        # a += inner(v, FluxB(f, Wind, n))*ds
+    
+        if MassConservation == False:
+            a -= inner(v, div(Wind)*f)*dx
+        return a
+
+    a = Constant(1.0/DeltaT)*(inner(v,Img_next)*dx - inner(v, Img_deformed)*dx)
+    
+    if timestepping == "explicitEuler":
+        a = a + Form(Img_deformed)
+    else:
+        raise NotImplementedError
+
+    A = assemble(lhs(a))
+
+    if solver == "krylov":
+        
+        solver = KrylovSolver(A, "gmres", hyperparameters["preconditioner"])
+        solver.set_operators(A, A)
+        print_overloaded("Assembled A, using Krylov solver")
+
+    for i in range(MaxIter):
+        #solve(a==0, Img_next)
+
+        print_overloaded("Iteration ", i + 1, "/", MaxIter, "in Transport()")
+
+        system_rhs = rhs(a)
+
+        b = assemble(system_rhs)
+        b.apply("")
+        
+        #solver.solve(Img_deformed.vector(), b)
+        solver.solve(Img.vector(), b)
+        Img_deformed.assign(Img)
+
+        assert norm(Img_deformed) > 0
+
+    
+
+    print_overloaded("i == MaxIter, Transport() finished")
+    return Img_deformed
+
+
+
+def DGTransport(Img, Wind, MaxIter, DeltaT, hyperparameters, MassConservation=False, StoreHistory=False, FNameOut="",
                 solver=None, timestepping=None):
     
     # assert timestepping in ["CrankNicolson", "explicitEuler"]
@@ -181,7 +251,7 @@ def Transport(Img, Wind, MaxIter, DeltaT, hyperparameters, MassConservation = Tr
 if __name__ == "__main__":
     #create on the fly
     FName = "shuttle_small.png"
-    from Pic2Fen import Pic2FEM, FEM2Pic
+    from dgregister.Pic2Fen import Pic2FEM, FEM2Pic
     (mesh, Img, NumData) = Pic2FEM(FName)
     
     FNameOut = "img_DG"
@@ -197,6 +267,6 @@ if __name__ == "__main__":
     Img = project(Img, VectorFunctionSpace(mesh, "DG", 1, NumData))
     Img.rename("img", "")
 
-    Img_deformed = Transport(Img, Wind, MaxIter, DeltaT, MassConservation, StoreHistory, FNameOut)
+    Img_deformed = DGTransport(Img, Wind, MaxIter, DeltaT, MassConservation, StoreHistory, FNameOut)
     File("output/DGTransportFinal.pvd") << Img_deformed
     FEM2Pic(Img_deformed, NumData, "output/DGTransportFinal.png")

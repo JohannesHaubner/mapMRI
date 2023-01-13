@@ -49,6 +49,7 @@ for resultpath in resultpaths:
 
         hyperparameters = None
         running = False
+        failed = False
 
         try:
             hyperparameters = json.load(open(folder / "hyperparameters.json"))
@@ -61,7 +62,6 @@ for resultpath in resultpaths:
         # print(hyperparameters["slurmid"], sretval.returncode)
         # continue
         if sretval.returncode == 0:
-
             running = True
         else:
             assert "Invalid job id specified" in str(sretval.stderr)
@@ -125,53 +125,66 @@ for resultpath in resultpaths:
                 
 
         if not running:
-            
-            key=""
 
-            for name in interesting_hyperparameters:
-                if name == "alpha":
-                    key += name + ":" + format(float(hyperparameters[name]), ".0e") + ","
-                elif name == "ocd":
-                    if hyperparameters[name] == True:
-                        key += "ocd"
+            if "optimization_time_hours" not in hyperparameters.keys() and ("OCD" not in str(folder)):
+                failed = True
+                # continue
+            else:
+                key = ""
+
+                for name in interesting_hyperparameters:
+                    if name == "alpha":
+                        key += name + ":" + format(float(hyperparameters[name]), ".0e") + ","
+                    elif name == "ocd":
+                        if hyperparameters[name] == True:
+                            key += "ocd"
+                        else:
+                            key += "   "
+                    elif name == "smoothen":
+                        if "OCD" in str(folder):
+                            key += "           "
+                        elif hyperparameters[name] == True:
+                            key += "--smoothen "
+                        else:
+                            key += "           "
+
                     else:
-                        key += "   "
-                elif name == "smoothen":
-                    if "OCD" in str(folder):
-                        key += "           "
-                    elif hyperparameters[name] == True:
-                        key += "--smoothen "
-                    else:
-                        key += "           "
+                        key += name + ":" + str(hyperparameters[name]) + ","
 
-                else:
-                    key += name + ":" + str(hyperparameters[name]) + ","
+                if "RS" in str(folder):
+                    key += "RS"
 
-            assert hyperparameters["smoothen"] == (not hyperparameters["nosmoothen"])
+                while len(key) < len("ocdRS           RSalpha:1e-05,RSmax_timesteps:1,RSlbfgs_max_iterations:100,RS") + 1:
+                    key += " "
 
-            results[key] = int(Jdinit), int(Jdfinal)
+                assert hyperparameters["smoothen"] == (not hyperparameters["nosmoothen"])
 
-            for config in configs:
-                best = None
-                match = True
-                for key, item in config.items():
-                    
-                    if (key != "best") and (hyperparameters[key] != item):
+                results[key] = int(Jdinit), int(Jdfinal), hyperparameters["slurmid"], folder
+
+                for config in configs:
+                    best = None
+                    match = True
+                    for key, item in config.items():
                         
-                        match = False
+                        if (key != "best") and (hyperparameters[key] != item):
+                            
+                            match = False
 
-                if match:
-                    if config["best"][1] > Jdfinal:
-                        config["best"] = [Jdinit, Jdfinal, folder]
+                    if match:
+                        if config["best"][1] > Jdfinal:
+                            config["best"] = [Jdinit, Jdfinal, folder]
                         
 
         print(folder.name)
 
 
             
-        if (not running): # and "Finalstate.xdmf" in os.listdir(folder):
+        if (not running) and (not failed): # and "Finalstate.xdmf" in os.listdir(folder):
             print("done.")
             print("Jd=", format(Jdinit, ".2e"), "-->", format(Jdfinal, ".4e"),  "(", hyperparameters["lbfgs_max_iterations"], " LBFGS)")
+
+        elif (not running) and failed:
+            print("failed", hyperparameters["slurmid"])
 
         else:
             print("still running ?, running =", running)
@@ -188,15 +201,19 @@ for resultpath in resultpaths:
     def print_best(x):
         print("** best for setting:", x[2].name, format(x[0], ".1e"), "-->", format(x[1], ".1e"))
 
-        if "postprocessing" in os.listdir(x[2]) and len(os.listdir(x[2] / "postprocessing")) > 0:
-            print("-- has postprocessing")
+        if "postprocessing" in os.listdir(x[2]) and len(os.listdir(x[2] / "postprocessing")) > 2:
+            print("  -- has postprocessing")
 
 
     for config in configs:
         if None not in config["best"]:
             print_best(config["best"])
 
+    ### PRINT SLURM IDS FOR JOB IF NECCESSARY
 
-
+    # if "croppedmriregistration_outputs" in str(resultpath):
+    #     print("All results") #  (merging different LBFGS settings)")
+    #     for key, r in sorted(results.items()):
+    #         print(key, "SLURMID", r[2], r[3])
 
     print("----------------------------------------------------------------------------------------------------------------------------------------------")

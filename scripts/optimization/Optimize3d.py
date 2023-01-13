@@ -42,7 +42,9 @@ parser.add_argument("--readname", type=str, default="-1")
 parser.add_argument("--starting_guess", type=str, default=None)
 parser.add_argument("--interpolate", default=False, action="store_true", help="Interpolate to finer mesh")
 
+parser.add_argument("--filter", default=False, action="store_true", help="median filter on input and output")
 parser.add_argument("--debug", default=False, action="store_true", help="Debug")
+parser.add_argument("--timing", default=False, action="store_true", help="Debug")
 parser.add_argument("--ocd", default=False, action="store_true")
 parser.add_argument("--input", default="mridata_3d/091registeredto205_padded_coarsened.mgz")
 parser.add_argument("--target", default="mridata_3d/205_cropped_padded_coarsened.mgz")
@@ -134,7 +136,7 @@ for key, item in hyperparameters.items():
 if not os.path.isdir(hyperparameters["outputfolder"]):
     os.makedirs(hyperparameters["outputfolder"], exist_ok=True)
 
-(domainmesh, Img, NumData) = read_image(hyperparameters, name="input", mesh=None, normalize=hyperparameters["normalize"])
+(domainmesh, Img, NumData) = read_image(hyperparameters, name="input", mesh=None, normalize=hyperparameters["normalize"], filter=hyperparameters["filter"])
 
 vCG = VectorFunctionSpace(domainmesh, hyperparameters["velocity_functionspace"], hyperparameters["velocity_functiondegree"])
 
@@ -142,16 +144,16 @@ vCG = VectorFunctionSpace(domainmesh, hyperparameters["velocity_functionspace"],
 if hyperparameters["starting_guess"] is not None:
     controlfun = load_velocity(hyperparameters, vCG)
 
-    if hyperparameters["interpolate"]:
-        raise NotImplementedError
-        domainmesh, vCG, controlfun = interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun)
+    # if hyperparameters["interpolate"]:
+    #     raise NotImplementedError
+    #     domainmesh, vCG, controlfun = interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun)
 
 else:
     controlfun = None
 
 
 
-(mesh_goal, Img_goal, NumData_goal) = read_image(hyperparameters, name="target", mesh=domainmesh, normalize=hyperparameters["normalize"])
+(mesh_goal, Img_goal, NumData_goal) = read_image(hyperparameters, name="target", mesh=domainmesh, normalize=hyperparameters["normalize"], filter=hyperparameters["filter"])
 
 
 T_final = 1
@@ -216,10 +218,21 @@ FinalImg, FinalVelocity, FinalControl = find_velocity(Img=Img, Img_goal=Img_goal
 tcomp = (time.time()-t0) / 3600
 print_overloaded("Done with optimization, took", format(tcomp, ".1f"), "hours")
 
-#####################################################################
-
+hyperparameters["optimization_time_hours"] = tcomp
 hyperparameters["Jd_final"] = hyperparameters["Jd_current"]
 hyperparameters["Jreg_final"] = hyperparameters["Jreg_current"]
+if MPI.rank(MPI.comm_world) == 0:
+    with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as outfile:
+        json.dump(hyperparameters, outfile, sort_keys=True, indent=4)
+
+if hyperparameters["timing"]:
+    exit()
+
+
+
+#####################################################################
+
+
 
 with XDMFFile(hyperparameters["outputfolder"] + "/Finalstate.xdmf") as xdmf:
     xdmf.write_checkpoint(FinalImg, "Finalstate", 0.)
@@ -249,11 +262,7 @@ except:
     pass
 
 
-hyperparameters["optimization_time_hours"] = tcomp
 
-if MPI.rank(MPI.comm_world) == 0:
-    with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as outfile:
-        json.dump(hyperparameters, outfile, sort_keys=True, indent=4)
 else:
     pass
 

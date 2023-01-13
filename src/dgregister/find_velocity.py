@@ -2,12 +2,12 @@ from fenics import *
 from fenics_adjoint import *
 
 # from mri_utils.helpers import load_velocity, interpolate_velocity
-from dgregister.DGTransport import Transport
+from dgregister.DGTransport import DGTransport
 from dgregister.transformation_overloaded import transformation
 # from preconditioning_overloaded import Overloaded_Preconditioning # 
 from dgregister.preconditioning_overloaded import preconditioning
 
-
+import time, json
 # import nibabel
 # from dgregister.MRI2FEM import fem2mri
 
@@ -39,8 +39,10 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
     # initialize control
     controlfun = Function(vCG)
 
-    if hyperparameters["starting_guess"] is not None:
+    if (hyperparameters["starting_guess"] is not None) and (not hyperparameters["interpolate"]):
         controlfun.assign(starting_guess)
+
+        assert norm(controlfun) > 0
 
 
     if hyperparameters["smoothen"]:
@@ -55,9 +57,25 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
 
     print_overloaded("Running Transport() with dt = ", hyperparameters["DeltaT"])
 
-    Img_deformed = Transport(Img, control, hyperparameters=hyperparameters,
-                            MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
-                            solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
+
+    if hyperparameters["interpolate"]:
+        print_overloaded("Start transporting with starting guess, now transport with the new control in addition")
+        Img_deformed = DGTransport(Img, Wind=starting_guess, hyperparameters=hyperparameters,
+                                MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
+                                solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
+
+        print_overloaded("Done transporting with starting guess, now transport with the new control in addition")
+        print_overloaded("*"*80)
+        Img_deformed = DGTransport(Img_deformed, Wind=control, hyperparameters=hyperparameters,
+                                MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
+                                solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
+
+    else:
+
+        Img_deformed = DGTransport(Img, control, hyperparameters=hyperparameters,
+                                MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
+                                solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
+
 
     # solve forward and evaluate objective
     alpha = Constant(hyperparameters["alpha"]) #regularization
@@ -79,6 +97,41 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
     print_overloaded("Assembled functional, J=", J)
 
     Jhat = ReducedFunctional(J, cont)
+
+    if hyperparameters["timing"]:
+
+        print_overloaded("Starting timing, will run 5 times")
+        times = []
+
+        for i in range(1,6):
+            
+            print_overloaded("timing iteration", i)
+            testcont = Function(vCG)
+
+            testcont.vector()[:] = i / 100
+            t0 = time.time()
+
+            Jhat(testcont)
+
+            dt0 = time.time() - t0
+
+            times.append(dt0)
+
+            print_overloaded("timing iteration", i, "took", dt0 / 3600, "h")
+            print_overloaded("Using", MPI.comm_world.Get_size(), "processes")
+        
+        
+
+
+        if MPI.rank(MPI.comm_world) == 0:
+            hyperparameters["times"] = times
+            hyperparameters["processes"] = MPI.comm_world.Get_size()
+
+            with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as outfile:
+                json.dump(hyperparameters, outfile, sort_keys=True, indent=4)
+
+        print_overloaded("Timing done, exiting")
+        exit()
 
     files["stateFile"].write(Img_deformed, str(0))
     files["controlFile"].write(control, str(0))
@@ -134,14 +187,13 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
 
         velocityField = preconditioning(scaledControl)
         velocityField.rename("velocity", "")
-        
+
         store_during_callback(current_iteration=current_iteration, hyperparameters=hyperparameters, files=files, Jd=Jd, Jreg=Jreg, 
                             domainmesh=domainmesh, velocityField=velocityField, 
                             current_pde_solution=current_pde_solution, control=controlfunction)
 
 
     minimize(Jhat,  method = 'L-BFGS-B', options = {"iprint": 0, "disp": None, "maxiter": hyperparameters["lbfgs_max_iterations"]}, tol=1e-08, callback = cb)
-
 
 
 

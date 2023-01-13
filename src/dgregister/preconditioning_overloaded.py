@@ -1,5 +1,12 @@
 from dolfin import *
-from dolfin_adjoint import *
+
+import dgregister.config as config
+# if ocd:
+if "optimize" in config.hyperparameters.keys() and (not config.hyperparameters["optimize"]):
+    print("Not importing dolfin-adjoint")
+else:
+    print("Importing dolfin-adjoint")
+    from dolfin_adjoint import *
 
 from pyadjoint import Block
 from pyadjoint.overloaded_function import overload_function

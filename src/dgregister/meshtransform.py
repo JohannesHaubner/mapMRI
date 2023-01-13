@@ -1,15 +1,27 @@
 import json
 import os
 import pathlib
-from tqdm import tqdm
+
+if "home/bastian" not in os.getcwd():
+
+    from tqdm import tqdm
 import nibabel
 import numpy
 import numpy as np
 from fenics import *
-# from fenics_adjoint import *
+import dgregister.config as config
+# if ocd:
+if "optimize" in config.hyperparameters.keys() and (not config.hyperparameters["optimize"]):
+    print("Not importing dolfin-adjoint")
+else:
+    print("Importing dolfin-adjoint")
+    from dolfin_adjoint import *
+
 from nibabel.affines import apply_affine
+
 from dgregister.helpers import get_bounding_box, get_lumped_mass_matrices # get_largest_box, pad_with, cut_to_box, 
 from dgregister import find_velocity_ocd
+
 
 # from IPython import embed
 
@@ -48,6 +60,8 @@ def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,
     comm = MPI.comm_world
     nprocs = comm.Get_size()
 
+    # MPI.comm_world.Get_size()
+
     if nprocs != 1:
         raise NotImplementedError
 
@@ -84,6 +98,15 @@ def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,
 
     ijk1 = apply_affine(ras2vox1, xyz1)# .T
 
+    aff = np.array([[9.800471663475037e-01, -5.472707748413086e-02, 1.910823285579681e-01, -1.452283763885498e+01],
+                    [4.260246828198433e-02, 9.968432784080505e-01, 6.699670851230621e-02, -1.174131584167480e+01],
+                    [-1.941456645727158e-01, -5.751936137676239e-02, 9.792849421501160e-01, 3.610760116577148e+01],
+                    [0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 1.000000000000000e+00]
+                    ])
+
+    ijk1 = apply_affine(aff, ijk1)
+
+
     if box is not None:
         bounds = get_bounding_box(box)
         dxyz = [bounds[x].start for x in range(3)]
@@ -111,23 +134,24 @@ def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,
 
     transformed_points = np.zeros_like(ijk1) - np.inf
     
-    points = downscale(ijk1)    
+    ijk1 = downscale(ijk1)    
 
     print_overloaded("Iterating over all mesh nodes")
 
-    progress = tqdm(total=points.shape[0])
+    if "home/bastian" not in os.getcwd():
+        progress = tqdm(total=ijk1.shape[0])
     
-    for idx in range(points.shape[0]):
+    for idx in range(ijk1.shape[0]):
         
         try:
-            transformed_point = mapping(points[idx, :])
+            transformed_point = mapping(ijk1[idx, :])
         except RuntimeError:
-            print_overloaded(points[idx, :], "not in BoxMesh")
+            print_overloaded(ijk1[idx, :], "not in BoxMesh")
             exit()
         
         transformed_points[idx, :] = transformed_point
-
-        progress.update(1)
+        if "home/bastian" not in os.getcwd():
+            progress.update(1)
 
     def in_mri(x):
         return (np.max(x) < 256) and (np.min(x) >= 0)
@@ -144,7 +168,7 @@ def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,
 
     transformed_points = upscale(transformed_points)
 
-    distance = np.linalg.norm(points-transformed_points, ord=2, axis=-1)
+    distance = np.linalg.norm(ijk1-transformed_points, ord=2, axis=-1)
     
     print_overloaded("Minimum distance travelled ", np.min(distance))
     print_overloaded("Maximum distance travelled ", np.max(distance))
@@ -194,31 +218,53 @@ def make_mapping(cubemesh, v, jobfile, hyperparameters, ocd):
             xout, _, _ = find_velocity_ocd.find_velocity(Img=xin, Img_goal=unity2, hyperparameters=hyperparameters, files=[], phi_eval=-v, projection=False)
 
         else:
+
             import dgregister.config as config
+
+            config.hyperparameters = {**hyperparameters, **config.hyperparameters}
+            cgtransport = True
             
-            config.hyperparameters = hyperparameters
-            from dgregister.DGTransport import Transport
-
-
-            V1 = FunctionSpace(cubemesh, hyperparameters["state_functionspace"], hyperparameters["state_functiondegree"])
+            if cgtransport:
+                from dgregister.DGTransport import CGTransport as Transport
+                
+                V1 = FunctionSpace(cubemesh, "CG", 1)
+            else:
+                from dgregister.DGTransport import DGTransport as Transport
+                V1 = FunctionSpace(cubemesh, hyperparameters["state_functionspace"], hyperparameters["state_functiondegree"])
+            
             xin = interpolate(Expression(coordinate, degree=1), V1) # cubeimg.function_space())
             
-            print_overloaded("Interpolated x")
+            print_overloaded("Interpolated ", coordinate)
 
             if hyperparameters["smoothen"]:
-                raise NotImplementedError
-                _, M_lumped_inv = get_lumped_mass_matrices(vCG=vCG)
+                assert "Control.hdf" in hyperparameters["velocityfilename"]
+                _, M_lumped_inv = get_lumped_mass_matrices(vCG=v.function_space())
             else:
+                assert "Control.hdf" not in hyperparameters["velocityfilename"]
                 M_lumped_inv = None
-            print_overloaded("Calling Transport()")
 
-            xout = Transport(Img=xin, Wind=-v, hyperparameters=hyperparameters,
+            if hyperparameters["smoothen"]:
+
+                from dgregister.transformation_overloaded import transformation
+                # from preconditioning_overloaded import Overloaded_Preconditioning # 
+                from dgregister.preconditioning_overloaded import preconditioning
+                print_overloaded("Transforming l2 control to L2 control")
+                controlf = transformation(v, M_lumped_inv)
+            else:
+                controlf = v
+
+            control = preconditioning(controlf)
+
+            print_overloaded("Calling Transport()", "cgtransport=", cgtransport, )
+            xout = Transport(Img=xin, Wind=-control, hyperparameters=hyperparameters,
                             MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
                             solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
 
-            V1_CG = FunctionSpace(cubemesh, "CG", 1)
-            xout = project(xout, V1_CG)
-            print_overloaded("Projected xout to CG1")
+            if not cgtransport:
+                V1_CG = FunctionSpace(cubemesh, "CG", 1)
+                xout = project(xout, V1_CG)
+            
+                print_overloaded("Projected xout to CG1")
 
 
         assert norm(xout) != 0

@@ -1,9 +1,12 @@
+import pathlib
 from fenics import *
 from fenics_adjoint import *
 import os
 # import h5py
 import numpy as np
 import nibabel
+import json
+
 
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
@@ -152,40 +155,93 @@ def load_velocity(hyperparameters, vCG):
     print_overloaded("Will try to read starting guess")
     # h5file = h5py.File(hyperparameters["starting_guess"])
 
-    # print_overloaded("keys in h5file", list(h5file.keys()))
+    readmesh = None
 
-    v = Function(vCG)
-    hdf = HDF5File(vCG.mesh().mpi_comm(), hyperparameters["starting_guess"], "r")
-    hdf.read(v, hyperparameters["readname"])
+    if hyperparameters["interpolate"]:
+
+        hyperparameterfile = pathlib.Path(hyperparameters["starting_guess"]).parent / "hyperparameters.json"
+        
+        assert hyperparameterfile.is_file()
+
+        old_params = json.load(open(hyperparameterfile))
+
+        nx = old_params["input.shape"][0]
+        ny = old_params["input.shape"][1]
+        nz = old_params["input.shape"][2]
+
+        Lx = hyperparameters["input.shape"][0]
+        Ly = hyperparameters["input.shape"][1]
+        Lz = hyperparameters["input.shape"][2]
+
+        # npad = 
+        readmesh = BoxMesh(MPI.comm_world, Point(0.0, 0.0, 0.0), Point(nx, ny, nz), nx, ny, nz)
+
+        readmesh.coordinates()[:, 0] *= (Lx / nx)
+        readmesh.coordinates()[:, 1] *= (Ly / ny)
+        readmesh.coordinates()[:, 2] *= (Lz / nz)
+
+        readVspace = VectorFunctionSpace(readmesh, old_params["velocity_functionspace"], old_params["velocity_functiondegree"])
+
+        for id in range(3):
+            for mname, m in zip(["readmesh", "vCG.mesh()"], [readmesh, vCG.mesh()]):
+                co = m.coordinates()
+                print_overloaded(mname)
+            
+                print_overloaded("id", id, np.min(co[:, id]), np.max(co[:, id]))
+
+        print_overloaded("nx, ny, nz", nx, ny, nz)
+        print_overloaded("Lx, Ly, Lz", Lx, Ly, Lz)
+
+
+        # xyz = vCG.tabulate_dof_coordinates()
+        # utes = Function(vCG)
+        # for id in range(xyz.shape[0]):
+        #     try:
+        #         utes(xyz[id, :])
+        #     except RuntimeError:
+        #         print_overloaded(id, xyz[id, :], "not in vCG.mesh()")
+
+        # raise NotImplementedError("note so self: remove checks after bug is fixed!")
+
+        coarsev = Function(readVspace)
+
+
+    else:
+        readmesh = vCG.mesh()
+
+        coarsev = Function(vCG)
+
+
+    hdf = HDF5File(readmesh.mpi_comm(), hyperparameters["starting_guess"], "r")
+    hdf.read(coarsev, hyperparameters["readname"])
     hdf.close()
 
-
-    # if controlfun is not None:
-    #     print_overloaded("max before loading", controlfun.vector()[:].max())
-    #     working_mesh = controlfun.function_space().mesh()
-    #     print_overloaded("trying to read velocity without loading mesh")
-    #     hdf = HDF5File(working_mesh.mpi_comm(), hyperparameters["starting_guess"], 'r')
-
-        
-    # else:
-    #     print_overloaded("Reading mesh")
-    #     working_mesh = Mesh()
-    #     hdf = HDF5File(working_mesh.mpi_comm(), hyperparameters["starting_guess"], 'r')
-    #     hdf.read(working_mesh, "/mesh", False)
-        
-    #     vCG = VectorFunctionSpace(working_mesh, hyperparameters["velocity_functionspace"], hyperparameters["functiondegree"])
-    #     controlfun = Function(vCG)
-
-    # print_overloaded("trying to read", hyperparameters["readname"])
-    # hdf.read(controlfun, hyperparameters["readname"])
-    # hdf.close()
-
-    print_overloaded("max after loading", v.vector()[:].max())
-    # print_overloaded()
+    print_overloaded("max after loading", coarsev.vector()[:].max())
     print_overloaded("Succesfully read starting guess", hyperparameters["starting_guess"])
 
-    return v
 
+    if hyperparameters["interpolate"]:
+
+        # coarsev.function_space().mesh() = 
+
+        coarsev_temp = coarsev
+
+        # VTemp = VectorFunctionSpace()
+
+        # coarsev_temp = Function(VTemp)
+
+        # coarsev_temp.vector()[:] 
+
+        print_overloaded("Trying to interpolate")
+        finev = interpolate(coarsev_temp, V=vCG)
+        print_overloaded("Interpolation worked")    
+
+
+
+        return finev
+
+    else:
+        return coarsev
 
 
 
@@ -207,7 +263,7 @@ def interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun, store_pvd
 
     domainmesh = refine(domainmesh, redistribute=False)
 
-    vCG = VectorFunctionSpace(domainmesh, hyperparameters["velocity_functionspace"], hyperparameters["functiondegree"])
+    vCG = VectorFunctionSpace(domainmesh, hyperparameters["velocity_functionspace"], hyperparameters["velocity_functiondegree"])
 
     controlfun_fine = interpolate(controlfun, vCG)
 

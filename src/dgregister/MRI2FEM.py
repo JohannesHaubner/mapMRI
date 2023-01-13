@@ -61,7 +61,7 @@ def fem2mri(function, shape):
         return retimage
 
 
-def read_image(hyperparameters, name, mesh=None, printout=True, threshold=True, normalize=True):
+def read_image(hyperparameters, name, mesh=None, printout=True, threshold=True, normalize=True, filter=False):
     
     if printout:
         print_overloaded("Loading", hyperparameters[name])
@@ -76,6 +76,12 @@ def read_image(hyperparameters, name, mesh=None, printout=True, threshold=True, 
         data = np.array(img)
 
         data = np.expand_dims(data, -1)
+
+    if filter:
+        from scipy import ndimage
+        print_overloaded("Applying median filter to image")
+        data = ndimage.median_filter(data, size=2)
+
 
     hyperparameters[name + ".shape"] = list(data.shape)
     if printout:

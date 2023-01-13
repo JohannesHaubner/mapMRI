@@ -2,7 +2,7 @@
 
 from dolfin import *
 from dolfin_adjoint import *
-from dgregister.DGTransport import Transport
+from dgregister.DGTransport import DGTransport
 from dgregister.Pic2Fen import Pic2FEM, FEM2Pic
 import numpy
 
@@ -44,7 +44,7 @@ Img.rename("img", "")
 
 DeltaT = 1e-5
 MaxIter = 500
-Img_deformed = Transport(Img, Wind_data, MaxIter, DeltaT, MassConservation = False)
+Img_deformed = DGTransport(Img, Wind_data, MaxIter, DeltaT, MassConservation = False)
 
 fout = XDMFFile(MPI.comm_world, "output/Img_Transported.xdmf")
 fout.parameters["flush_output"] = True

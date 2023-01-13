@@ -14,6 +14,8 @@ def print_overloaded(*args):
     else:
         pass
 
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--mapping_only", help="only create the coordinate mapping and exit (no mesh transform)", action="store_true", default=False)
 parser.add_argument("--folder", type=str, default="mriregistration_outputs")
@@ -80,6 +82,19 @@ if not parserargs["readname"] in list(h5py.File(velocityfile).keys()):
 
 hyperparameters = json.load(open(jobfile + "hyperparameters.json"))
 
+import dgregister.config as config
+config.hyperparameters = {"optimize": False}
+
+if hyperparameters["smoothen"]:
+    config.hyperparameters = {"optimize": True}
+    from fenics_adjoint import *
+
+from dgregister.meshtransform import map_mesh, make_mapping
+
+
+hyperparameters = {**parserargs, **hyperparameters}
+
+config.hyperparameters = {**hyperparameters, **config.hyperparameters}
 
 
 if "OCD" not in jobfile:
@@ -89,11 +104,7 @@ else:
     ocd = True
     assert hyperparameters["max_timesteps"] == 1
 
-import dgregister.config as config
-# if ocd:
-config.hyperparameters = {"optimize": False}
 
-from dgregister.meshtransform import map_mesh, make_mapping
 
 res = 16
 
@@ -167,10 +178,10 @@ else:
 
 raise_errors = True
 
-# if ocd:
-#     raise_errors = False
+if ocd:
+    raise_errors = False
 
-
+# raise_errors = False
 
 brainmesh2 = map_mesh(xmlfile1, imgfile1, imgfile2, mapping, box=box, 
                     outfolder=jobfile + "postprocessing/", npad=npad, raise_errors=raise_errors,

@@ -47,7 +47,7 @@ REGIMAGE=${REGDIR}/${subj1}to${subj2}.mgz
 if [ ! -f ${REGIMAGE} ]; then
     echo "File not found!"
     mri_robust_register --mov ${IMG1} --dst ${IMG2} --lta ${REGDIR}/${subj1}to${subj2}.lta \
-    --mapmov ${REGIMAGE} --weights ${REGDIR}/${subj1}to${subj2}-weights.mgz --iscale --satit
+    --mapmov ${REGIMAGE} --weights ${REGDIR}/${subj1}to${subj2}-weights.mgz --iscale --satit --vox2vox
 
     freeview ${IMG1} ${IMG2} ${REGDIR}/${subj1}to${subj2}.mgz ${REGDIR}/${subj1}to${subj2}-weights.mgz:colormap=heat
 else
