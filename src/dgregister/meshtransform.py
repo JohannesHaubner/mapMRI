@@ -10,11 +10,18 @@ import numpy
 import numpy as np
 from fenics import *
 import dgregister.config as config
+
+def print_overloaded(*args):
+    if MPI.rank(MPI.comm_world) == 0:
+        # set_log_level(PROGRESS)
+        print(*args)
+    else:
+        pass
 # if ocd:
 if "optimize" in config.hyperparameters.keys() and (not config.hyperparameters["optimize"]):
-    print("Not importing dolfin-adjoint")
+    print_overloaded("Not importing dolfin-adjoint")
 else:
-    print("Importing dolfin-adjoint")
+    print_overloaded("Importing dolfin-adjoint")
     from dolfin_adjoint import *
 
 from nibabel.affines import apply_affine
@@ -26,12 +33,7 @@ from dgregister import find_velocity_ocd
 # from IPython import embed
 
 
-def print_overloaded(*args):
-    if MPI.rank(MPI.comm_world) == 0:
-        # set_log_level(PROGRESS)
-        print(*args)
-    else:
-        pass
+
 
 
 def store2mgz(imgfile1, imgfile2, ijk1, outfolder):

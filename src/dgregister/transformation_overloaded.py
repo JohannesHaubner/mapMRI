@@ -1,11 +1,18 @@
 from dolfin import *
 import dgregister.config as config
+def print_overloaded(*args):
+    if MPI.rank(MPI.comm_world) == 0:
+        # set_log_level(PROGRESS)
+        print(*args)
+    else:
+        pass
 # if ocd:
 if "optimize" in config.hyperparameters.keys() and (not config.hyperparameters["optimize"]):
-    print("Not importing dolfin-adjoint")
+    print_overloaded("Not importing dolfin-adjoint")
 else:
-    print("Importing dolfin-adjoint")
+    print_overloaded("Importing dolfin-adjoint")
     from dolfin_adjoint import *
+    
 from pyadjoint import Block
 from pyadjoint.overloaded_function import overload_function
 

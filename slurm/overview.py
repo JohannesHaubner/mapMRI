@@ -16,7 +16,7 @@ if "home/bastian" in os.getcwd():
 else:
     superfolder = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/"
 
-resultpaths = ["mriregistration_outputs",
+resultpaths = [# "mriregistration_outputs",
 "croppedmriregistration_outputs"
 ]
 

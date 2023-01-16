@@ -11,7 +11,7 @@
 #################################################################
 
 #SBATCH --time 6-24 ##--time=99:00:00
-#SBATCH -o /home/bastian/Oscar-Image-Registration-via-Transport-Equation/slurm/mrislurm/%j.out
+#SBATCH -o /home/bastian/D1/registration/ocdslurm/%j.out
 #SBATCH --export=ALL
 #SBATCH --mail-user=bastian@simula.no
 #module load gcc
@@ -36,7 +36,7 @@ echo "starting to run"
 #######################################################
 GPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/
 SPATH=${GPATH}scripts/optimization
-LOGOUTFILE=${GPATH}slurm/mrislurm/${SLURM_JOB_ID}_log_python_srun.txt
+LOGOUTFILE=/home/bastian/D1/registration/ocdslurm/${SLURM_JOB_ID}_log_python_srun.txt
 
 
 
