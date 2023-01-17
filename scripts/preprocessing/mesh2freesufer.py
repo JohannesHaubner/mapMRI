@@ -5,13 +5,36 @@ import os
 from IPython import embed
 
 
-subj = "ernie"
-path = "chp4/outs/" + subj + "/"
-res = 16
-xmlfile = path + subj + str(res) + ".xml"
-meshfile = path + subj + str(res) + ".mesh"
+outpath = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/"
+outpath += "croppedmriregistration_outputs/E100A0.01LBFGS100/postprocessing/"
+inputpath = outpath
+meshname = "transformed_input_mesh"
 
-brainmesh = Mesh(xmlfile)
+# outpath = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/scripts/preprocessing/chp4/outs/ernie/"
+# inputpath = outpath
+# meshname = "ernie16"
+
+# subj = "ernie"
+# path = "chp4/outs/" + subj + "/"
+# res = 16
+xmlfile = inputpath + meshname + ".xml"
+# path + subj + str(res) + ".xml"
+# meshfile = inputpath  # path + subj + str(res) + ".mesh"
+
+subj = "ernie"
+
+# sf = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/mri2fem-dataset/freesurfer/ernie/surf/lh.orig"
+
+assert os.path.isfile(xmlfile)
+
+try:
+    brainmesh = Mesh(xmlfile)
+except:
+    brainmesh = Mesh()
+    hdf = HDF5File(brainmesh.mpi_comm(), xmlfile.replace(".xml", ".h5"), "r")
+    hdf.read(brainmesh, "/mesh", False)
+    hdf.close()
+
 
 # mesh = meshio.read(meshfile)
 
@@ -51,12 +74,12 @@ xyz = bmesh.coordinates()
 from freesurfer_surface import Surface, Vertex, Triangle
 
 
-sf = path + 'lh.pial'
+# sf = path + 'lh.pial'
 # sf = path + 'lh.white'
 
-assert os.path.isfile(sf)
 
-p = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/mri2fem-dataset/freesurfer/" +subj + "/surf/"
+
+p = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/mri2fem-dataset/freesurfer/" + subj + "/surf/"
 # p = "/home/basti/Dropbox (UiO)/Sleep/228/surf/"
 for f in os.listdir(p):
     try:
@@ -68,6 +91,7 @@ for f in os.listdir(p):
         break
     except:
         pass
+
 
 # exit()
 # surface = Surface.read_triangular(sf)
@@ -104,8 +128,8 @@ for idc in range(bmesh.cells().shape[0]):
 
 
 
-outfile = meshfile.replace(".mesh", "")
+outfile = xmlfile.replace(".xml", "")
 
 surface.write_triangular(outfile)
 
-print("freeview " + path + "wmparc.mgz -f " + outfile)
+print("freeview -f " + outfile)

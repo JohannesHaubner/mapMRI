@@ -136,6 +136,12 @@ def compute_ocd_reduced(c0, c1, tau, alpha, results_dir, hyperparameters, files,
         current_pde_solution = state.tape_value()
         current_pde_solution.rename("Img", "")
 
+        currphi = m.tape_value()
+
+        Jd = assemble(0.5*(current_pde_solution - c2)**2*dx(domain=mesh))
+
+        Jreg = assemble(R(currphi, alpha, mesh))
+
         store_during_callback(current_iteration=counter, hyperparameters=hyperparameters, files=files, Jd=Jd, Jreg=Jreg, 
                     domainmesh=mesh, velocityField=phi, 
                     current_pde_solution=current_pde_solution, control=None)
