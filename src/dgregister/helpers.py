@@ -145,7 +145,7 @@ def get_lumped_mass_matrices(vCG):
     return M_lumped, M_lumped_inv
 
 
-def load_velocity(hyperparameters, vCG):
+def load_control(hyperparameters, vCG):
 
     if not hyperparameters["ocd"]:
         assert "Control.hdf" in hyperparameters["starting_guess"]

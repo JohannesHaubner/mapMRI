@@ -21,7 +21,7 @@ parameters['ghost_mode'] = 'shared_facet'
 import dgregister.config as config
 config.hyperparameters = {"optimize": True}
 
-from dgregister.helpers import load_velocity, get_lumped_mass_matrices, interpolate_velocity
+from dgregister.helpers import load_control, get_lumped_mass_matrices
 from dgregister.MRI2FEM import read_image, fem2mri
 
 parser = argparse.ArgumentParser()
@@ -42,7 +42,7 @@ parser.add_argument("--state_functiondegree", type=int, default=1)
 
 parser.add_argument("--readname", type=str, default="-1")
 parser.add_argument("--starting_guess", type=str, default=None)
-parser.add_argument("--interpolate", default=False, action="store_true", help="Interpolate to finer mesh")
+parser.add_argument("--multigrid", default=False, action="store_true", help="Use starting guess & another transform")
 
 parser.add_argument("--filter", default=False, action="store_true", help="median filter on input and output")
 parser.add_argument("--debug", default=False, action="store_true", help="Debug")
@@ -52,7 +52,7 @@ parser.add_argument("--input", default="mridata_3d/091registeredto205_padded_coa
 parser.add_argument("--target", default="mridata_3d/205_cropped_padded_coarsened.mgz")
 
 hyperparameters = vars(parser.parse_args())
-
+hyperparameters["interpolate"] = False
 
 os.chdir(hyperparameters["code_dir"])
 print_overloaded("Setting pwd to", hyperparameters["code_dir"])
@@ -144,11 +144,14 @@ vCG = VectorFunctionSpace(domainmesh, hyperparameters["velocity_functionspace"],
 
 
 if hyperparameters["starting_guess"] is not None:
-    controlfun = load_velocity(hyperparameters, vCG)
+    if hyperparameters["multigrid"] and hyperparameters["smoothen"]:
+        assert "control" not in hyperparameters["starting_guess"].lower()
+    else:
+        assert "CurrentV.hdf" not in hyperparameters["starting_guess"]
+        assert "Velocity" not in hyperparameters["starting_guess"]
 
-    # if hyperparameters["interpolate"]:
-    #     raise NotImplementedError
-    #     domainmesh, vCG, controlfun = interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun)
+    controlfun = load_control(hyperparameters, vCG)
+
 
 else:
     controlfun = None
@@ -215,7 +218,8 @@ files["regularizationfile"] = hyperparameters["outputfolder"] + '/regularization
 #####################################################################
 # Optimization
 
-FinalImg, FinalVelocity, FinalControl = find_velocity(Img=Img, Img_goal=Img_goal, vCG=vCG, M_lumped_inv=M_lumped_inv, hyperparameters=hyperparameters, files=files, starting_guess=controlfun)
+FinalImg, FinalVelocity, FinalControl = find_velocity(Img=Img, Img_goal=Img_goal, vCG=vCG, M_lumped_inv=M_lumped_inv, 
+    hyperparameters=hyperparameters, files=files, starting_guess=controlfun)
 
 tcomp = (time.time()-t0) / 3600
 print_overloaded("Done with optimization, took", format(tcomp, ".1f"), "hours")

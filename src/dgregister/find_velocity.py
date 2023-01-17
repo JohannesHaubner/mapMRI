@@ -1,10 +1,7 @@
 from fenics import *
 from fenics_adjoint import *
-
-# from mri_utils.helpers import load_velocity, interpolate_velocity
 from dgregister.DGTransport import DGTransport
 from dgregister.transformation_overloaded import transformation
-# from preconditioning_overloaded import Overloaded_Preconditioning # 
 from dgregister.preconditioning_overloaded import preconditioning
 
 import time, json
@@ -39,9 +36,9 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
     # initialize control
     controlfun = Function(vCG)
 
-    if (hyperparameters["starting_guess"] is not None) and (not hyperparameters["interpolate"]):
+    if (hyperparameters["starting_guess"] is not None) and (not hyperparameters["multigrid"]):
         controlfun.assign(starting_guess)
-
+        print_overloaded("*"*20, "assigned starting guess to control")
         assert norm(controlfun) > 0
 
 
@@ -58,7 +55,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
     print_overloaded("Running Transport() with dt = ", hyperparameters["DeltaT"])
 
 
-    if hyperparameters["interpolate"]:
+    if hyperparameters["multigrid"]:
         print_overloaded("Start transporting with starting guess, now transport with the new control in addition")
         Img_deformed = DGTransport(Img, Wind=starting_guess, hyperparameters=hyperparameters,
                                 MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 

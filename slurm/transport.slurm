@@ -67,8 +67,9 @@ cd $SPATH
 FOLDER=croppedmriregistration_outputs
 JOBNAME=E100A0.01LBFGS100
 VFILE=CurrentV.hdf
-READNAME="function"
-
+# READNAME="function"
+VFILE=VelocityField.hdf
+READNAME="-1"
 
 
 # FOLDER=mriregistration_outputs
@@ -80,11 +81,11 @@ READNAME="function"
 
 
 srun -n 32 python3 -u transform_mesh.py --mapping_only --folder ${FOLDER} --job ${JOBNAME} \
---postfolder postprocessing --velocityfilename ${VFILE} --readname ${READNAME} > ${LOGOUTFILE}
+--postfolder postprocessing_final --velocityfilename ${VFILE} --readname ${READNAME} > ${LOGOUTFILE}
 echo "Computed mapping, now running transform with only one core"
 
 srun -n 1 python3 -u transform_mesh.py --folder ${FOLDER} --job ${JOBNAME} \
---postfolder postprocessing --velocityfilename ${VFILE} --readname ${READNAME} > ${LOGOUTFILE}
+--postfolder postprocessing_final --velocityfilename ${VFILE} --readname ${READNAME} >> ${LOGOUTFILE}
 echo "success"
 
 

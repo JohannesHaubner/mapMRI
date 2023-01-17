@@ -21,7 +21,7 @@ def print_overloaded(*args):
         pass
 
 
-from dgregister.helpers import load_velocity, interpolate_velocity
+from dgregister.helpers import load_control, interpolate_velocity
 
 parser = argparse.ArgumentParser()
 
@@ -58,7 +58,7 @@ if not os.path.isdir(hyperparameters["outputfolder"]):
 
 hyperparameters["starting_guess"] = hyperparameters["function"]
 
-domainmesh, vCG, controlfun = load_velocity(hyperparameters, controlfun=None)
+domainmesh, vCG, controlfun = load_control(hyperparameters, controlfun=None)
 
 domainmesh, vCG, controlfun = interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun)
 
