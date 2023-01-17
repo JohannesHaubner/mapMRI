@@ -56,7 +56,7 @@ def store2mgz(imgfile1, imgfile2, ijk1, outfolder):
 
 def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,  
     coarsening_factor: int, npad: int, box: np.ndarray=None, 
-    inverse_affine:bool = False,
+    inverse_affine:bool = False, registration_affine: np.ndarray = None,
     outfolder=None, raise_errors: bool = True):
 
     assert norm(mapping) != 0
@@ -102,17 +102,18 @@ def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,
 
     ijk1 = apply_affine(ras2vox1, xyz1)# .T
 
-    aff = np.array([[9.800471663475037e-01, -5.472707748413086e-02, 1.910823285579681e-01, -1.452283763885498e+01],
-                    [4.260246828198433e-02, 9.968432784080505e-01, 6.699670851230621e-02, -1.174131584167480e+01],
-                    [-1.941456645727158e-01, -5.751936137676239e-02, 9.792849421501160e-01, 3.610760116577148e+01],
-                    [0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 1.000000000000000e+00]
-                    ])
+    
+    if registration_affine is not None:
+        aff = registration_affine
 
-    if inverse_affine:
-        print_overloaded("Using inverse of affine for testing")
-        aff = np.linalg.inv(aff)
 
-    ijk1 = apply_affine(aff, ijk1)
+        if inverse_affine:
+            print_overloaded("Using inverse of affine for testing")
+            aff = np.linalg.inv(aff)
+
+        ijk1 = apply_affine(aff, ijk1)
+
+    # breakpoint()
 
     if box is not None:
         bounds = get_bounding_box(box)
@@ -154,6 +155,7 @@ def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,
             transformed_point = mapping(ijk1[idx, :])
         except RuntimeError:
             print_overloaded(ijk1[idx, :], "not in BoxMesh")
+            # breakpoint()
             raise ValueError("Some ijk1[idx, :] is not in BoxMesh, probably something is wrong.")
             # exit()
         
@@ -204,7 +206,7 @@ def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,
 
 
 
-def make_mapping(cubemesh, velocity, jobfile, hyperparameters, ocd, dgtransport: bool = False):
+def make_mapping(cubemesh, velocity, hyperparameters, ocd, dgtransport: bool = False):
 
 
     mappings = []

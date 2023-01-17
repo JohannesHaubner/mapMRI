@@ -74,13 +74,13 @@ else:
 
 
     runnames = ['E100A0.01LBFGS100',
- 'E10A0.0001LBFGS100',
- 'E10A0.01LBFGS100',
- 'E1A0.01LBFGS100',
- 'E100A0.0001LBFGS100',
- 'E1A0.01LBFGS100NOSMOOTHEN',
- 'E100A0.01LBFGS100NOSMOOTHEN',
- 'E10A0.01LBFGS100NOSMOOTHEN']
+                'E10A0.0001LBFGS100',
+                'E10A0.01LBFGS100',
+                'E1A0.01LBFGS100',
+                'E100A0.0001LBFGS100',
+                'E1A0.01LBFGS100NOSMOOTHEN',
+                'E100A0.01LBFGS100NOSMOOTHEN',
+                'E10A0.01LBFGS100NOSMOOTHEN']
 
 
 fig1, ax1 = plt.subplots(dpi=dpi, figsize=figsize)
@@ -89,7 +89,7 @@ fig3, ax3 = plt.subplots(dpi=dpi, figsize=figsize)
 
 for runname in sorted(runnames):
     
-    os.system("rm -r " + str(localpath / runname))
+    # os.system("rm -r " + str(localpath / runname))
     
     if not (localpath / runname).is_dir():
 
@@ -233,6 +233,8 @@ for runname in sorted(runnames):
 
     domain_size = np.product(hyperparameters["input.shape"])
 
+
+    running = "Jd_final" not in hyperparameters.keys()
     try:
         if not np.allclose(hyperparameters["Jd_init"], jd0):
             print(runname)
@@ -251,6 +253,9 @@ for runname in sorted(runnames):
     
     if error:
         label += "error!"
+
+    elif running:
+        label += " (running)"
 
     marker = None
     markevery= 1e14
@@ -280,7 +285,7 @@ for runname in sorted(runnames):
 
             ax1.plot([1 + x for x in range(len(lossx))], lossx, color=c, linestyle=":", label=label + "from loss.txt", marker=marker, markevery=markevery)
 
-        ax3.semilogy([1 + x for x in range(len(reg))], loss + reg, color=c, linestyle=linestlyle, label=label)
+        ax3.plot([1 + x for x in range(len(reg))], (loss + reg) / (jd0 / domain_size) , color=c, linestyle=linestlyle, label=label, marker=marker, markevery=markevery)
 
 
 for ax in [ax1, ax2, ax3]:
@@ -295,10 +300,10 @@ for ax in [ax1, ax2, ax3]:
 
 
 ax2.set_ylabel("Regularization")
-ax3.set_ylabel("$J = J_d + J_reg$")
+ax3.set_ylabel("$\Delta J = (J_d + J_reg) / Jd0$")
 # plt.savefig("./losses.png")
 
-plt.close(fig2)
-plt.close(fig1)
+# plt.close(fig2)
+# plt.close(fig1)
 
 plt.show()

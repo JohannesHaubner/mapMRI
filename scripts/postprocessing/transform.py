@@ -4,7 +4,7 @@ import os
 import numpy as np
 from fenics import *
 # from fenics_adjoint import *
-import h5py
+# 
 import meshio
 
 def print_overloaded(*args):
@@ -83,10 +83,15 @@ readname = parserargs["readname"]
 
 velocityfile = jobfile + velocityfilename
 
+# print(os.listdir(os.getcwd()))
+# breakpoint()
+# assert velocityfile in os.listdir(os.getcwd())
 assert os.path.isfile(velocityfile)
 
-if not parserargs["readname"] in list(h5py.File(velocityfile).keys()):
-    raise ValueError(parserargs["readname"] + "not in keys of velocityfile:" + str(list(h5py.File(velocityfile).keys())))
+if "home/bastian" in os.getcwd():
+    import h5py
+    if not parserargs["readname"] in list(h5py.File(velocityfile).keys()):
+        raise ValueError(parserargs["readname"] + "not in keys of velocityfile:" + str(list(h5py.File(velocityfile).keys())))
 
 # jobfoldername = "E100A0.0001LBFGS100NOSMOOTHEN"
 # jobfile = resultpath + jobfoldername + "/"
@@ -124,6 +129,12 @@ res = 16
 subj1 = "abby"
 subj2 = "ernie"
 # subj2 = "abby"
+
+aff = np.array([[9.800471663475037e-01, -5.472707748413086e-02, 1.910823285579681e-01, -1.452283763885498e+01],
+                [4.260246828198433e-02, 9.968432784080505e-01, 6.699670851230621e-02, -1.174131584167480e+01],
+                [-1.941456645727158e-01, -5.751936137676239e-02, 9.792849421501160e-01, 3.610760116577148e+01],
+                [0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 1.000000000000000e+00]
+                ])
 
 path1 = path_to_meshes + subj1 + "/"
 path2 = path_to_meshes + subj2 + "/"
@@ -198,6 +209,7 @@ if ocd:
 
 brainmesh2 = map_mesh(xmlfile1, imgfile1, imgfile2, mapping, box=box, 
                     inverse_affine=hyperparameters["inverseRAS"],
+                    registration_affine=aff,
                     outfolder=jobfile + hyperparameters["postfolder"], npad=npad, raise_errors=raise_errors,
                     coarsening_factor=coarsening_factor)
 

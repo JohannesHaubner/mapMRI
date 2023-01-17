@@ -1,5 +1,19 @@
 from fenics import *
-from fenics_adjoint import *
+
+
+import dgregister.config as config
+def print_overloaded(*args):
+    if MPI.rank(MPI.comm_world) == 0:
+        # set_log_level(PROGRESS)
+        print(*args)
+    else:
+        pass
+# if ocd:
+if "optimize" in config.hyperparameters.keys() and (not config.hyperparameters["optimize"]):
+    print_overloaded("Not importing dolfin-adjoint")
+else:
+    print_overloaded("Importing dolfin-adjoint")
+    from dolfin_adjoint import *
 import nibabel
 import numpy as np
 from nibabel.affines import apply_affine
@@ -10,12 +24,6 @@ import pathlib
 comm = MPI.comm_world
 nprocs = comm.Get_size()
 
-def print_overloaded(*args):
-    if MPI.rank(MPI.comm_world) == 0:
-        # set_log_level(PROGRESS)
-        print(*args)
-    else:
-        pass
 
 # The dof coordinates for DG0 are in the middle of the cell. 
 # Shift everything by -0.5 so that the rounded dof coordinate corresponds to the voxel idx.
