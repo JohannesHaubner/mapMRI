@@ -1,16 +1,16 @@
 #!/bin/bash
 #SBATCH --job-name=transport
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=16
+#SBATCH --ntasks=32
 #################################################################
-##SBATCH --partition=milanq
+## SBATCH --partition=milanq
 #SBATCH --partition=fpgaq
 ## SBATCH --partition=defq
 ## SBATCH --partition=slowq
 ## SBATCH --partition=rome16q
 #################################################################
 
-#SBATCH --time 0-1 ##--time=99:00:00
+#SBATCH --time 0-8 ##--time=99:00:00
 #SBATCH -o /home/bastian/D1/registration/transportslurm/%j.out
 #SBATCH --export=ALL
 #SBATCH --mail-user=bastian@simula.no
@@ -57,11 +57,7 @@ cd $SPATH
 # VFILE=VelocityField.hdf
 # READNAME="-1"
 
-# FOLDER=mriregistration_outputs
-# # JOBNAME=E100A0.0001LBFGS100NOSMOOTHEN
-# # JOBNAME=E100A0.0001LBFGS100NOSMOOTHEN
-# VFILE=VelocityField.hdf
-# READNAME="-1"
+
 
 # FOLDER=mriregistration_outputs
 # JOBNAME=E100A0.001LBFGS100
@@ -73,37 +69,63 @@ JOBNAME=E100A0.01LBFGS100
 VFILE=CurrentV.hdf
 READNAME="function"
 
-# srun -n 16 python3 -u transform.py --mapping_only --folder ${FOLDER} --job ${JOBNAME} \
-# --postfolder processing_dg_inv --DGtransport --inverseRAS \
-# --velocityfilename ${VFILE} --readname ${READNAME} > ${LOGOUTFILE}
-# echo "Computed mapping, now running transform with only one core"
 
-# srun -n 1 python3 -u transform.py --folder ${FOLDER} --job ${JOBNAME} \
-# --postfolder processing_dg_inv --DGtransport --inverseRAS \
-# --velocityfilename ${VFILE} --readname ${READNAME} >> ${LOGOUTFILE}
-# echo "success"
 
-# srun -n 16 python3 -u transform.py --mapping_only --folder ${FOLDER} --job ${JOBNAME} \
-# --postfolder processing_dg --DGtransport \
-# --velocityfilename ${VFILE} --readname ${READNAME} > ${LOGOUTFILE}
-# echo "Computed mapping, now running transform with only one core"
+# FOLDER=mriregistration_outputs
+# # JOBNAME=E100A0.0001LBFGS100NOSMOOTHEN
+# JOBNAME=E100A0.01LBFGS100NOSMOOTHEN
+# # JOBNAME=E100A0.0001LBFGS100
+# VFILE=VelocityField.hdf
+# READNAME="-1"
 
-# srun -n 1 python3 -u transform.py --folder ${FOLDER} --job ${JOBNAME} \
-# --postfolder processing_dg --DGtransport \
-# --velocityfilename ${VFILE} --readname ${READNAME} >> ${LOGOUTFILE}
-# echo "success"
 
-srun -n 16 python3 -u transform.py --mapping_only --folder ${FOLDER} --job ${JOBNAME} \
---postfolder processing_cg_inv --inverseRAS \
---velocityfilename ${VFILE} --readname ${READNAME} > ${LOGOUTFILE}
+srun -n 32 python3 -u transform_mesh.py --mapping_only --folder ${FOLDER} --job ${JOBNAME} \
+--postfolder postprocessing --velocityfilename ${VFILE} --readname ${READNAME} > ${LOGOUTFILE}
 echo "Computed mapping, now running transform with only one core"
 
-srun -n 1 python3 -u transform.py --folder ${FOLDER} --job ${JOBNAME} \
---postfolder processing_cg_inv --inverseRAS \
---velocityfilename ${VFILE} --readname ${READNAME} >> ${LOGOUTFILE}
+srun -n 1 python3 -u transform_mesh.py --folder ${FOLDER} --job ${JOBNAME} \
+--postfolder postprocessing --velocityfilename ${VFILE} --readname ${READNAME} > ${LOGOUTFILE}
 echo "success"
 
-# srun -n 16 python3 -u transform.py --mapping_only --folder ${FOLDER} --job ${JOBNAME} \
+
+
+
+
+
+# 
+#   OBSOLETE SETTINGS FOR DIFFERENT HYPERPARAMETERS BELOW
+
+# srun -n 32 python3 -u transform.py --mapping_only --folder ${FOLDER} --job ${JOBNAME} \
+# --postfolder processing_dg_inv --DGtransport --inverseRAS \
+# --velocityfilename ${VFILE} --readname ${READNAME} > ${LOGOUTFILE}
+# echo "Computed mapping, now running transform with only one core"
+
+# srun -n 1 python3 -u transform.py --folder ${FOLDER} --job ${JOBNAME} \
+# --postfolder processing_dg_inv --DGtransport --inverseRAS \
+# --velocityfilename ${VFILE} --readname ${READNAME} >> ${LOGOUTFILE}
+# echo "success"
+
+# srun -n 32 python3 -u transform.py --mapping_only --folder ${FOLDER} --job ${JOBNAME} \
+# --postfolder processing_dg --DGtransport \
+# --velocityfilename ${VFILE} --readname ${READNAME} > ${LOGOUTFILE}
+# echo "Computed mapping, now running transform with only one core"
+
+# srun -n 1 python3 -u transform.py --folder ${FOLDER} --job ${JOBNAME} \
+# --postfolder processing_dg --DGtransport \
+# --velocityfilename ${VFILE} --readname ${READNAME} >> ${LOGOUTFILE}
+# echo "success"
+
+# srun -n 32 python3 -u transform.py --mapping_only --folder ${FOLDER} --job ${JOBNAME} \
+# --postfolder processing_cg_inv --inverseRAS \
+# --velocityfilename ${VFILE} --readname ${READNAME} > ${LOGOUTFILE}
+# echo "Computed mapping, now running transform with only one core"
+
+# srun -n 1 python3 -u transform.py --folder ${FOLDER} --job ${JOBNAME} \
+# --postfolder processing_cg_inv --inverseRAS \
+# --velocityfilename ${VFILE} --readname ${READNAME} >> ${LOGOUTFILE}
+# echo "success"
+
+# srun -n 32 python3 -u transform.py --mapping_only --folder ${FOLDER} --job ${JOBNAME} \
 # --postfolder processing_cg \
 # --velocityfilename ${VFILE} --readname ${READNAME} > ${LOGOUTFILE}
 # echo "Computed mapping, now running transform with only one core"

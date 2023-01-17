@@ -93,6 +93,15 @@ if "home/bastian" in os.getcwd():
     if not parserargs["readname"] in list(h5py.File(velocityfile).keys()):
         raise ValueError(parserargs["readname"] + "not in keys of velocityfile:" + str(list(h5py.File(velocityfile).keys())))
 
+recompute_mapping = False
+if ("function" in parserargs["readname"]) or ("function" == parserargs["readname"]) or ("CurrentV.hdf" in parserargs["velocityfilename"]):
+
+    recompute_mapping = True
+
+    print_overloaded("*"*80)
+    print_overloaded("Assuming the job is not done, recomputing mapping to have most up-to date transformation")
+    print_overloaded("*"*80)
+
 # jobfoldername = "E100A0.0001LBFGS100NOSMOOTHEN"
 # jobfile = resultpath + jobfoldername + "/"
 # velocityfilename = "VelocityField.hdf"
@@ -154,7 +163,7 @@ print_overloaded("cubemesh size", nx, ny, nz)
 
 V3 = VectorFunctionSpace(cubemesh, hyperparameters["velocity_functionspace"], hyperparameters["velocity_functiondegree"],)
 
-if os.path.isfile(mapfile):
+if os.path.isfile(mapfile) and (not recompute_mapping):
     hdf = HDF5File(cubemesh.mpi_comm(), mapfile, "r")
     mapping = Function(V3)
     hdf.read(mapping, mappingname)
@@ -171,8 +180,9 @@ else:
     hdf = HDF5File(cubemesh.mpi_comm(), velocityfile, "r")
     hdf.read(v, readname)
     hdf.close()
-        
-    mapping = make_mapping(cubemesh, v, jobfile, hyperparameters, ocd=ocd, dgtransport=hyperparameters["DGtransport"])
+    
+    # make_mapping(cubemesh, velocity, hyperparameters, ocd, dgtransport: bool = False):
+    mapping = make_mapping(cubemesh, v, hyperparameters, ocd=ocd, dgtransport=hyperparameters["DGtransport"])
 
     hdf = HDF5File(cubemesh.mpi_comm(), mapfile, "w")
     hdf.write(mapping, mappingname)

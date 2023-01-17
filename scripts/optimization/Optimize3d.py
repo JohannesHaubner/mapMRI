@@ -18,9 +18,11 @@ def print_overloaded(*args):
 print_overloaded("Setting parameters parameters['ghost_mode'] = 'shared_facet'")
 parameters['ghost_mode'] = 'shared_facet'
 
+import dgregister.config as config
+config.hyperparameters = {"optimize": True}
+
 from dgregister.helpers import load_velocity, get_lumped_mass_matrices, interpolate_velocity
 from dgregister.MRI2FEM import read_image, fem2mri
-import dgregister.config as config
 
 parser = argparse.ArgumentParser()
 
