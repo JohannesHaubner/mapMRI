@@ -1,5 +1,5 @@
 import os, pathlib, json, subprocess
-
+from fenics import *
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -55,23 +55,35 @@ localpath = pathlib.Path("/home/basti/programming/Oscar-Image-Registration-via-T
 expath = pathlib.Path("/home/bastian/D1/registration") / foldername
 
 
+subj1 = "abby"
+res = 8
+xmlfile1 = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/scripts/preprocessing/chp4/outs/abby/" + subj1 + str(res) + ".xml"
+deformed_mesh = Mesh(xmlfile1)
+quality = MeshQuality.radius_ratio_min_max(deformed_mesh)
+meshes={}
+meshes["input"] = {"min inner/outer radius" : quality[0], "Delta J = ": None}
+
 
 if foldername == "mriregistration_outputs":
     # runnames = [x for x in os.listdir(localpath) if x[0] == "E"]
     jd0 = 2051.0663685198188
-
+    """
+    The coarsened resolution results
+    """
     runnames = ['E100A0.0001LBFGS100NOSMOOTHEN',
- 'E100A0.01LBFGS100NOSMOOTHEN',
- 'E100A0.001LBFGS100',
- 'E100A0.0001LBFGS100',
- 'E100A0.01LBFGS500',
- 'E1000A0.01LBFGS500']
+                'E100A0.01LBFGS100NOSMOOTHEN',
+                'E100A0.001LBFGS100',
+                'E100A0.0001LBFGS100',
+                'E100A0.01LBFGS500',
+                'E1000A0.01LBFGS500']
 
 
 else:
+
+    """
+    The full resolution results
+    """
     jd0 = 18122.697155044116
-
-
 
     runnames = ['E100A0.01LBFGS100',
                 'E10A0.0001LBFGS100',
@@ -107,6 +119,9 @@ for runname in sorted(runnames):
         subprocess.run(command, shell=True)
 
     hyperparameterfile = localpath / runname / "hyperparameters.json"
+
+
+
 
     # try:
     #     command = "rsync -r "
@@ -288,6 +303,12 @@ for runname in sorted(runnames):
         ax3.plot([1 + x for x in range(len(reg))], (loss + reg) / (jd0 / domain_size) , color=c, linestyle=linestlyle, label=label, marker=marker, markevery=markevery)
 
 
+    if "postprocessing" in os.listdir(localpath / runname):
+        deformed_mesh = Mesh(str(localpath / runname / "postprocessing" / "transformed_input_mesh.xml"))
+        quality = MeshQuality.radius_ratio_min_max(deformed_mesh)
+
+        meshes[runname] = {"min inner/outer radius" : quality[0], "Delta J = ": ((loss + reg) / (jd0 / domain_size))[-1]}
+
 for ax in [ax1, ax2, ax3]:
 
     plt.sca(ax)
@@ -304,6 +325,9 @@ ax3.set_ylabel("$\Delta J = (J_d + J_reg) / Jd0$")
 # plt.savefig("./losses.png")
 
 # plt.close(fig2)
-# plt.close(fig1)
+plt.close(fig1)
+
+for key, item in meshes.items():
+    print(key, item)
 
 plt.show()

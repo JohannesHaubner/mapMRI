@@ -24,14 +24,22 @@ path = "./"
 
 cubemesh = Mesh()
 
+# VelocitFile = "NewTarget.hdf"
+# readname = "velocity"
+# outname = "transformed_input_mesh"
 
-hdf = HDF5File(cubemesh.mpi_comm(), "NewTarget.hdf", "r")
+VelocitFile = "VelocityField.hdf"
+readname = "-1"
+outname = "transformed_input_mesh_optimized"
+
+
+hdf = HDF5File(cubemesh.mpi_comm(), VelocitFile, "r")
 hdf.read(cubemesh, "mesh", False)
 
 vCG = VectorFunctionSpace(cubemesh, "CG", 1)
 v = Function(vCG)
 
-hdf.read(v, "velocity")
+hdf.read(v, readname)
 
 
 hdf.close()
@@ -43,11 +51,13 @@ from make_target import MaxIter, DeltaT
 hyperparameters["max_timesteps"] = MaxIter
 hyperparameters["DeltaT"] = DeltaT
 hyperparameters["MassConservation"] = False
-hyperparameters["DGtransport"] = False
+hyperparameters["DGtransport"] = True
+
 hyperparameters["inverseRAS"] = False
 
 mapfile = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/testdata_3d/Mapping.hdf"
 
+os.system("rm " + mapfile)
 
 if os.path.isfile(mapfile):
     hdf = HDF5File(cubemesh.mpi_comm(), mapfile, "r")
@@ -82,7 +92,7 @@ brainmesh2 = map_mesh(xmlfile1, imgfile1, imgfile2, mapping, box=None,
 File("/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/testdata_3d/velocity.pvd") << v
 
 # # Store as xdmf file for paraview visualization
-xmlfile3 =  "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/testdata_3d/transformed_input_mesh.xml"
+xmlfile3 =  "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/testdata_3d/" + outname + ".xml"
 # with XDMFFile(xmlfile3) as xdmf:
 #     xdmf.write(brainmesh2) # , "mesh")
 
