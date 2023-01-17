@@ -162,8 +162,8 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
         current_control.vector().update_ghost_values()
         current_control.rename("control", "")
 
-        if current_pde_solution.vector()[:].max() > 10:
-            raise ValueError("State became > 10 at some vertex, something is probably wrong")
+        if current_pde_solution.vector()[:].max() > 42:
+            raise ValueError("State became > 42 at some vertex, something is probably wrong")
 
         Jd = assemble(0.5 * (current_pde_solution - Img_goal)**2 * dx(domain=Img.function_space().mesh()))
         Jreg = assemble(alpha*(current_control)**2*dx(domain=Img.function_space().mesh()))

@@ -20,6 +20,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--mapping_only", help="only create the coordinate mapping and exit (no mesh transform)", action="store_true", default=False)
 parser.add_argument("--folder", type=str, default="mriregistration_outputs")
 parser.add_argument("--job", type=str, required=True)
+parser.add_argument("--DGtransport", action="store_true", default=False)
+parser.add_argument("--inverseRAS", action="store_true", default=False)
+
+parser.add_argument("--postfolder", type=str, default="postprocessing/")
 
 parser.add_argument("--velocityfilename", type=str, default="VelocityField.hdf") #opts/opt_phi_6.h5")
 parser.add_argument("--readname", type=str, default="-1")#"function")
@@ -27,8 +31,17 @@ parser.add_argument("--readname", type=str, default="-1")#"function")
 parserargs = vars(parser.parse_args())
 # from IPython import embed
 
+print_overloaded("*"*80)
 
+for key, item in parserargs.items():
+    print_overloaded(key, item)
 
+print_overloaded("*"*80)
+
+if not parserargs["postfolder"].endswith("/"):
+    parserargs["postfolder"] += "/"
+
+assert parserargs["postfolder"][0] != "/"
 
 if parserargs["mapping_only"]:
     print_overloaded("--mapping_only is set, will only create the mapping and exit()")
@@ -59,7 +72,7 @@ if not parserargs["folder"].endswith("/"):
 
 resultpath += parserargs["folder"]
 path_to_data += "mri2fem-dataset/processed/coarsecropped/"
-path_to_meshes += "Oscar-Image-Registration-via-Transport-Equation/scripts/preprocessing/chp4/outs/"
+path_to_meshes += "mri2fem-dataset/chp4/outs/" # "Oscar-Image-Registration-via-Transport-Equation/scripts/preprocessing/chp4/outs/"
 
 jobfoldername = parserargs["job"]
 
@@ -115,9 +128,9 @@ subj2 = "ernie"
 path1 = path_to_meshes + subj1 + "/"
 path2 = path_to_meshes + subj2 + "/"
 
-os.makedirs(jobfile + "postprocessing/", exist_ok=True)
+os.makedirs(jobfile + hyperparameters["postfolder"], exist_ok=True)
 
-mapfile = jobfile + "postprocessing/" + "all" + ".hdf"
+mapfile = jobfile + hyperparameters["postfolder"] + "all" + ".hdf"
 mappingname = "coordinatemapping"
 
 nx = hyperparameters["input.shape"][0]
@@ -148,7 +161,7 @@ else:
     hdf.read(v, readname)
     hdf.close()
         
-    mapping = make_mapping(cubemesh, v, jobfile, hyperparameters, ocd=ocd)
+    mapping = make_mapping(cubemesh, v, jobfile, hyperparameters, ocd=ocd, dgtransport=hyperparameters["DGtransport"])
 
     hdf = HDF5File(cubemesh.mpi_comm(), mapfile, "w")
     hdf.write(mapping, mappingname)
@@ -184,7 +197,8 @@ if ocd:
 # raise_errors = False
 
 brainmesh2 = map_mesh(xmlfile1, imgfile1, imgfile2, mapping, box=box, 
-                    outfolder=jobfile + "postprocessing/", npad=npad, raise_errors=raise_errors,
+                    inverse_affine=hyperparameters["inverseRAS"],
+                    outfolder=jobfile + hyperparameters["postfolder"], npad=npad, raise_errors=raise_errors,
                     coarsening_factor=coarsening_factor)
 
 
@@ -193,7 +207,7 @@ inputmesh = Mesh(xmlfile1)
 # embed()
 
 # # Store as xdmf file for paraview visualization
-xmlfile3 = jobfile + "postprocessing/" + "transformed_input_mesh.xml"
+xmlfile3 = jobfile + hyperparameters["postfolder"] + "transformed_input_mesh.xml"
 # with XDMFFile(xmlfile3) as xdmf:
 #     xdmf.write(brainmesh2) # , "mesh")
 
@@ -205,7 +219,7 @@ transormed_xmlmesh = meshio.read(xmlfile3)
 transormed_xmlmesh.write(xmlfile3.replace(".xml", ".xdmf"))
 
 # Store as hdf File for use in further FEniCS simulation
-hdf = HDF5File(brainmesh2.mpi_comm(), xmlfile3.replace(".xdmf", ".h5"), "w")
+hdf = HDF5File(brainmesh2.mpi_comm(), xmlfile3.replace(".xml", ".hdf"), "w")
 hdf.write(brainmesh2, "mesh")
 hdf.close()
 

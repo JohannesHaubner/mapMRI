@@ -1,9 +1,10 @@
 import os
 import pathlib
 import time
-jobpaths = ["/home/bastian/Oscar-Image-Registration-via-Transport-Equation/2dslurm/",
-"/home/bastian/Oscar-Image-Registration-via-Transport-Equation/slurm/mrislurm/",
-"/home/bastian/Oscar-Image-Registration-via-Transport-Equation/slurm/transportslurm/",
+jobpaths = [
+# "/home/bastian/Oscar-Image-Registration-via-Transport-Equation/2dslurm/",
+"/home/bastian/D1/registration/mrislurm/",
+"/home/bastian/D1/registration/transportslurm/",
 ]
 
 while True:

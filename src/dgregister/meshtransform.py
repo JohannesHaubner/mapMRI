@@ -55,7 +55,9 @@ def store2mgz(imgfile1, imgfile2, ijk1, outfolder):
 
 
 def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,  
-    coarsening_factor: int, npad: int, box: np.ndarray=None, outfolder=None, raise_errors: bool = True):
+    coarsening_factor: int, npad: int, box: np.ndarray=None, 
+    inverse_affine:bool = False,
+    outfolder=None, raise_errors: bool = True):
 
     assert norm(mapping) != 0
 
@@ -106,8 +108,11 @@ def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,
                     [0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 1.000000000000000e+00]
                     ])
 
-    ijk1 = apply_affine(aff, ijk1)
+    if inverse_affine:
+        print_overloaded("Using inverse of affine for testing")
+        aff = np.linalg.inv(aff)
 
+    ijk1 = apply_affine(aff, ijk1)
 
     if box is not None:
         bounds = get_bounding_box(box)
@@ -149,7 +154,8 @@ def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,
             transformed_point = mapping(ijk1[idx, :])
         except RuntimeError:
             print_overloaded(ijk1[idx, :], "not in BoxMesh")
-            exit()
+            raise ValueError("Some ijk1[idx, :] is not in BoxMesh, probably something is wrong.")
+            # exit()
         
         transformed_points[idx, :] = transformed_point
         if "home/bastian" not in os.getcwd():
@@ -198,14 +204,14 @@ def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,
 
 
 
-def make_mapping(cubemesh, v, jobfile, hyperparameters, ocd):
+def make_mapping(cubemesh, velocity, jobfile, hyperparameters, ocd, dgtransport: bool = False):
 
 
     mappings = []
 
     for coordinate in ["x[0]", "x[1]", "x[2]"]:
 
-        assert norm(v) > 0
+        assert norm(velocity) > 0
 
         print_overloaded("Transporting, ", coordinate, "coordinate")
 
@@ -217,21 +223,25 @@ def make_mapping(cubemesh, v, jobfile, hyperparameters, ocd):
 
             xin = interpolate(Expression(coordinate, degree=1), V1) # cubeimg.function_space())
             print_overloaded("Running OCD forward pass")
-            xout, _, _ = find_velocity_ocd.find_velocity(Img=xin, Img_goal=unity2, hyperparameters=hyperparameters, files=[], phi_eval=-v, projection=False)
+            xout, _, _ = find_velocity_ocd.find_velocity(Img=xin, Img_goal=unity2, hyperparameters=hyperparameters, files=[], phi_eval=-velocity, projection=False)
 
         else:
 
             import dgregister.config as config
 
             config.hyperparameters = {**hyperparameters, **config.hyperparameters}
-            cgtransport = True
             
+            cgtransport = not dgtransport
+
+
             if cgtransport:
                 from dgregister.DGTransport import CGTransport as Transport
-                
+                print("Using CG transport")
                 V1 = FunctionSpace(cubemesh, "CG", 1)
             else:
                 from dgregister.DGTransport import DGTransport as Transport
+
+                print("Using DG transport")
                 V1 = FunctionSpace(cubemesh, hyperparameters["state_functionspace"], hyperparameters["state_functiondegree"])
             
             xin = interpolate(Expression(coordinate, degree=1), V1) # cubeimg.function_space())
@@ -239,23 +249,27 @@ def make_mapping(cubemesh, v, jobfile, hyperparameters, ocd):
             print_overloaded("Interpolated ", coordinate)
 
             if hyperparameters["smoothen"]:
-                assert "Control.hdf" in hyperparameters["velocityfilename"]
-                _, M_lumped_inv = get_lumped_mass_matrices(vCG=v.function_space())
-            else:
+
+                assert "VelocityField" in hyperparameters["velocityfilename"] or "CurrentV" in hyperparameters["velocityfilename"]
                 assert "Control.hdf" not in hyperparameters["velocityfilename"]
-                M_lumped_inv = None
+            #     _, M_lumped_inv = get_lumped_mass_matrices(vCG=v.function_space())
+            # else:
+            #     assert "Control.hdf" not in hyperparameters["velocityfilename"]
+            #     M_lumped_inv = None
 
-            if hyperparameters["smoothen"]:
+            # if hyperparameters["smoothen"]:
 
-                from dgregister.transformation_overloaded import transformation
-                # from preconditioning_overloaded import Overloaded_Preconditioning # 
-                from dgregister.preconditioning_overloaded import preconditioning
-                print_overloaded("Transforming l2 control to L2 control")
-                controlf = transformation(v, M_lumped_inv)
-            else:
-                controlf = v
+            #     from dgregister.transformation_overloaded import transformation
+            #     # from preconditioning_overloaded import Overloaded_Preconditioning # 
+            #     from dgregister.preconditioning_overloaded import preconditioning
+            #     print_overloaded("Transforming l2 control to L2 control")
+            #     controlf = transformation(v, M_lumped_inv)
+            # else:
+            #     controlf = v
 
-            control = preconditioning(controlf)
+            # control = preconditioning(controlf)
+
+            control = velocity
 
             print_overloaded("Calling Transport()", "cgtransport=", cgtransport, )
             xout = Transport(Img=xin, Wind=-control, hyperparameters=hyperparameters,
@@ -273,25 +287,11 @@ def make_mapping(cubemesh, v, jobfile, hyperparameters, ocd):
 
         mappings.append(xout)
 
-        assert os.path.isdir(jobfile + "postprocessing/")
-
-        # hdf = HDF5File(cubemesh.mpi_comm(), jobfile + "postprocessing/" + coordinate + ".hdf", "w")
-        # hdf.write(xin, "in")
-        # hdf.write(xout, "out")
-        # hdf.close()
-
-        # with XDMFFile(jobfile + "postprocessing/" + coordinate + "_in.xdmf") as xdmf:
-        #     xdmf.write_checkpoint(xin, "xin", 0.)
-
-
-        # with XDMFFile(jobfile + "postprocessing/" + coordinate + "_out.xdmf") as xdmf:
-        #     xdmf.write_checkpoint(xout, "xout", 0.)
-
     assert len(mappings) == 3
 
     assert True not in [norm(x) == 0 for x in mappings]
 
-    vxyz = Function(v.function_space())
+    vxyz = Function(velocity.function_space())
 
     arr = np.zeros_like(vxyz.vector()[:])
 

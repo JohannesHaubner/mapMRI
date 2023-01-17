@@ -63,21 +63,52 @@ cd $SPATH
 # VFILE=VelocityField.hdf
 # READNAME="-1"
 
-FOLDER=mriregistration_outputs
-JOBNAME=E100A0.001LBFGS100
-VFILE=Control.hdf
-READNAME="-1"
+# FOLDER=mriregistration_outputs
+# JOBNAME=E100A0.001LBFGS100
+# VFILE=Control.hdf
+# READNAME="-1"
 
-srun -n 16 python3 -u transform.py --mapping_only --folder ${FOLDER} --job ${JOBNAME} --velocityfilename ${VFILE} --readname ${READNAME} > ${LOGOUTFILE}
+FOLDER=croppedmriregistration_outputs
+JOBNAME=E100A0.01LBFGS100
+VFILE=CurrentV.hdf
+READNAME="function"
+
+# srun -n 16 python3 -u transform.py --mapping_only --folder ${FOLDER} --job ${JOBNAME} \
+# --postfolder processing_dg_inv --DGtransport --inverseRAS \
+# --velocityfilename ${VFILE} --readname ${READNAME} > ${LOGOUTFILE}
+# echo "Computed mapping, now running transform with only one core"
+
+# srun -n 1 python3 -u transform.py --folder ${FOLDER} --job ${JOBNAME} \
+# --postfolder processing_dg_inv --DGtransport --inverseRAS \
+# --velocityfilename ${VFILE} --readname ${READNAME} >> ${LOGOUTFILE}
+# echo "success"
+
+# srun -n 16 python3 -u transform.py --mapping_only --folder ${FOLDER} --job ${JOBNAME} \
+# --postfolder processing_dg --DGtransport \
+# --velocityfilename ${VFILE} --readname ${READNAME} > ${LOGOUTFILE}
+# echo "Computed mapping, now running transform with only one core"
+
+# srun -n 1 python3 -u transform.py --folder ${FOLDER} --job ${JOBNAME} \
+# --postfolder processing_dg --DGtransport \
+# --velocityfilename ${VFILE} --readname ${READNAME} >> ${LOGOUTFILE}
+# echo "success"
+
+srun -n 16 python3 -u transform.py --mapping_only --folder ${FOLDER} --job ${JOBNAME} \
+--postfolder processing_cg_inv --inverseRAS \
+--velocityfilename ${VFILE} --readname ${READNAME} > ${LOGOUTFILE}
 echo "Computed mapping, now running transform with only one core"
-srun -n 1 python3 -u transform.py --folder ${FOLDER} --job ${JOBNAME} --velocityfilename ${VFILE} --readname ${READNAME} >> ${LOGOUTFILE}
+
+srun -n 1 python3 -u transform.py --folder ${FOLDER} --job ${JOBNAME} \
+--postfolder processing_cg_inv --inverseRAS \
+--velocityfilename ${VFILE} --readname ${READNAME} >> ${LOGOUTFILE}
 echo "success"
 
-
-# FOLDER=mriregistration_outputs
-# JOBNAME=E100A0.0001LBFGS100NOSMOOTHEN
-
-# srun -n 8 python3 -u transform.py --mapping_only --folder ${FOLDER} --job ${JOBNAME} --velocityfilename opts/opt_phi_6.h5 --readname "function" > ${LOGOUTFILE}
+# srun -n 16 python3 -u transform.py --mapping_only --folder ${FOLDER} --job ${JOBNAME} \
+# --postfolder processing_cg \
+# --velocityfilename ${VFILE} --readname ${READNAME} > ${LOGOUTFILE}
 # echo "Computed mapping, now running transform with only one core"
-# srun -n 1 python3 -u transform.py --folder ${FOLDER} --job ${JOBNAME} --velocityfilename opts/opt_phi_6.h5 --readname "function" >> ${LOGOUTFILE}
+
+# srun -n 1 python3 -u transform.py --folder ${FOLDER} --job ${JOBNAME} \
+# --postfolder processing_cg \
+# --velocityfilename ${VFILE} --readname ${READNAME} >> ${LOGOUTFILE}
 # echo "success"
