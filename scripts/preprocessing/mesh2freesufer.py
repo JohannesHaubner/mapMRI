@@ -1,12 +1,12 @@
 from fenics import *
 import meshio
 import numpy as np
-import os
-from IPython import embed
+import os, subprocess
+# from IPython import embed
 
 
 outpath = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/"
-outpath += "croppedmriregistration_outputs/E100A0.01LBFGS100/postprocessing/"
+outpath += "croppedmriregistration_outputs/E100A0.01LBFGS100/postprocessing_newer/"
 inputpath = outpath
 meshname = "transformed_input_mesh"
 
@@ -22,6 +22,25 @@ xmlfile = inputpath + meshname + ".xml"
 # meshfile = inputpath  # path + subj + str(res) + ".mesh"
 
 subj = "ernie"
+
+
+
+outfile = xmlfile.replace(".xml", "")
+
+if os.path.isfile(outfile):
+    print("*"*80)
+    print("File already exists, not recomputing")
+    print("*"*80)
+    command = "freeview"
+    command += " /home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/mri2fem-dataset/processed/input/abby/abby_brain.mgz"
+    command += " /home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/mri2fem-dataset/processed/input/ernie/ernie_brain.mgz"
+    command += " -f " + outfile
+    command += " /home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/scripts/preprocessing/chp4/outs/abby/abby16:edgecolor=magenta"
+    command += " /home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/scripts/preprocessing/chp4/outs/ernie/ernie16:edgecolor=blue"
+    print()
+    subprocess.run(command, shell=True)
+    exit()
+
 
 # sf = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/mri2fem-dataset/freesurfer/ernie/surf/lh.orig"
 
@@ -128,8 +147,6 @@ for idc in range(bmesh.cells().shape[0]):
 
 
 
-outfile = xmlfile.replace(".xml", "")
+# outfile = xmlfile.replace(".xml", "")
 
 surface.write_triangular(outfile)
-
-print("freeview -f " + outfile)

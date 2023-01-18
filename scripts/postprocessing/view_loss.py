@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 from parse import parse
+# from scipy.interpolate import CubicSpline
+from scipy.signal import savgol_filter
 # FS = 40
 # dpi = 400
 # figsize = (10, 10)
@@ -78,6 +80,8 @@ if foldername == "mriregistration_outputs":
                 'E1000A0.01LBFGS500']
 
 
+
+    # E100A0.01LBFGS500
 else:
 
     """
@@ -85,14 +89,10 @@ else:
     """
     jd0 = 18122.697155044116
 
-    runnames = ['E100A0.01LBFGS100',
-                'E10A0.0001LBFGS100',
-                'E10A0.01LBFGS100',
-                'E1A0.01LBFGS100',
-                'E100A0.0001LBFGS100',
-                'E1A0.01LBFGS100NOSMOOTHEN',
-                'E100A0.01LBFGS100NOSMOOTHEN',
-                'E10A0.01LBFGS100NOSMOOTHEN']
+    runnames = ['E100A0.01LBFGS100', 'E10A0.0001LBFGS100', 
+    'E10A0.01LBFGS100', 'E1A0.01LBFGS100', 'E100A0.0001LBFGS100', 
+    'E1A0.01LBFGS100NOSMOOTHEN', 'E100A0.01LBFGS100NOSMOOTHEN', 'E10A0.01LBFGS100NOSMOOTHEN', 
+    'E10A0.0001LBFGS100NOSMOOTHEN', 'E1A0.0001LBFGS100']
 
 
 fig1, ax1 = plt.subplots(dpi=dpi, figsize=figsize)
@@ -147,6 +147,10 @@ for runname in sorted(runnames):
         print(runname, "has starting guess, ignoring for this plot")
 
         continue
+
+    if "optimization_time_hours" in hyperparameters.keys():
+
+        print(runname, "Compute time", hyperparameters["optimization_time_hours"])
 
 
     if "slurmid" in hyperparameters.keys() and not ("E100A0.01LBFGS100" == runname and foldername == "croppedmriregistration_outputs"):
@@ -267,18 +271,21 @@ for runname in sorted(runnames):
     label = r"$\alpha$=" + format(hyperparameters["alpha"], ".0e") + "," + format(hyperparameters["max_timesteps"], ".0f") + " time steps"
     
     if error:
-        label += "error!"
+        label += "\n(error)"
 
     elif running:
-        label += " (running)"
+        label += "\n(running)"
 
     marker = None
     markevery= 1e14
 
     if "nosmoothen" in runname.lower():
+        if "\n" not in label:
+            label += "\n"
         label += "(no smoothen)"
         marker = "x"
         markevery= 10
+        linestlyle = "--"
 
 
     if loss is not None:
@@ -300,8 +307,17 @@ for runname in sorted(runnames):
 
             ax1.plot([1 + x for x in range(len(lossx))], lossx, color=c, linestyle=":", label=label + "from loss.txt", marker=marker, markevery=markevery)
 
-        ax3.plot([1 + x for x in range(len(reg))], (loss + reg) / (jd0 / domain_size) , color=c, linestyle=linestlyle, label=label, marker=marker, markevery=markevery)
+        dJ = (loss + reg) / (jd0 / domain_size)
+        iters = [1 + x for x in range(len(reg))]
 
+
+        # cs = CubicSpline(iters, dJ)
+
+        ax3.plot(iters, dJ , color=c, linestyle=linestlyle, label=label, marker=marker, markevery=markevery)
+
+        # if dJ.size > 8:
+        #     dJ2 = savgol_filter(dJ, 7, 3)
+        #     ax3.plot(dJ2, color=c, linestyle="--")
 
     if "postprocessing" in os.listdir(localpath / runname):
         deformed_mesh = Mesh(str(localpath / runname / "postprocessing" / "transformed_input_mesh.xml"))
@@ -313,7 +329,9 @@ for ax in [ax1, ax2, ax3]:
 
     plt.sca(ax)
 
-    plt.legend()
+    ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
+    # plt.legend()
     plt.xlabel("LBFGS iteration")
     plt.ylabel("$L^2$-mismatch to target image")
     plt.tight_layout()
@@ -321,7 +339,7 @@ for ax in [ax1, ax2, ax3]:
 
 
 ax2.set_ylabel("Regularization")
-ax3.set_ylabel("$\Delta J = (J_d + J_reg) / Jd0$")
+ax3.set_ylabel(r"$\frac{J}{J(0)}$")
 # plt.savefig("./losses.png")
 
 # plt.close(fig2)
