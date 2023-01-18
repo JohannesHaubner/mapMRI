@@ -1,6 +1,9 @@
+import os
+if "home/bastian" in os.getcwd():
+    import h5py
 import argparse
 import json
-import os
+
 import numpy as np
 from fenics import *
 # from fenics_adjoint import *
@@ -89,7 +92,7 @@ velocityfile = jobfile + velocityfilename
 assert os.path.isfile(velocityfile)
 
 if "home/bastian" in os.getcwd():
-    import h5py
+    # import h5py
     if not parserargs["readname"] in list(h5py.File(velocityfile).keys()):
         raise ValueError(parserargs["readname"] + "not in keys of velocityfile:" + str(list(h5py.File(velocityfile).keys())))
 

@@ -16,7 +16,7 @@ if "home/bastian" in os.getcwd():
 else:
     superfolder = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/"
 
-resultpaths = [# "mriregistration_outputs",
+resultpaths = ["mriregistration_outputs",
 "croppedmriregistration_outputs"
 ]
 
@@ -217,3 +217,11 @@ for resultpath in resultpaths:
     #         print(key, "SLURMID", r[2], r[3])
 
     print("----------------------------------------------------------------------------------------------------------------------------------------------")
+
+
+for resultpath in resultpaths:
+
+    print(resultpath)
+    regfolders = [x for x in os.listdir(superfolder / resultpath) if "OCD" not in str(x)]
+    print(regfolders)
+    print(len(regfolders))
