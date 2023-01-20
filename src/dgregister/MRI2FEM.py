@@ -133,7 +133,14 @@ def read_image(hyperparameters, name, mesh=None, printout=True, threshold=True, 
     if normalize:
         print_overloaded("Normalizing data")
         print_overloaded("data.max()", data.max())
-        data /= data.max()
+
+        if "normalization" in hyperparameters.keys():
+            if hyperparameters["normalization"] == "max":
+                data /= data.max()
+            if hyperparameters["normalization"] == "mean":
+                data /= np.mean(data[data > 1])
+        # else:
+        #     data /= data.max()
 
     if threshold and np.min(data) < 0:
         

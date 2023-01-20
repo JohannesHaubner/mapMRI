@@ -171,8 +171,8 @@ def get_lumped_mass_matrices(vCG):
 
 def load_control(hyperparameters, vCG):
 
-    if not hyperparameters["ocd"]:
-        assert "Control.hdf" in hyperparameters["starting_guess"]
+    # if not hyperparameters["ocd"]:
+    #     assert "Control.hdf" in hyperparameters["starting_guess"]
 
     assert os.path.isfile(hyperparameters["starting_guess"])
 

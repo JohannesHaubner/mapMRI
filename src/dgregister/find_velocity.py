@@ -31,6 +31,19 @@ current_iteration = 0
 
 def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess):
 
+
+    if hyperparameters["multigrid"]:
+        print_overloaded("Start transporting with starting guess, now transport with the new control in addition")
+        starting_image = DGTransport(Img, Wind=starting_guess, hyperparameters=hyperparameters,
+                                MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
+                                solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
+
+        print_overloaded("Done transporting with starting guess, now transport with the new control in addition")
+        print_overloaded("*"*80)
+
+    else:
+        starting_image = Img
+
     set_working_tape(Tape())
 
     # initialize control
@@ -55,23 +68,16 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
     print_overloaded("Running Transport() with dt = ", hyperparameters["DeltaT"])
 
 
-    if hyperparameters["multigrid"]:
-        print_overloaded("Start transporting with starting guess, now transport with the new control in addition")
-        Img_deformed = DGTransport(Img, Wind=starting_guess, hyperparameters=hyperparameters,
-                                MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
-                                solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
 
-        print_overloaded("Done transporting with starting guess, now transport with the new control in addition")
-        print_overloaded("*"*80)
-        Img_deformed = DGTransport(Img_deformed, Wind=control, hyperparameters=hyperparameters,
-                                MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
-                                solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
+    #     Img_deformed = DGTransport(Img_deformed, Wind=control, hyperparameters=hyperparameters,
+    #                             MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
+    #                             solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
 
-    else:
+    # else:
 
-        Img_deformed = DGTransport(Img, control, hyperparameters=hyperparameters,
-                                MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
-                                solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
+    Img_deformed = DGTransport(starting_image, control, hyperparameters=hyperparameters,
+                            MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
+                            solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
 
 
     # solve forward and evaluate objective

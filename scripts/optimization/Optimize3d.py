@@ -42,6 +42,7 @@ parser.add_argument("--state_functiondegree", type=int, default=1)
 
 parser.add_argument("--readname", type=str, default="-1")
 parser.add_argument("--starting_guess", type=str, default=None)
+parser.add_argument("--normalization", type=str, default="max")
 parser.add_argument("--multigrid", default=False, action="store_true", help="Use starting guess & another transform")
 
 parser.add_argument("--filter", default=False, action="store_true", help="median filter on input and output")

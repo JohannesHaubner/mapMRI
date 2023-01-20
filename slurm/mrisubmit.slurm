@@ -44,7 +44,7 @@ LOGOUTFILE=/home/bastian/D1/registration/mrislurm/${SLURM_JOB_ID}_log_python_sru
 
 ITERS=$1
 ALPHA=$2
-LBFGS=500
+LBFGS=100
 
 echo "ITERS=" ${ITERS}
 echo "ALPHA=" ${ALPHA}
@@ -54,16 +54,20 @@ OUTFOLDERNAME=None
 
 
 
-# OUTPUTDIR=/home/bastian/D1/registration/croppedmriregistration_outputs/
+# OUTPUTDIR=/home/bastian/D1/registration/croppedmriregistration_outputs2/
 # IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/cropped/cropped_abbytoernie.mgz
 # IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/cropped/cropped_ernie_brain.mgz
-# # OUTFOLDERNAME=RS1e-3
 
-# mkdir -pv ${OUTPUTDIR}
-# echo "OUTPUTDIR=" $OUTPUTDIR
-# echo "OUTFOLDERNAME=" $OUTFOLDERNAME
-# echo "IMG1=" ${IMG1}
-# echo "IMG2=" ${IMG2}
+OUTPUTDIR=/home/bastian/D1/registration/croppedmriregistration_outputs_affine_median/
+IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/affine_registered/cropped_abbytoernie_affine.mgz
+IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/affine_registered/cropped_ernie_brain.mgz
+
+
+mkdir -pv ${OUTPUTDIR}
+echo "OUTPUTDIR=" $OUTPUTDIR
+echo "OUTFOLDERNAME=" $OUTFOLDERNAME
+echo "IMG1=" ${IMG1}
+echo "IMG2=" ${IMG2}
 
 # srun -n 50 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 # --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
@@ -72,15 +76,20 @@ OUTFOLDERNAME=None
 # # --starting_guess /home/bastian/D1/registration/mriregistration_outputs/E100A0.001LBFGS100/Control.hdf --readname "-1" --interpolate \
 
 
-OUTPUTDIR=/home/bastian/D1/registration/mriregistration_outputs/
-DPATH=/home/bastian/D1/registration
-DATAPATH=${DPATH}/mri2fem-dataset/processed/coarsecropped/
-IMG1=${DATAPATH}coarsenedabbytoernie.mgz
-IMG2=${DATAPATH}coarsenedernie_brain.mgz
+# OUTPUTDIR=/home/bastian/D1/registration/mriregistration_outputs/
+# DPATH=/home/bastian/D1/registration
+# DATAPATH=${DPATH}/mri2fem-dataset/processed/coarsecropped/
+# IMG1=${DATAPATH}coarsenedabbytoernie.mgz
+# IMG2=${DATAPATH}coarsenedernie_brain.mgz
+
+
 
 srun -n 50 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
+--normalization median \
 --timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+# --starting_guess /home/bastian/D1/registration/croppedmriregistration_outputs/E100A0.01LBFGS100/VelocityField.hdf --readname "-1" --multigrid \
 
 
+#
 echo "success"

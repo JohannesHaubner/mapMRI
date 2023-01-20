@@ -10,11 +10,14 @@ matchstring = ""
 
 
 
-if "home/bastian" in os.getcwd():
+if "/bastian/" in os.getcwd():
     superfolder = "/home/bastian/D1/registration/"
 
-else:
+elif "/basti/" in os.getcwd():
     superfolder = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/"
+else:
+    print(os.getcwd())
+    raise ValueError
 
 resultpaths = ["mriregistration_outputs",
 "croppedmriregistration_outputs"
