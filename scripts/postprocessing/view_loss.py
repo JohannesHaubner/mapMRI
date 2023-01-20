@@ -5,6 +5,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from parse import parse
 # from scipy.interpolate import CubicSpline
+import argparse
 from scipy.signal import savgol_filter
 # FS = 40
 # dpi = 400
@@ -18,12 +19,18 @@ from scipy.signal import savgol_filter
 # matplotlib.rcParams["legend.fontsize"] = FS # "xx-large"
 # matplotlib.rcParams["font.size"] = FS
 
-def read_loss_from_log(file1):
+parser = argparse.ArgumentParser()
+parser.add_argument("--resync", action="store_true", default=False)
+parsersargs = vars(parser.parse_args())
+
+
+
+def read_loss_from_log(file1, jd0, reg0=0):
 
     Lines = file1.readlines()
 
 
-    loss , reg = [jd0], [0]
+    loss, reg = [], []
 
     for line in Lines:
 
@@ -35,6 +42,19 @@ def read_loss_from_log(file1):
                 # print(result[0], result[1])
                 loss.append(lval)
                 reg.append(rval)
+        if "Assembled functional" in line:
+            result = parse("Assembledfunctional,J={}", line.replace(" ", ""))
+            if (result is not None):
+                jd_0 = float(result[0])
+
+    if jd0 is None:
+        jd0 = jd_0
+    
+    assert jd0 is not None
+
+
+    loss = [jd0] + loss 
+    reg = [reg0] + reg
 
 
     loss = np.array(loss)
@@ -43,19 +63,11 @@ def read_loss_from_log(file1):
     if loss.size != reg.size:
         breakpoint()
 
-    return loss, reg
+    return loss, reg, jd0
 
 
 dpi = None
 figsize= None
-
-foldername = "croppedmriregistration_outputs"
-# foldername = "mriregistration_outputs"
-
-localpath = pathlib.Path("/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration") / foldername
-
-expath = pathlib.Path("/home/bastian/D1/registration") / foldername
-
 
 subj1 = "abby"
 res = 8
@@ -66,112 +78,90 @@ meshes={}
 meshes["input"] = {"min inner/outer radius" : quality[0], "Delta J = ": None}
 
 
-if foldername == "mriregistration_outputs":
-    # runnames = [x for x in os.listdir(localpath) if x[0] == "E"]
-    jd0 = 2051.0663685198188
-    """
-    The coarsened resolution results
-    """
-    runnames = ['E100A0.0001LBFGS100NOSMOOTHEN',
-                'E100A0.01LBFGS100NOSMOOTHEN',
-                'E100A0.001LBFGS100',
-                'E100A0.0001LBFGS100',
-                'E100A0.01LBFGS500',
-                'E1000A0.01LBFGS500']
+# foldername = "croppedmriregistration_outputs"
+# # sfoldername = "mriregistration_outputs"
 
 
-
-    # E100A0.01LBFGS500
-else:
-
-    """
-    The full resolution results
-    """
-    jd0 = 18122.697155044116
-
-    runnames = ['E100A0.01LBFGS100', 'E10A0.0001LBFGS100', 
-    'E10A0.01LBFGS100', 'E1A0.01LBFGS100', 'E100A0.0001LBFGS100', 
-    'E1A0.01LBFGS100NOSMOOTHEN', 'E100A0.01LBFGS100NOSMOOTHEN', 'E10A0.01LBFGS100NOSMOOTHEN', 
-    'E10A0.0001LBFGS100NOSMOOTHEN', 'E1A0.0001LBFGS100']
 
 
 fig1, ax1 = plt.subplots(dpi=dpi, figsize=figsize)
 fig2, ax2 = plt.subplots(dpi=dpi, figsize=figsize)
 fig3, ax3 = plt.subplots(dpi=dpi, figsize=figsize)
 
-for runname in sorted(runnames):
-    
-    # os.system("rm -r " + str(localpath / runname))
-    
-    if not (localpath / runname).is_dir():
+for foldername in ["croppedmriregistration_outputs2", "croppedmriregistration_outputs"]:
 
-        os.makedirs(localpath / runname, exist_ok=True)
-    
-    lossfile = localpath / runname / "loss.txt"
+    localpath = pathlib.Path("/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration") / foldername
+    expath = pathlib.Path("/home/bastian/D1/registration") / foldername
 
-    if not lossfile.is_file():
+    if foldername == "mriregistration_outputs":
+        # runnames = [x for x in os.listdir(localpath) if x[0] == "E"]
+        # jd0 = 2051.0663685198188
+        """
+        The coarsened resolution results
+        """
+        runnames = ['E100A0.0001LBFGS100NOSMOOTHEN',
+                    'E100A0.01LBFGS100NOSMOOTHEN',
+                    'E100A0.001LBFGS100',
+                    'E100A0.0001LBFGS100',
+                    'E100A0.01LBFGS500',
+                    'E1000A0.01LBFGS500']
 
-        command = "rsync -r "
-        command += "ex:" + str(expath / runname / "*.txt")
-        command += " "
-        command += str(localpath / runname)
+    elif foldername == "croppedmriregistration_outputs2":
+        runnames = ["E100A1.0LBFGS100", "E100A0.01LBFGS100"]
+    else:
 
-        subprocess.run(command, shell=True)
+        """
+        The full resolution results
+        """
+        # jd0 = 18122.697155044116
 
-    hyperparameterfile = localpath / runname / "hyperparameters.json"
+        runnames = ['E100A0.01LBFGS100', 'E10A0.0001LBFGS100', 
+        'E10A0.01LBFGS100', 'E1A0.01LBFGS100', 'E100A0.0001LBFGS100', 
+        'E1A0.01LBFGS100NOSMOOTHEN', 'E100A0.01LBFGS100NOSMOOTHEN', 'E10A0.01LBFGS100NOSMOOTHEN', 
+        'E10A0.0001LBFGS100NOSMOOTHEN', 'E1A0.0001LBFGS100']
 
+    for runname in sorted(runnames):
+        
+        # breakpoint()
+        # os.system("rm -r " + str(runname))
+        
+        if not (localpath / runname).is_dir():
 
+            os.makedirs(localpath / runname, exist_ok=True)
+        
+        lossfile = localpath / runname / "loss.txt"
+        hyperparameterfile = localpath / runname / "hyperparameters.json"
 
+        if parsersargs["resync"]:
 
-    # try:
-    #     command = "rsync -r "
-    #     command += "ex:" + str(expath / runname / "*_log_python_srun.txt")
-    #     command += " "
-    #     command += str(localpath / runname)
-    #     subprocess.run(command, shell=True)
-    # except:
-    #     pass
-
-    if not hyperparameterfile.is_file():
-        command = "rsync -r "
-        command += "ex:" + str(expath / runname / "*.json")
-        command += " "
-        command += str(localpath / runname)
-
-        subprocess.run(command, shell=True)
-
-    hyperparameters = json.load(open(hyperparameterfile))
-
-    if hyperparameters["starting_guess"] is not None:
-
-        print(runname, "has starting guess, ignoring for this plot")
-
-        continue
-
-    if "optimization_time_hours" in hyperparameters.keys():
-
-        print(runname, "Compute time", hyperparameters["optimization_time_hours"])
-
-
-    if "slurmid" in hyperparameters.keys() and not ("E100A0.01LBFGS100" == runname and foldername == "croppedmriregistration_outputs"):
-        command = "rsync -r "
-        command += "ex:" + "/home/bastian/D1/registration/mrislurm/" + str(hyperparameters["slurmid"]) + "_log_python_srun.txt"
-        command += " "
-        command += str(localpath / runname)
-        retva = subprocess.run(command, shell=True, capture_output=True)
-
-        command = "rsync -r "
-        command += "ex:" + "/home/bastian/D1/registration/mrislurm/" + str(hyperparameters["slurmid"]) + ".out"
-        command += " "
-        command += str(localpath / runname)
-        retva = subprocess.run(command, shell=True, capture_output=True)
-
-        if retva.returncode == 0:
             command = "rsync -r "
-            command += "ex:" + "/home/bastian/D1/registration/old/mrislurm/" + str(hyperparameters["slurmid"]) + "_log_python_srun.txt"
+            command += "ex:" + str(expath / runname / "*.txt")
             command += " "
             command += str(localpath / runname)
 
+            subprocess.run(command, shell=True)
+
+            
+
+            command = "rsync -r "
+            command += "ex:" + str(expath / runname / "*.json")
+            command += " "
+            command += str(localpath / runname)
+            subprocess.run(command, shell=True)
+
+        hyperparameters = json.load(open(hyperparameterfile))
+        domain_size = np.product(hyperparameters["input.shape"])
+
+        if "optimization_time_hours" in hyperparameters.keys():
+
+            print(runname, "Compute time", hyperparameters["optimization_time_hours"])
+
+
+        if "slurmid" in hyperparameters.keys() and parsersargs["resync"]:
+            command = "rsync -r "
+            command += "ex:" + "/home/bastian/D1/registration/mrislurm/" + str(hyperparameters["slurmid"]) + "_log_python_srun.txt"
+            command += " "
+            command += str(localpath / runname)
             retva = subprocess.run(command, shell=True, capture_output=True)
 
             command = "rsync -r "
@@ -179,173 +169,191 @@ for runname in sorted(runnames):
             command += " "
             command += str(localpath / runname)
             retva = subprocess.run(command, shell=True, capture_output=True)
-    
-    assert foldername in hyperparameters["output_dir"]
 
-    loss, reg = None, None
+            if retva.returncode == 0:
+                command = "rsync -r "
+                command += "ex:" + "/home/bastian/D1/registration/old/mrislurm/" + str(hyperparameters["slurmid"]) + "_log_python_srun.txt"
+                command += " "
+                command += str(localpath / runname)
 
-    if ("E100A0.01LBFGS100" == runname and foldername == "croppedmriregistration_outputs"):
+                retva = subprocess.run(command, shell=True, capture_output=True)
 
-        command = "rsync -r "
-        command += "ex:" + "/home/bastian/Oscar-Image-Registration-via-Transport-Equation/slurm/mrislurm/433513_log_python_srun.txt"
-        command += " "
-        command += str(localpath / runname)
+                command = "rsync -r "
+                command += "ex:" + "/home/bastian/D1/registration/mrislurm/" + str(hyperparameters["slurmid"]) + ".out"
+                command += " "
+                command += str(localpath / runname)
+                retva = subprocess.run(command, shell=True, capture_output=True)
+        
+        assert foldername in hyperparameters["output_dir"]
 
-        subprocess.run(command, shell=True)
+        loss, reg = None, None
 
-        file1 = open(localpath / runname / "433513_log_python_srun.txt", 'r')
+        logfiles = [x for x in os.listdir(localpath / runname) if "_log_python_srun.txt" in x]
+        assert len(logfiles) <= 1
+        loss2, reg2 = None, None
+        
+        if len(logfiles) > 0:
 
-        loss, reg = read_loss_from_log(file1)
+            file1 = open(localpath / runname / logfiles[0], 'r')
+            loss, reg, jd0 = read_loss_from_log(file1, jd0=None, reg0=0)
 
-    # else:
+        startloss = None
+        startjd0 = None
 
-    #     loss = np.genfromtxt(lossfile, delimiter=",")# [:-1]
-    #     reg = np.genfromtxt(localpath / runname /"regularization.txt", delimiter=",")
-    #     loss[1:] = loss[0:-1]
-    #     loss[0] = jd0
-
-    logfiles = [x for x in os.listdir(localpath / runname) if "_log_python_srun.txt" in x]
-
-    loss2, reg2 = None, None
-
-    if len(logfiles) > 0:
-
-        file1 = open(localpath / runname / logfiles[0], 'r')
-        loss, reg = read_loss_from_log(file1)
-    
-
-    error = False
-    if (localpath / runname / (str(hyperparameters["slurmid"]) + ".out")).is_file():
-        outfile = open(localpath / runname / (str(hyperparameters["slurmid"]) + ".out"), "r")
-
-        Lines = outfile.readlines()
-
-        for line in Lines:
-            if "error" in line.lower():
-
-                error = True
-                print(line, "<------- error message in ", runname, "<----------")
-                break
-
-    try:
-        loss2 = np.genfromtxt(lossfile, delimiter=",")# [:-1
-        reg2 = np.genfromtxt(localpath / runname /"regularization.txt", delimiter=",")
-        loss2[1:] = loss2[0:-1]
-        loss2[0] = jd0
-
-        if loss2.size == hyperparameters["lbfgs_max_iterations"]:
-            loss, reg = loss2, reg2
-            breakpoint()
-            # TODO FIXME 
-            loss2, reg2 = None, None
-
-    except:
-        pass
-
-    
-    if len(logfiles) > 1:
-
-        breakpoint()
-        file1 = open(localpath / runname / logfiles[1], 'r')
-
-        loss2, reg2 = read_loss_from_log(file1)
-
-    domain_size = np.product(hyperparameters["input.shape"])
+        if hyperparameters["starting_guess"] is not None:
+            # load loss from starting guess run
+            if not "/croppedmriregistration_outputs/" in hyperparameters["starting_guess"]:
+                raise NotImplementedError
+            
+            startresultfolder = pathlib.Path("/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration") / "croppedmriregistration_outputs" / runname
+            startlogfiles = [x for x in os.listdir(startresultfolder) if "_log_python_srun.txt" in x]
 
 
-    running = "Jd_final" not in hyperparameters.keys()
-    try:
-        if not np.allclose(hyperparameters["Jd_init"], jd0):
-            print(runname)
-            breakpoint()
+            file1 = open(startresultfolder / startlogfiles[0], 'r')
+            startloss, startreg, startjd0 = read_loss_from_log(file1, jd0=None, reg0=0)
+            
+
+            print(runname, "has starting guess")
+        
+
+        error = False
+        cancelled = False
+
+        if (localpath / runname / (str(hyperparameters["slurmid"]) + ".out")).is_file():
+            outfile = open(localpath / runname / (str(hyperparameters["slurmid"]) + ".out"), "r")
+
+            Lines = outfile.readlines()
+
+            for line in Lines:
+                if "valueerror" in line.lower():
+
+                    error = True
+                    print(line, "<------- error message in ", runname, "<----------")
+                    break
+                if "CANCELLED" in line:
+
+                    cancelled = True
+                    break
+
+        try:
+            loss2 = np.genfromtxt(lossfile, delimiter=",")# [:-1
+            reg2 = np.genfromtxt(localpath / runname /"regularization.txt", delimiter=",")
+            loss2[1:] = loss2[0:-1]
+            loss2[0] = jd0
+            reg2[1:] = reg2[0:-1]
+            reg2[0] = 0
+            if loss2.size == loss.size:
+                loss = loss2
+                reg = reg2
+                print(runname, "Plotting loss from loss.txt instead of logfile")
+        except FileNotFoundError:
+            pass
+
+        
+
+        running = "Jd_final" not in hyperparameters.keys()
+        try:
+            if not np.allclose(hyperparameters["Jd_init"], jd0):
+                print(runname)
+                breakpoint()
+                raise ValueError
+        except KeyError:
+
+            if error:
+                print(runname, "error, ", hyperparameters["slurmid"])
+            elif cancelled:
+                print(runname, "cancelled, ", hyperparameters["slurmid"])
+            elif running:
+                print(runname, "not done", hyperparameters["slurmid"])
+
+        linestlyle="-"
+        if "OCD" in str(runname):
             raise ValueError
-    except KeyError:
-        print(runname, "not done")
+
+        # label = runname
+        label = r"$\alpha$=" + format(hyperparameters["alpha"], ".0e") + "," + format(hyperparameters["max_timesteps"], ".0f") + " time steps"
+        
+        if error:
+            label += "\n(error)"
+        elif cancelled:
+            label += "\n(cancelled)"
+        elif running:
+            label += "\n(running)"
 
 
-    linestlyle="-"
-    if "OCD" in runname:
-        linestlyle = "--"
+        marker = None
+        markevery= 1e14
 
-    # label = runname
-    label = r"$\alpha$=" + format(hyperparameters["alpha"], ".0e") + "," + format(hyperparameters["max_timesteps"], ".0f") + " time steps"
-    
-    if error:
-        label += "\n(error)"
-
-    elif running:
-        label += "\n(running)"
-
-    marker = None
-    markevery= 1e14
-
-    if "nosmoothen" in runname.lower():
-        if "\n" not in label:
-            label += "\n"
-        label += "(no smoothen)"
-        marker = "x"
-        markevery= 10
-        linestlyle = "--"
+        if "nosmoothen" in str(runname).lower():
+            if "\n" not in label:
+                label += "\n"
+            label += "(no smoothen)"
+            marker = "x"
+            markevery= 10
+            linestlyle = "--"
 
 
-    if loss is not None:
 
         loss /= domain_size
 
         reg /= domain_size
 
-        p = ax1.plot([1 + x for x in range(len(loss))], loss, linestyle=linestlyle, label=label, marker=marker, markevery=markevery)
-
-        c = p[0].get_color()
-
-        ax2.semilogy([1 + x for x in range(len(reg))], reg, color=c, linestyle=linestlyle, label=label)
-
-        for lossx in [loss2]:
-            if lossx is None:
-                continue
-            lossx /= domain_size
-
-            ax1.plot([1 + x for x in range(len(lossx))], lossx, color=c, linestyle=":", label=label + "from loss.txt", marker=marker, markevery=markevery)
+        if startjd0 is not None:
+            jd0 = startjd0
 
         dJ = (loss + reg) / (jd0 / domain_size)
         iters = [1 + x for x in range(len(reg))]
 
+        if startloss is not None:
+            startloss /= domain_size
+            startreg /= domain_size
+            dJ = ((startloss + startreg) / (startjd0 / domain_size)).tolist() + dJ.tolist()
+            iters = [1 + x for x in range(len(dJ))]
 
-        # cs = CubicSpline(iters, dJ)
+        p = ax1.plot(iters, dJ, linestyle=linestlyle, label=label, marker=marker, markevery=markevery)
 
-        ax3.plot(iters, dJ , color=c, linestyle=linestlyle, label=label, marker=marker, markevery=markevery)
+        c = p[0].get_color()
 
-        # if dJ.size > 8:
-        #     dJ2 = savgol_filter(dJ, 7, 3)
-        #     ax3.plot(dJ2, color=c, linestyle="--")
+        if len(dJ) > 10 and (not error) and (hyperparameters["alpha"] > 1e-4):
+            label = label.replace("\n(cancelled)", "")
+            
+            if "(no smoothen)" in label and "\n" not in label:
+                label = label.replace("(no smoothen)", "\n(no smoothen)")
 
-    if "postprocessing" in os.listdir(localpath / runname):
-        deformed_mesh = Mesh(str(localpath / runname / "postprocessing" / "transformed_input_mesh.xml"))
-        quality = MeshQuality.radius_ratio_min_max(deformed_mesh)
+            ax3.plot(iters, dJ , color=c, linestyle=linestlyle, label=label, marker=marker, markevery=markevery)
 
-        meshes[runname] = {"min inner/outer radius" : quality[0], "Delta J = ": ((loss + reg) / (jd0 / domain_size))[-1]}
-
-for ax in [ax1, ax2, ax3]:
-
-    plt.sca(ax)
-
-    ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-
-    # plt.legend()
-    plt.xlabel("LBFGS iteration")
-    plt.ylabel("$L^2$-mismatch to target image")
-    plt.tight_layout()
+        ax2.semilogy([1 + x for x in range(len(reg))], reg, color=c, linestyle=linestlyle, label=label)
 
 
 
-ax2.set_ylabel("Regularization")
-ax3.set_ylabel(r"$\frac{J}{J(0)}$")
-# plt.savefig("./losses.png")
+    # if "postprocessing" in os.listdir(localpath / runname):
+    #     deformed_mesh = Mesh(str(localpath / runname / "postprocessing" / "transformed_input_mesh.xml"))
+    #     quality = MeshQuality.radius_ratio_min_max(deformed_mesh)
 
-# plt.close(fig2)
-plt.close(fig1)
+    #     meshes[runname] = {"min inner/outer radius" : quality[0], "Delta J = ": ((loss + reg) / (jd0 / domain_size))[-1]}
 
-for key, item in meshes.items():
-    print(key, item)
+    for ax in [ax1, ax2, ax3]:
+
+        plt.sca(ax)
+
+        ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
+        # plt.legend()
+        plt.xlabel("LBFGS iteration")
+        plt.ylabel("$L^2$-mismatch to target image")
+        plt.tight_layout()
+
+
+
+    ax2.set_ylabel("Regularization")
+    ax1.set_ylabel(r"$\frac{J}{J(0)}$")
+    ax3.set_ylabel(r"$\frac{J}{J(0)}$")
+    # plt.savefig("./losses.png")
+
+    # plt.close(fig2)
+    # plt.close(fig1)
+
+    for key, item in meshes.items():
+        print(key, item)
 
 plt.show()
