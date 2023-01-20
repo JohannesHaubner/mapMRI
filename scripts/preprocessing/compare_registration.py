@@ -74,7 +74,6 @@ viewcommand += rigid + "abbytoernie.mgz "
 viewcommand += affine + "abbytoernie_affine.mgz "
 
 
-read_image
 
 axis, idx = 1, 100
 
@@ -115,52 +114,104 @@ for a, name, img in zip(ax, names, images):
 
     a.set_title(name)
 
-fig, ax = plt.subplots(1,2)
+fig, ax = plt.subplots(1,4)
 # ax[0].imshow(np.abs(np.take(ernie-rimg, idx, axis)), cmap="jet", vmin=0, vmax=100)
 # ax[1].imshow(np.abs(np.take(ernie-aimg, idx, axis)), cmap="jet", vmin=0, vmax=100)
 
-def l2loss(x, y):
-    s = np.mean(y) / np.mean(x)
+def sigma(residual, mean=False):
+
+    if mean:
+        return sigma3(residual=residual)
+    else:
+
+        return 1.486 * np.median(np.abs(residual[np.abs(residual)>0] - np.median(residual[np.abs(residual)>0])))
+
+# def sigma2(residual):
+#     return 1.486 * np.mean(np.abs(residual[np.abs(residual)>0] - np.mean(residual[np.abs(residual)>0])))
+
+def sigma3(residual):
+    return np.mean((residual - np.mean(residual))**2)
+
+def residual(x,y):
+    # s = np.mean(y) / np.mean(x)
     
-    # x /= np.mean(x)
-    # y /= np.mean(y)
+    s = 1
+    print("s=", s)
 
-    residual = x*np.sqrt(s) - y / np.sqrt(s)
+    return x*np.sqrt(s) - y / np.sqrt(s)
 
-    factor = 1.486 * np.median(np.abs(residual[np.abs(residual)>0] - np.median(residual[np.abs(residual)>0])))
+f = 1
 
-    return (residual / factor)**2
+def l2loss(x, y, mean=False):
+    r = residual(x, y)
+    
+    if f is None:
+        factor =  sigma(r, mean)
+    else:
+        factor = f
 
-def tukeymean(x, y, c=4):
-    s = np.mean(y) / np.mean(x)
-
-    # x /= np.mean(x)
-    # y /= np.mean(y)
-
-    residual = x*np.sqrt(s) - y / np.sqrt(s)
-
-    factor = 1.486 * np.median(np.abs(residual[np.abs(residual)>0] - np.median(residual[np.abs(residual)>0])))
     print("factor", factor)
-    return tukey2(residual / factor, c=c)
+    return (r / factor)**2
 
 
-pcm1=ax[0].imshow(np.take(l2loss(abby, ernie), idx, axis), cmap="jet",)# vmin=0, vmax=100)
-pcm2=ax[1].imshow(np.take(tukeymean(abby, ernie), idx, axis), cmap="jet",)# vmin=0, vmax=100)
+def tukeymean(x, y, c=4, mean=False):
+    r = residual(x, y)
+    if f is None:
+        factor =  sigma(r, mean)
+    else:
+        factor = f
+
+    print("factor", factor)
+
+    return tukey2(r / factor, c=c)
+
+vmax = None
+
+
+
+
+abby = (aimg - np.mean(aimg)) / (np.std(aimg)**2)
+ernie = (ernie - np.mean(ernie)) / (np.std(ernie)**2)
+
+cc = 0.2
+
+pcm1=ax[0].imshow(np.take(l2loss(abby, ernie), idx, axis), cmap="jet", vmax=vmax)
+pcm2=ax[1].imshow(np.take(l2loss(abby, ernie, mean=True), idx, axis), cmap="jet", vmax=vmax)
+pcm3=ax[2].imshow(np.take(tukeymean(abby, ernie, c=cc), idx, axis), cmap="jet", vmax=vmax)
+pcm4=ax[3].imshow(np.take(tukeymean(abby, ernie, c=cc, mean=True), idx, axis), cmap="jet", vmax=vmax)
 
 # ax[0].set_title(r"$(\sqrt{s} \frac{x}{\overline{x}} - \frac{1}{\sqrt{s}} \frac{y}{\overline{y}} )^2$")
 # ax[1].set_title(r"tukey$(\sqrt{s} \frac{x}{\overline{x}}-\frac{1}{\sqrt{s}} \frac{y}{\overline{y}}, c=4.0)$")
 # plt.suptitle("$s = \overline{y} / \overline{x}, \overline{z}$ = geometric mean")
 
-ax[0].set_title(r"$(r)^2$")
-ax[1].set_title(r"tukey$(r)$, c=4.0)$")
+ax[0].set_title(r"$(r/\sigma)^2$")
+ax[1].set_title(r"$(r/\tilde\sigma)^2$")
+ax[2].set_title(r"tukey$(r/\sigma, c=4.0)$")
+ax[3].set_title(r"tukey$(r/\tilde\sigma, c=4.0)$")
 plt.suptitle(r"x,y: Images, $s = \overline{y} / \overline{x}, \overline{x}$ = geometric mean of x" + "\n" + r"$r = \sqrt{s}x-\frac{y}{\sqrt{s}}$")
 
 fig.colorbar(pcm1, ax=ax[0])
 fig.colorbar(pcm2, ax=ax[1])
+fig.colorbar(pcm3, ax=ax[2])
+fig.colorbar(pcm4, ax=ax[3])
+images = []
+
+for image in ["cropped_abby_brain.mgz", "cropped_ernie_brain.mgz", "cropped_abbytoernie_affine.mgz"]:
+    imagepath = affine + image
+
+    image = nibabel.load(imagepath).get_fdata()
+
+    images.append(image)
 
 
+# def op(x,y):
+#     return x-y
 
+# for s in [sigma, sigma2, sigma3]:
 
+#     print(sigma(op(images[0],images[1])))
+#     print(sigma(op(images[0],images[2])))
+#     print(sigma(op(images[2],images[1])))
 
 
 plt.show()

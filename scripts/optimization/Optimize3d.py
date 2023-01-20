@@ -40,9 +40,12 @@ parser.add_argument("--lbfgs_max_iterations", type=float, default=400)
 parser.add_argument("--max_timesteps", type=float, default=None)
 parser.add_argument("--state_functiondegree", type=int, default=1)
 
+
+parser.add_argument("--tukey", default=False, action="store_true", help="Use tukey loss function")
+parser.add_argument("--tukey_c", type=float, default=4)
 parser.add_argument("--readname", type=str, default="-1")
 parser.add_argument("--starting_guess", type=str, default=None)
-parser.add_argument("--normalization", type=str, default="max")
+# parser.add_argument("--normalization", type=str, default="max")
 parser.add_argument("--multigrid", default=False, action="store_true", help="Use starting guess & another transform")
 
 parser.add_argument("--filter", default=False, action="store_true", help="median filter on input and output")
@@ -108,7 +111,7 @@ print_overloaded("Generated outfoldername", hyperparameters["outfoldername"])
 if hyperparameters["starting_guess"] is not None:
     assert os.path.isfile(hyperparameters["starting_guess"])
 
-hyperparameters["normalize"] = True
+hyperparameters["normalize"] = False
 
 if hyperparameters["nosmoothen"]:
     print_overloaded(".................................................................................................................................")
@@ -139,7 +142,11 @@ for key, item in hyperparameters.items():
 if not os.path.isdir(hyperparameters["outputfolder"]):
     os.makedirs(hyperparameters["outputfolder"], exist_ok=True)
 
-(domainmesh, Img, NumData) = read_image(hyperparameters, name="input", mesh=None, normalize=hyperparameters["normalize"], filter=hyperparameters["filter"])
+state_functionspace=hyperparameters["state_functionspace"]
+state_functiondegree=hyperparameters["state_functiondegree"] 
+
+(domainmesh, Img, input_mean) = read_image(hyperparameters, name="input", mesh=None, 
+            state_functionspace=state_functionspace, state_functiondegree=state_functiondegree)
 
 vCG = VectorFunctionSpace(domainmesh, hyperparameters["velocity_functionspace"], hyperparameters["velocity_functiondegree"])
 
@@ -157,9 +164,22 @@ if hyperparameters["starting_guess"] is not None:
 else:
     controlfun = None
 
+(mesh_goal, Img_goal, target_mean) = read_image(hyperparameters, name="target", mesh=domainmesh, 
+        state_functionspace=state_functionspace, state_functiondegree=state_functiondegree,)
 
 
-(mesh_goal, Img_goal, NumData_goal) = read_image(hyperparameters, name="target", mesh=domainmesh, normalize=hyperparameters["normalize"], filter=hyperparameters["filter"])
+iscale = target_mean / input_mean
+hyperparameters["iscale"] = iscale
+print_overloaded("Intensity scale factor =", iscale)
+
+Img = Img * sqrt(iscale)
+Img_goal = Img_goal / sqrt(iscale)
+
+print_overloaded("check:norms:", assemble(Img*dx(domainmesh)), assemble(Img_goal*dx(domainmesh)))
+
+assert np.allclose(assemble(Img*dx(domainmesh)), assemble(Img_goal*dx(domainmesh)))
+
+
 
 
 T_final = 1

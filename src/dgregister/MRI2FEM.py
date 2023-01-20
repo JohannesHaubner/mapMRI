@@ -69,7 +69,9 @@ def fem2mri(function, shape):
         return retimage
 
 
-def read_image(hyperparameters, name, mesh=None, printout=True, threshold=True, normalize=True, filter=False):
+def read_image(hyperparameters, name, mesh=None, printout=True, threshold=True, 
+                state_functionspace="DG", state_functiondegree=1, 
+                filter=False):
     
     if printout:
         print_overloaded("Loading", hyperparameters[name])
@@ -108,7 +110,7 @@ def read_image(hyperparameters, name, mesh=None, printout=True, threshold=True, 
             mesh = BoxMesh(MPI.comm_world, Point(0.0, 0.0, 0.0), Point(nx, ny, nz), nx, ny, nz)
             print_overloaded("Created box mesh")
 
-    space = FunctionSpace(mesh, hyperparameters["state_functionspace"], 0) #hyperparameters["state_functiondegree"])
+    space = FunctionSpace(mesh, "DG", 0)
 
     u_data = Function(space)
 
@@ -130,17 +132,17 @@ def read_image(hyperparameters, name, mesh=None, printout=True, threshold=True, 
     if nz != 1:
         k = ijk[:, 2]
 
-    if normalize:
-        print_overloaded("Normalizing data")
-        print_overloaded("data.max()", data.max())
+    # if normalize:
+    #     print_overloaded("Normalizing data")
+    #     print_overloaded("data.max()", data.max())
 
-        if "normalization" in hyperparameters.keys():
-            if hyperparameters["normalization"] == "max":
-                data /= data.max()
-            if hyperparameters["normalization"] == "mean":
-                data /= np.mean(data[data > 1])
-        # else:
-        #     data /= data.max()
+    #     if "normalization" in hyperparameters.keys():
+    #         if hyperparameters["normalization"] == "max":
+    #             data /= data.max()
+    #         if hyperparameters["normalization"] == "mean":
+    #             data /= np.mean(data[data > 1])
+    #     # else:
+    #     #     data /= data.max()
 
     if threshold and np.min(data) < 0:
         
@@ -155,16 +157,19 @@ def read_image(hyperparameters, name, mesh=None, printout=True, threshold=True, 
         
         data = np.where(data < 0, 0, data)
 
+
+    print(name, "mean intensity", np.mean(data))
+
     if nz != 1:
         u_data.vector()[:] = data[i, j, k]
     else:
         u_data.vector()[:] = data[i, j]
 
-    space = FunctionSpace(mesh, hyperparameters["state_functionspace"], hyperparameters["state_functiondegree"])
+    space = FunctionSpace(mesh, state_functionspace, state_functiondegree)
     
     u_data = project(u_data, space)
 
-    return mesh, u_data, 1  
+    return mesh, u_data, np.mean(data)
 
 if __name__ == "__main__":
 

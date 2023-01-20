@@ -15,7 +15,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--images", type=str, nargs="+", required=True)
     parser.add_argument("--targetfolder", required=True, type=str)
-    
+    parser.add_argument("--box", type=str,)
     parser.add_argument("--crop", action="store_true", default=False)
 
     parser.add_argument("--coarsen", action="store_true", default=False)
@@ -44,11 +44,16 @@ if __name__ == "__main__":
         if not os.path.isfile(imagefile):
             raise ValueError(imagefile + " does not exist")
 
-    largest_box = get_largest_box(parserargs["images"])
+    if parserargs["box"] is not None:
+        largest_box = np.load(parserargs["box"])
+    else:
+
+        largest_box = get_largest_box(parserargs["images"])
+        np.save(targetfolder / "box.npy", largest_box)
 
     generic_affine = np.eye(4)
 
-    np.save(targetfolder / "box.npy", largest_box)
+    
 
     with open(targetfolder / "files.json", 'w') as outfile:
         json.dump(parserargs, outfile, sort_keys=True, indent=4)

@@ -3,7 +3,7 @@ from fenics_adjoint import *
 from dgregister.DGTransport import DGTransport
 from dgregister.transformation_overloaded import transformation
 from dgregister.preconditioning_overloaded import preconditioning
-
+from dgregister.tukey import tukey
 import time, json
 # import nibabel
 # from dgregister.MRI2FEM import fem2mri
@@ -31,6 +31,9 @@ current_iteration = 0
 
 def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess):
 
+    vol = assemble(1*dx)
+
+    hyperparameters["vol"] = vol
 
     if hyperparameters["multigrid"]:
         print_overloaded("Start transporting with starting guess, now transport with the new control in addition")
@@ -87,7 +90,33 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
     cont = Control(controlfun)
 
     # Jd = assemble(0.5 * (Img_deformed - Img_goal) ** 2 * dx(domain=Img.function_space().mesh()))
-    Jd = assemble(0.5 * (Img_deformed - Img_goal) ** 2 * dx) # (domain=Img_goal.function_space().mesh()))
+
+
+    def tukeyloss(x, y, hyperparameters):
+
+        tukey_c = hyperparameters["tukey_c"]
+
+        residual = x - y
+
+        mean_residual = assemble(residual * dx) / vol
+
+        std_residual = sqrt( assemble((residual - mean_residual) ** 2 * dx) / vol )
+
+        residual = (residual - mean_residual) / std_residual
+
+        loss = tukey(x=residual, c=tukey_c)
+        
+        return loss
+
+
+    if hyperparameters["tukey_c"]:
+        
+        loss = tukeyloss(x=Img_deformed, y=Img, hyperparameters=hyperparameters)
+
+    else:
+        loss = (Img_deformed - Img_goal) ** 2
+    
+    Jd = assemble(0.5 * loss * dx)
     print_overloaded("Assembled L2 error between transported image and target, Jdata=", Jd)
 
     Jreg = assemble(alpha*(controlf)**2*dx) # (domain=Img.function_space().mesh()))
@@ -168,7 +197,18 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
         if current_pde_solution.vector()[:].max() > 42:
             raise ValueError("State became > 42 at some vertex, something is probably wrong")
 
-        Jd = assemble(0.5 * (current_pde_solution - Img_goal)**2 * dx(domain=Img.function_space().mesh()))
+
+        if hyperparameters["tukey_c"]:
+            
+            loss = tukeyloss(x=current_pde_solution, y=Img_goal, hyperparameters=hyperparameters)
+
+        else:
+            loss = (Img_deformed - Img_goal) ** 2
+        
+        Jd = assemble(0.5 * loss * dx)
+
+
+        # Jd = assemble(0.5 * (current_pde_solution - Img_goal)**2 * dx(domain=Img.function_space().mesh()))
         Jreg = assemble(alpha*(current_control)**2*dx(domain=Img.function_space().mesh()))
 
         domainmesh = current_pde_solution.function_space().mesh()
