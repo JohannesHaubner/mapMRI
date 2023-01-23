@@ -69,19 +69,20 @@ def fem2mri(function, shape):
         return retimage
 
 
-def read_image(hyperparameters, name, mesh=None, printout=True, threshold=True, 
+def read_image(filename, name, mesh=None, printout=True, threshold=True, 
                 state_functionspace="DG", state_functiondegree=1, 
+                iscale=1, hyperparameters=None,
                 filter=False):
     
     if printout:
-        print_overloaded("Loading", hyperparameters[name])
+        print_overloaded("Loading", filename)
     
-    if hyperparameters[name].endswith(".mgz"):
-        image2 = nibabel.load(hyperparameters[name])
+    if filename.endswith(".mgz"):
+        image2 = nibabel.load(filename)
         data = image2.get_fdata()
-    elif hyperparameters[name].endswith(".png"):
+    elif filename.endswith(".png"):
         from PIL import Image
-        img = Image.open(hyperparameters[name])
+        img = Image.open(filename)
         img = img.convert("L")
         data = np.array(img)
 
@@ -92,8 +93,8 @@ def read_image(hyperparameters, name, mesh=None, printout=True, threshold=True,
         print_overloaded("Applying median filter to image")
         data = ndimage.median_filter(data, size=2)
 
-
-    hyperparameters[name + ".shape"] = list(data.shape)
+    if hyperparameters is not None:
+        hyperparameters[name + ".shape"] = list(data.shape)
     if printout:
         print_overloaded("dimension of image:", data.shape, "(", data.size, "voxels)")
 
@@ -151,14 +152,31 @@ def read_image(hyperparameters, name, mesh=None, printout=True, threshold=True,
         print_overloaded("Warning:", mask.sum(), "/", mask.size, "voxels < 0 in", name)
         print_overloaded("Smallest value", np.min(data), "largest value:", np.max(data))
         print_overloaded("Will apply ReLU to image (threshold negative values to 0)")
-        hyperparameters["smallest_voxel_value"] = np.min(data)
+        if hyperparameters is not None:
+            hyperparameters["smallest_voxel_value"] = np.min(data)
 
         print_overloaded("-"*80)
         
         data = np.where(data < 0, 0, data)
 
+    data /= 255
 
-    print(name, "mean intensity", np.mean(data))
+    if name == "input":
+        data *= np.sqrt(iscale)
+
+    elif name == "target":
+        data /= np.sqrt(iscale)
+
+    else:
+        raise ValueError
+
+    # Img.vector()[:] *= sqrt(iscale)
+    # Img_goal.vector()[:] /= sqrt(iscale)
+
+    print_overloaded(name, "mean intensity", np.mean(data))
+    print_overloaded(name, "median intensity", np.median(data))
+    print_overloaded(name, "min intensity", np.min(data))
+    print_overloaded(name, "max intensity", np.max(data))
 
     if nz != 1:
         u_data.vector()[:] = data[i, j, k]
@@ -169,7 +187,7 @@ def read_image(hyperparameters, name, mesh=None, printout=True, threshold=True,
     
     u_data = project(u_data, space)
 
-    return mesh, u_data, np.mean(data)
+    return mesh, u_data, np.max(data)
 
 if __name__ == "__main__":
 

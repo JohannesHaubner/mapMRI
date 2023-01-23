@@ -1,7 +1,10 @@
 #!/bin/bash
 #SBATCH --job-name=mriregister
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=50
+#SBATCH --ntasks=64
+#SBATCH --exclusive
+### =user
+#SBATCH --ntasks-per-node=64
 #################################################################
 #SBATCH --partition=milanq
 ## SBATCH --partition=fpgaq
@@ -58,7 +61,7 @@ OUTFOLDERNAME=None
 # IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/cropped/cropped_abbytoernie.mgz
 # IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/cropped/cropped_ernie_brain.mgz
 
-OUTPUTDIR=/home/bastian/D1/registration/croppedmriregistration_outputs_affine_median/
+OUTPUTDIR=/home/bastian/D1/registration/test/affine_croppedmriregistration_outputs/tukeyC1/
 IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/affine_registered/cropped_abbytoernie_affine.mgz
 IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/affine_registered/cropped_ernie_brain.mgz
 
@@ -69,25 +72,13 @@ echo "OUTFOLDERNAME=" $OUTFOLDERNAME
 echo "IMG1=" ${IMG1}
 echo "IMG2=" ${IMG2}
 
-# srun -n 50 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
-# --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
-# --timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
-# # --nosmoothen
-# # --starting_guess /home/bastian/D1/registration/mriregistration_outputs/E100A0.001LBFGS100/Control.hdf --readname "-1" --interpolate \
 
-
-# OUTPUTDIR=/home/bastian/D1/registration/mriregistration_outputs/
-# DPATH=/home/bastian/D1/registration
-# DATAPATH=${DPATH}/mri2fem-dataset/processed/coarsecropped/
-# IMG1=${DATAPATH}coarsenedabbytoernie.mgz
-# IMG2=${DATAPATH}coarsenedernie_brain.mgz
-
-
-
-srun -n 50 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
+srun -n 64 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
---normalization median \
+--tukey --tukey_c 1 \
 --timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+
+# --tukey \
 # --starting_guess /home/bastian/D1/registration/croppedmriregistration_outputs/E100A0.01LBFGS100/VelocityField.hdf --readname "-1" --multigrid \
 
 

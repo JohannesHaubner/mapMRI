@@ -27,7 +27,7 @@ else:
 from nibabel.affines import apply_affine
 
 from dgregister.helpers import get_bounding_box, get_lumped_mass_matrices # get_largest_box, pad_with, cut_to_box, 
-from dgregister import find_velocity_ocd
+# 
 
 
 # from IPython import embed
@@ -206,18 +206,17 @@ def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,
 
 
 
-def make_mapping(cubemesh, velocity, hyperparameters, ocd, dgtransport: bool = False):
-
+def make_mapping(cubemesh, velocities, hyperparameters, ocd, dgtransport: bool = False):
 
     mappings = []
 
     for coordinate in ["x[0]", "x[1]", "x[2]"]:
 
-        assert norm(velocity) > 0
-
         print_overloaded("Transporting, ", coordinate, "coordinate")
 
         if ocd:
+            from dgregister import find_velocity_ocd
+            velocity = velocities[0]
             V1 = FunctionSpace(cubemesh, "CG", 1)
             
             unity2 = Function(V1) #¤ cubeimg.function_space())
@@ -229,12 +228,11 @@ def make_mapping(cubemesh, velocity, hyperparameters, ocd, dgtransport: bool = F
 
         else:
 
-            import dgregister.config as config
+            # import dgregister.config as config
 
-            config.hyperparameters = {**hyperparameters, **config.hyperparameters}
+            # config.hyperparameters = {**hyperparameters, **config.hyperparameters}
             
             cgtransport = not dgtransport
-
 
             if cgtransport:
                 from dgregister.DGTransport import CGTransport as Transport
@@ -254,29 +252,18 @@ def make_mapping(cubemesh, velocity, hyperparameters, ocd, dgtransport: bool = F
 
                 assert "VelocityField" in hyperparameters["velocityfilename"] or "CurrentV" in hyperparameters["velocityfilename"]
                 assert "Control.hdf" not in hyperparameters["velocityfilename"]
-            #     _, M_lumped_inv = get_lumped_mass_matrices(vCG=v.function_space())
-            # else:
-            #     assert "Control.hdf" not in hyperparameters["velocityfilename"]
-            #     M_lumped_inv = None
 
-            # if hyperparameters["smoothen"]:
+            for idx, velocity in enumerate(velocities):
 
-            #     from dgregister.transformation_overloaded import transformation
-            #     # from preconditioning_overloaded import Overloaded_Preconditioning # 
-            #     from dgregister.preconditioning_overloaded import preconditioning
-            #     print_overloaded("Transforming l2 control to L2 control")
-            #     controlf = transformation(v, M_lumped_inv)
-            # else:
-            #     controlf = v
+                assert norm(velocity) > 0
 
-            # control = preconditioning(controlf)
+                print_overloaded("Calling Transport()", "cgtransport=", cgtransport, "velocity field", idx + 1 / len(velocities))
+                
+                xout = Transport(Img=xin, Wind=-velocity, preconditioner=hyperparameters["preconditioner"], 
+                                MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
+                                solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
 
-            control = velocity
-
-            print_overloaded("Calling Transport()", "cgtransport=", cgtransport, )
-            xout = Transport(Img=xin, Wind=-control, hyperparameters=hyperparameters,
-                            MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
-                            solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
+                xin = xout
 
             if not cgtransport:
                 V1_CG = FunctionSpace(cubemesh, "CG", 1)

@@ -21,15 +21,14 @@ def print_overloaded(*args):
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--mapping_only", help="only create the coordinate mapping and exit (no mesh transform)", action="store_true", default=False)
-parser.add_argument("--folder", type=str, default="mriregistration_outputs")
-parser.add_argument("--job", type=str, required=True)
+parser.add_argument("--folders", nargs="+", type=str, default="mriregistration_outputs")
 parser.add_argument("--DGtransport", action="store_true", default=False)
 parser.add_argument("--inverseRAS", action="store_true", default=False)
 
 parser.add_argument("--postfolder", type=str, default="postprocessing/")
 
-parser.add_argument("--velocityfilename", type=str, default="VelocityField.hdf") #opts/opt_phi_6.h5")
-parser.add_argument("--readname", type=str, default="-1")#"function")
+parser.add_argument("--velocityfilenames", nargs="+", type=str, default="VelocityField.hdf") #opts/opt_phi_6.h5")
+parser.add_argument("--readnames", nargs="+", type=str, default="-1")#"function")
 
 parserargs = vars(parser.parse_args())
 # from IPython import embed
@@ -51,13 +50,11 @@ if parserargs["mapping_only"]:
 
 if "home/bastian" in os.getcwd():
     path_to_stuff = "/home/bastian/D1/registration/"
-    resultpath = path_to_stuff
     path_to_data = path_to_stuff
     path_to_meshes = "/home/bastian/"
 else:
     path_to_stuff = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/"
     path_to_data = path_to_stuff
-    resultpath = path_to_stuff
     path_to_meshes = "/home/basti/programming/"
 
 def path_to_wmparc(subj):
@@ -70,31 +67,39 @@ def path_to_wmparc(subj):
     else:
         raise ValueError
 
-if not parserargs["folder"].endswith("/"):
-    parserargs["folder"] += "/"
 
-resultpath += parserargs["folder"]
+for idx, _ in parserargs["folders"]:
+    if not parserargs["folders"][idx].endswith("/"):
+        parserargs["folders"][idx] += "/"
+
+    assert os.path.isdir(parserargs["folders"][idx])
+
+# resultpath += parserargs["folder"]
 path_to_data += "mri2fem-dataset/processed/coarsecropped/"
-path_to_meshes += "mri2fem-dataset/chp4/outs/" # "Oscar-Image-Registration-via-Transport-Equation/scripts/preprocessing/chp4/outs/"
+path_to_meshes += "mri2fem-dataset/chp4/outs/"
 
-jobfoldername = parserargs["job"]
+velocityfilenames = parserargs["velocityfilenames"]
+readnames = parserargs["readnames"]
 
-jobfile = resultpath + jobfoldername + "/"
+assert len(parserargs["folders"]) == len(readnames)
+assert len(readnames) == len(velocityfilenames)
 
-velocityfilename = parserargs["velocityfilename"]
-readname = parserargs["readname"]
+ocd = False
 
-velocityfile = jobfile + velocityfilename
+velocities = {}
 
-# print(os.listdir(os.getcwd()))
-# breakpoint()
-# assert velocityfile in os.listdir(os.getcwd())
-assert os.path.isfile(velocityfile)
+for folder, filename, readname in zip(parserargs["folders"], velocityfilenames):
+    assert os.path.isfile(folder + filename)
 
-if "home/bastian" in os.getcwd():
-    # import h5py
-    if not parserargs["readname"] in list(h5py.File(velocityfile).keys()):
-        raise ValueError(parserargs["readname"] + "not in keys of velocityfile:" + str(list(h5py.File(velocityfile).keys())))
+    if "OCD" in folder:
+        raise NotImplementedError
+
+    velocities[folder + filename] = readname
+
+# if "home/bastian" in os.getcwd():
+#     # import h5py
+#     if not parserargs["readname"] in list(h5py.File(velocityfile).keys()):
+#         raise ValueError(parserargs["readname"] + "not in keys of velocityfile:" + str(list(h5py.File(velocityfile).keys())))
 
 recompute_mapping = False
 if ("function" in parserargs["readname"]) or ("function" == parserargs["readname"]) or ("CurrentV.hdf" in parserargs["velocityfilename"]):
@@ -105,12 +110,7 @@ if ("function" in parserargs["readname"]) or ("function" == parserargs["readname
     print_overloaded("Assuming the job is not done, recomputing mapping to have most up-to date transformation")
     print_overloaded("*"*80)
 
-# jobfoldername = "E100A0.0001LBFGS100NOSMOOTHEN"
-# jobfile = resultpath + jobfoldername + "/"
-# velocityfilename = "VelocityField.hdf"
-# readname = "-1"
-
-hyperparameters = json.load(open(jobfile + "hyperparameters.json"))
+hyperparameters = json.load(open(resultpath + "hyperparameters.json"))
 
 import dgregister.config as config
 config.hyperparameters = {"optimize": False}
@@ -122,18 +122,8 @@ if hyperparameters["smoothen"]:
 from dgregister.meshtransform import map_mesh, make_mapping
 
 
-hyperparameters = {**parserargs, **hyperparameters}
-
-config.hyperparameters = {**hyperparameters, **config.hyperparameters}
-
-
-if "OCD" not in jobfile:
-    ocd = False
-    assert hyperparameters["max_timesteps"] > 1
-else:
-    ocd = True
-    assert hyperparameters["max_timesteps"] == 1
-
+# hyperparameters = {**parserargs, **hyperparameters}
+# config.hyperparameters = {**hyperparameters, **config.hyperparameters}
 
 
 res = 16
@@ -151,9 +141,14 @@ aff = np.array([[9.800471663475037e-01, -5.472707748413086e-02, 1.91082328557968
 path1 = path_to_meshes + subj1 + "/"
 path2 = path_to_meshes + subj2 + "/"
 
-os.makedirs(jobfile + hyperparameters["postfolder"], exist_ok=True)
 
-mapfile = jobfile + hyperparameters["postfolder"] + "all" + ".hdf"
+
+outputfolder = parserargs["folders"][-1] + hyperparameters["postfolder"]
+
+os.makedirs(outputfolder, exist_ok=True)
+
+mapfile = outputfolder + "all" + ".hdf"
+
 mappingname = "coordinatemapping"
 
 nx = hyperparameters["input.shape"][0]
@@ -172,20 +167,27 @@ if os.path.isfile(mapfile) and (not recompute_mapping):
     hdf.read(mapping, mappingname)
     hdf.close()
 
-    # For debugging purpose: No transformation
-    # mapping = interpolate(Expression(("x[0]", "x[1]", "x[2]"), degree=1), V3)
 
     assert norm(mapping) != 0
     print_overloaded("Read mapping")
 
 else:
-    v = Function(V3)
-    hdf = HDF5File(cubemesh.mpi_comm(), velocityfile, "r")
-    hdf.read(v, readname)
-    hdf.close()
+    vs = []
+
+    # velocities[folder + filename] = readname
+
+    for filename, readname in velocities.items():
+
+        v = Function(V3)
+        hdf = HDF5File(cubemesh.mpi_comm(), filename, "r")
+        hdf.read(v, readname)
+        hdf.close()
+
+        print_overloaded("Read", filename)
+        vs.append(v)
     
     # make_mapping(cubemesh, velocity, hyperparameters, ocd, dgtransport: bool = False):
-    mapping = make_mapping(cubemesh, v, hyperparameters, ocd=ocd, dgtransport=hyperparameters["DGtransport"])
+    mapping = make_mapping(cubemesh, velocities=vs, hyperparameters=hyperparameters, ocd=ocd, dgtransport=hyperparameters["DGtransport"])
 
     hdf = HDF5File(cubemesh.mpi_comm(), mapfile, "w")
     hdf.write(mapping, mappingname)

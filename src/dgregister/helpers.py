@@ -337,10 +337,12 @@ def interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun, store_pvd
     return domainmesh, vCG, controlfun_fine
 
 
-def store_during_callback(current_iteration, hyperparameters, files, Jd, Jreg, 
+def store_during_callback(current_iteration, hyperparameters, files, Jd, Jreg, l2loss,
                             domainmesh, velocityField, current_pde_solution, control=None):
 
-    print_overloaded("Iter", format(current_iteration, ".0f"), "Jd =", format(Jd, ".2e"), "Reg =", format(Jreg, ".2e"))
+    print_overloaded("Iter", format(current_iteration, ".0f"), 
+                    "Jd =", format(Jd, ".4e"), 
+                    "L2loss =", format(l2loss, ".4e"), "Reg =", format(Jreg, ".2e"))
 
 
 
@@ -350,7 +352,11 @@ def store_during_callback(current_iteration, hyperparameters, files, Jd, Jreg,
             myfile.write(str(float(Jd))+ ", ")
         with open(files["regularizationfile"], "a") as myfile:
             myfile.write(str(float(Jreg))+ ", ")
+        with open(files["l2lossfile"], "a") as myfile:
+            myfile.write(str(float(l2loss))+ ", ")
     
+
+    # 
     hyperparameters["Jd_current"] = float(Jd)
     hyperparameters["Jreg_current"] = float(Jreg)
     

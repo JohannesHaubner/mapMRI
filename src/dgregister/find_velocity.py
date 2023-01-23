@@ -5,6 +5,8 @@ from dgregister.transformation_overloaded import transformation
 from dgregister.preconditioning_overloaded import preconditioning
 from dgregister.tukey import tukey
 import time, json
+import numpy as np
+import resource
 # import nibabel
 # from dgregister.MRI2FEM import fem2mri
 
@@ -31,13 +33,13 @@ current_iteration = 0
 
 def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess):
 
-    vol = assemble(1*dx)
+    vol = assemble(1*dx(Img.function_space().mesh()))
 
     hyperparameters["vol"] = vol
 
     if hyperparameters["multigrid"]:
         print_overloaded("Start transporting with starting guess, now transport with the new control in addition")
-        starting_image = DGTransport(Img, Wind=starting_guess, hyperparameters=hyperparameters,
+        starting_image = DGTransport(Img, Wind=starting_guess, preconditioner=hyperparameters["preconditioner"],
                                 MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
                                 solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
 
@@ -78,7 +80,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
 
     # else:
 
-    Img_deformed = DGTransport(starting_image, control, hyperparameters=hyperparameters,
+    Img_deformed = DGTransport(starting_image, control, preconditioner=hyperparameters["preconditioner"],
                             MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
                             solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
 
@@ -91,6 +93,8 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
 
     # Jd = assemble(0.5 * (Img_deformed - Img_goal) ** 2 * dx(domain=Img.function_space().mesh()))
 
+    mem = resource.getrusage(resource.RUSAGE_SELF)[2]
+    print_overloaded("Current memory after calling transport: %g (MB)" % (mem/1024))
 
     def tukeyloss(x, y, hyperparameters):
 
@@ -102,25 +106,88 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
 
         std_residual = sqrt( assemble((residual - mean_residual) ** 2 * dx) / vol )
 
-        residual = (residual - mean_residual) / std_residual
+        arrname = hyperparameters["outputfolder"] + "/normalized_residual" + str(MPI.rank(MPI.comm_world)) + ".npy"
+        resvec = (x.vector()[:] - y.vector()[:] - mean_residual) / std_residual
+        np.save(arrname, resvec)
 
+        print_overloaded("mean_residual", mean_residual)
+        print_overloaded("std_residual", std_residual)
+
+        print("mean_residual (same as when printd only once?)", mean_residual)
+        print("std_residual (same as when printd only once?)", std_residual)
+
+
+        try:
+            input_for_loss = (x.vector()[:] - y.vector()[:] - mean_residual) / std_residual
+
+            if np.max(np.abs(input_for_loss)) < 1:
+                print("process", MPI.rank(MPI.comm_world), "max of normalized residual < 1")
+        except:
+            pass
+
+        residual = (residual - mean_residual) / std_residual
+        
         loss = tukey(x=residual, c=tukey_c)
         
         return loss
 
 
-    if hyperparameters["tukey_c"]:
-        
-        loss = tukeyloss(x=Img_deformed, y=Img, hyperparameters=hyperparameters)
+    arrname = hyperparameters["outputfolder"] + "/residual" + str(MPI.rank(MPI.comm_world)) + ".npy"
+    resvec = Img_deformed.vector()[:] - Img_goal.vector()[:]
+    np.save(arrname, resvec)
+
+    if hyperparameters["tukey"]:
+        print_overloaded("Using tukey loss")
+        loss = tukeyloss(x=Img_deformed, y=Img_goal, hyperparameters=hyperparameters)
+        Jd = assemble(0.5 * loss * dx)
+
+
+        mem = resource.getrusage(resource.RUSAGE_SELF)[2]
+        print_overloaded("Current memory usage (after assembling tukey loss): %g (MB)" % (mem/1024))
+
+
+        l2loss = assemble(0.5 * (Img_deformed - Img_goal) ** 2 * dx)
+
+        mem = resource.getrusage(resource.RUSAGE_SELF)[2]
+        print_overloaded("Current memory usage (after assembling l2 loss): %g (MB)" % (mem/1024))
 
     else:
         loss = (Img_deformed - Img_goal) ** 2
+        Jd = assemble(0.5 * loss * dx)
+        l2loss = Jd
+
+
+        mem = resource.getrusage(resource.RUSAGE_SELF)[2]
+        print_overloaded("Current memory usage (after assembling l2 loss only): %g (MB)" % (mem/1024))
+
     
-    Jd = assemble(0.5 * loss * dx)
-    print_overloaded("Assembled L2 error between transported image and target, Jdata=", Jd)
+    
+
+    print_overloaded("Assembled error between transported image and target, Jdata=", Jd)
+    print_overloaded("L2 error between transported image and target, Jdata_L2=", l2loss)
 
     Jreg = assemble(alpha*(controlf)**2*dx) # (domain=Img.function_space().mesh()))
     
+
+    mem = resource.getrusage(resource.RUSAGE_SELF)[2]
+    print_overloaded("Current memory usage (after assembling regularization): %g (MB)" % (mem/1024))
+
+
+
+    if MPI.rank(MPI.comm_world) == 0:
+    
+        with open(files["lossfile"], "a") as myfile:
+            myfile.write(str(float(Jd))+ ", ")
+        with open(files["regularizationfile"], "a") as myfile:
+            myfile.write(str(float(Jreg))+ ", ")
+        with open(files["l2lossfile"], "a") as myfile:
+            myfile.write(str(float(l2loss))+ ", ")
+    
+
+    print_overloaded("At init:")
+    print_overloaded("Jd", Jd)
+    print_overloaded("Reg", Jreg)
+
     J = Jd + Jreg
     
     hyperparameters["Jd_init"] = float(Jd)
@@ -129,6 +196,9 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
     print_overloaded("Assembled functional, J=", J)
 
     Jhat = ReducedFunctional(J, cont)
+
+    mem = resource.getrusage(resource.RUSAGE_SELF)[2]
+    print_overloaded("Current memory usage (after creating reduced functional): %g (MB)" % (mem/1024))
 
     if hyperparameters["timing"]:
 
@@ -179,13 +249,25 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
         print_overloaded("convergence test done, exiting")
         
         hyperparameters["conv_rate"] = float(conv_rate)
-        return
+        
+        exit()
+        
+        # return 
 
 
 
     def cb(*args, **kwargs):
         global current_iteration
         current_iteration += 1
+
+        comm = MPI.comm_world
+        nprocs = comm.Get_size()
+
+        # MPI.comm_world.Get_size()
+
+        if nprocs > 100:
+
+            raise ValueError("are you sure you want to use more than 100 tasks ? ")
 
         current_pde_solution = state.tape_value()
         current_pde_solution.rename("Img", "")
@@ -194,18 +276,35 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
         current_control.vector().update_ghost_values()
         current_control.rename("control", "")
 
-        if current_pde_solution.vector()[:].max() > 42:
-            raise ValueError("State became > 42 at some vertex, something is probably wrong")
+        if current_pde_solution.vector()[:].max() > hyperparameters["max_voxel_intensity"] * 5:
+            raise ValueError("State became > hyperparameters['max_voxel_intensity'] * 5 at some vertex, something is probably wrong")
 
 
-        if hyperparameters["tukey_c"]:
+        mem = resource.getrusage(resource.RUSAGE_SELF)[2]
+        print_overloaded("Current memory usage: %g (MB) in iter," % (mem/1024), "current_iteration", current_iteration)
+
+
+        l2loss = (current_pde_solution - Img_goal) ** 2
+
+        l2loss = assemble(0.5 * l2loss * dx)
+
+        mem = resource.getrusage(resource.RUSAGE_SELF)[2]
+        print_overloaded("Current memory usage: %g (MB) in iter, (after l2 loss assembly)" % (mem/1024), "current_iteration", current_iteration)
+
+
+        if hyperparameters["tukey"]:
             
             loss = tukeyloss(x=current_pde_solution, y=Img_goal, hyperparameters=hyperparameters)
 
-        else:
-            loss = (Img_deformed - Img_goal) ** 2
+            Jd = assemble(0.5 * loss * dx)
+            mem = resource.getrusage(resource.RUSAGE_SELF)[2]
+            print_overloaded("Current memory usage: %g (MB) in iter,(after tukey loss assembly)" % (mem/1024), "current_iteration", current_iteration)
+
         
-        Jd = assemble(0.5 * loss * dx)
+        else:
+            Jd = l2loss
+        
+        
 
 
         # Jd = assemble(0.5 * (current_pde_solution - Img_goal)**2 * dx(domain=Img.function_space().mesh()))
@@ -232,6 +331,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
         velocityField.rename("velocity", "")
 
         store_during_callback(current_iteration=current_iteration, hyperparameters=hyperparameters, files=files, Jd=Jd, Jreg=Jreg, 
+                            l2loss=l2loss,
                             domainmesh=domainmesh, velocityField=velocityField, 
                             current_pde_solution=current_pde_solution, control=controlfunction)
 

@@ -80,11 +80,11 @@ READNAME="-1"
 # READNAME="-1"
 
 
-srun -n 32 python3 -u transform_mesh.py --mapping_only --folder ${FOLDER} --job ${JOBNAME} \
+srun -n 32 python3 -u transform_mesh.py --mapping_only --folder ${FOLDER} \
 --postfolder postprocessing_final --velocityfilename ${VFILE} --readname ${READNAME} > ${LOGOUTFILE}
 echo "Computed mapping, now running transform with only one core"
 
-srun -n 1 python3 -u transform_mesh.py --folder ${FOLDER} --job ${JOBNAME} \
+srun -n 1 python3 -u transform_mesh.py --folder ${FOLDER} \
 --postfolder postprocessing_final --velocityfilename ${VFILE} --readname ${READNAME} >> ${LOGOUTFILE}
 echo "success"
 

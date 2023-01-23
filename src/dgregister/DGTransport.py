@@ -8,7 +8,7 @@ def print_overloaded(*args):
         print(*args)
     else:
         pass
-# if ocd:
+
 if "optimize" in config.hyperparameters.keys() and (not config.hyperparameters["optimize"]):
     print_overloaded("Not importing dolfin-adjoint")
 else:
@@ -30,9 +30,9 @@ parameters['ghost_mode'] = 'shared_facet'
 
 
 
-
-
-def CGTransport(Img, Wind, MaxIter, DeltaT, hyperparameters, MassConservation=False, StoreHistory=False, FNameOut="",
+def CGTransport(Img, Wind, MaxIter, DeltaT, 
+                preconditioner="amg",
+                MassConservation=False,
                 solver=None, timestepping=None):
 
     print_overloaded("Calling CGTransport")
@@ -68,7 +68,7 @@ def CGTransport(Img, Wind, MaxIter, DeltaT, hyperparameters, MassConservation=Fa
 
     if solver == "krylov":
         
-        solver = KrylovSolver(A, "gmres", hyperparameters["preconditioner"])
+        solver = KrylovSolver(A, "gmres", preconditioner)
         solver.set_operators(A, A)
         print_overloaded("Assembled A, using Krylov solver")
 
@@ -95,7 +95,7 @@ def CGTransport(Img, Wind, MaxIter, DeltaT, hyperparameters, MassConservation=Fa
 
 
 
-def DGTransport(Img, Wind, MaxIter, DeltaT, hyperparameters, MassConservation=False, StoreHistory=False, FNameOut="",
+def DGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservation=False, StoreHistory=False, FNameOut="",
                 solver=None, timestepping=None):
     
     # assert timestepping in ["CrankNicolson", "explicitEuler"]
@@ -195,7 +195,7 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, hyperparameters, MassConservation=Fa
 
     if solver == "krylov":
         
-        solver = KrylovSolver(A, "gmres", hyperparameters["preconditioner"])
+        solver = KrylovSolver(A, "gmres", preconditioner)
         solver.set_operators(A, A)
         print_overloaded("Assembled A, using Krylov solver")
     

@@ -44,7 +44,7 @@ LOGOUTFILE=/home/bastian/D1/registration/cubeslurm/${SLURM_JOB_ID}_log_python_sr
 
 ITERS=$1
 ALPHA=$2
-LBFGS=50
+LBFGS=2
 
 echo "ITERS=" ${ITERS}
 echo "ALPHA=" ${ALPHA}
@@ -52,7 +52,7 @@ echo "ALPHA=" ${ALPHA}
 OUTFOLDERNAME=None
 
 
-OUTPUTDIR=/home/bastian/D1/registration/cuberegistration_outputs/
+OUTPUTDIR=/home/bastian/D1/registration/tests/
 DPATH=/home/bastian/D1/registration
 DATAPATH=${DPATH}/testdata_3d/
 IMG1=${DATAPATH}input.mgz
@@ -60,7 +60,8 @@ IMG2=${DATAPATH}newtarget.mgz
 
 srun -n 50 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
+--tukey --debug --solver krylov \
 --timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
-
+# --tukey \
 
 echo "success"

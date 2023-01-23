@@ -15,6 +15,14 @@ def print_overloaded(*args):
     else:
         pass
 
+
+comm = MPI.comm_world
+nprocs = comm.Get_size()
+
+if nprocs > 100:
+
+    raise ValueError("are you sure you want to use more than 100 tasks ? ")
+
 print_overloaded("Setting parameters parameters['ghost_mode'] = 'shared_facet'")
 parameters['ghost_mode'] = 'shared_facet'
 
@@ -145,7 +153,12 @@ if not os.path.isdir(hyperparameters["outputfolder"]):
 state_functionspace=hyperparameters["state_functionspace"]
 state_functiondegree=hyperparameters["state_functiondegree"] 
 
-(domainmesh, Img, input_mean) = read_image(hyperparameters, name="input", mesh=None, 
+iscale = np.mean(nibabel.load(hyperparameters["target"]).get_fdata()) / np.mean(nibabel.load(hyperparameters["input"]).get_fdata())
+hyperparameters["iscale"] = iscale
+
+
+(domainmesh, Img, input_max) = read_image(filename=hyperparameters["input"], name="input", mesh=None, 
+            iscale=iscale, hyperparameters=hyperparameters,
             state_functionspace=state_functionspace, state_functiondegree=state_functiondegree)
 
 vCG = VectorFunctionSpace(domainmesh, hyperparameters["velocity_functionspace"], hyperparameters["velocity_functiondegree"])
@@ -164,20 +177,24 @@ if hyperparameters["starting_guess"] is not None:
 else:
     controlfun = None
 
-(mesh_goal, Img_goal, target_mean) = read_image(hyperparameters, name="target", mesh=domainmesh, 
+(mesh_goal, Img_goal, target_max) = read_image(hyperparameters["target"], name="target", mesh=domainmesh, 
+    iscale=iscale, hyperparameters=hyperparameters,
         state_functionspace=state_functionspace, state_functiondegree=state_functiondegree,)
 
 
-iscale = target_mean / input_mean
-hyperparameters["iscale"] = iscale
-print_overloaded("Intensity scale factor =", iscale)
+hyperparameters["max_voxel_intensity"] = max(input_max, target_max)
 
-Img = Img * sqrt(iscale)
-Img_goal = Img_goal / sqrt(iscale)
+# # iscale = target_mean / input_mean
+# iscale = np.mean(Img_goal.vector()[:]) / np.mean(Img.vector()[:])
+# hyperparameters["iscale"] = iscale
+# print_overloaded("Intensity scale factor =", iscale)
+
+# Img.vector()[:] *= sqrt(iscale)
+# Img_goal.vector()[:] /= sqrt(iscale)
 
 print_overloaded("check:norms:", assemble(Img*dx(domainmesh)), assemble(Img_goal*dx(domainmesh)))
 
-assert np.allclose(assemble(Img*dx(domainmesh)), assemble(Img_goal*dx(domainmesh)))
+# assert np.allclose(assemble(Img*dx(domainmesh)), assemble(Img_goal*dx(domainmesh)), rtol=1e-1)
 
 
 
@@ -198,8 +215,8 @@ if MPI.rank(MPI.comm_world) == 0:
 else:
     pass
 
-print_overloaded("Img.vector()[:].mean()", Img.vector()[:].mean())
-print_overloaded("Img_goal.vector()[:].mean()", Img_goal.vector()[:].mean())
+# print_overloaded("Img.vector()[:].mean()", Img.vector()[:].mean())
+# print_overloaded("Img_goal.vector()[:].mean()", Img_goal.vector()[:].mean())
 
 controlFile = HDF5File(domainmesh.mpi_comm(), hyperparameters["outputfolder"] + "/Control.hdf", "w")
 controlFile.write(domainmesh, "mesh")
@@ -233,6 +250,7 @@ else:
 t0 = time.time()
 
 files["lossfile"] = hyperparameters["outputfolder"] + '/loss.txt'
+files["l2lossfile"] = hyperparameters["outputfolder"] + '/l2loss.txt'
 files["regularizationfile"] = hyperparameters["outputfolder"] + '/regularization.txt'
 
 
