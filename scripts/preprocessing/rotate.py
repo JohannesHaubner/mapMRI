@@ -3,15 +3,22 @@ import scipy.ndimage
 from scipy.spatial.transform import Rotation as R
 import numpy as np
 import matplotlib.pyplot as plt
-
+import os
 import nibabel
 import itertools
 from dgregister.helpers import crop_rectangular, get_bounding_box_limits
 from tqdm import tqdm
 
+if "bastian" in os.getcwd():
+    p1 = "/home/bastian/D1/registration/"
+
+else:
+    p1 = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation"
+
+
 imagefiles = [
-"/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/mri2fem-dataset/processed/affine_registered/abbytoernie_affine.mgz",
-"/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/mri2fem-dataset/processed/affine_registered/ernie_brain.mgz",
+p1 + "/mri2fem-dataset/processed/affine_registered/abbytoernie_affine.mgz",
+p1 + "/mri2fem-dataset/processed/affine_registered/ernie_brain.mgz",
 ]
 
 

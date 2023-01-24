@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH --job-name=mriregister
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=128
-## SBATCH --exclusive
+#SBATCH --ntasks=36
+#SBATCH --exclusive
 ### =user
-#SBATCH --ntasks-per-node=128
+#SBATCH --ntasks-per-node=36
 #################################################################
 ## SBATCH --partition=milanq
 ## SBATCH --partition=fpgaq
@@ -48,7 +48,7 @@ LOGOUTFILE=/home/bastian/D1/registration/mrislurm/${SLURM_JOB_ID}_log_python_sru
 # ALPHA=$2
 ITERS=90
 ALPHA=1e-2
-LBFGS=100
+LBFGS=2
 
 echo "ITERS=" ${ITERS}
 echo "ALPHA=" ${ALPHA}
@@ -58,7 +58,7 @@ OUTFOLDERNAME=None
 
 
 
-OUTPUTDIR=/home/bastian/D1/registration/croppedmriregistration_outputs2/tukey/
+OUTPUTDIR=/home/bastian/D1/registration/h001timing/36/
 IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/cropped/cropped_abbytoernie.mgz
 IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/cropped/cropped_ernie_brain.mgz
 
@@ -74,7 +74,7 @@ echo "IMG1=" ${IMG1}
 echo "IMG2=" ${IMG2}
 
 
-srun -n 128 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
+srun -n 36 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
 --tukey --tukey_c 1 \
 --timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}

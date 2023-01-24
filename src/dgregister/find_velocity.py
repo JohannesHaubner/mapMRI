@@ -145,8 +145,8 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
         mem = resource.getrusage(resource.RUSAGE_SELF)[2]
         print_overloaded("Current memory usage (after assembling tukey loss): %g (MB)" % (mem/1024))
 
-
-        l2loss = assemble(0.5 * (Img_deformed - Img_goal) ** 2 * dx)
+        with stop_annotating():
+            l2loss = assemble(0.5 * (Img_deformed - Img_goal) ** 2 * dx)
 
         mem = resource.getrusage(resource.RUSAGE_SELF)[2]
         print_overloaded("Current memory usage (after assembling l2 loss): %g (MB)" % (mem/1024))
@@ -154,6 +154,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
     else:
         loss = (Img_deformed - Img_goal) ** 2
         Jd = assemble(0.5 * loss * dx)
+        
         l2loss = Jd
 
 
