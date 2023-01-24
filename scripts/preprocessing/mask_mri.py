@@ -6,7 +6,7 @@ import pathlib
 import argparse
 import json
 from scipy import ndimage
-from dgregister.helpers import get_largest_box, pad_with, cut_to_box, get_bounding_box
+from dgregister.helpers import crop_rectangular, pad_with, cut_to_box, get_bounding_box_limits
 
 
 if __name__ == "__main__":
@@ -48,7 +48,7 @@ if __name__ == "__main__":
         largest_box = np.load(parserargs["box"])
     else:
 
-        largest_box = get_largest_box(parserargs["images"])
+        largest_box = crop_rectangular(parserargs["images"])
         np.save(targetfolder / "box.npy", largest_box)
 
     generic_affine = np.eye(4)

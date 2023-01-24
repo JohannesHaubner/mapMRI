@@ -26,7 +26,7 @@ else:
 
 from nibabel.affines import apply_affine
 
-from dgregister.helpers import get_bounding_box, get_lumped_mass_matrices # get_largest_box, pad_with, cut_to_box, 
+from dgregister.helpers import get_bounding_box_limits, get_lumped_mass_matrices # get_largest_box, pad_with, cut_to_box, 
 # 
 
 
@@ -116,7 +116,7 @@ def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,
     # breakpoint()
 
     if box is not None:
-        bounds = get_bounding_box(box)
+        bounds = get_bounding_box_limits(box)
         dxyz = [bounds[x].start for x in range(3)]
     else:
 

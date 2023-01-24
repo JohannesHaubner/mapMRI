@@ -235,6 +235,10 @@ for foldername in ["croppedmriregistration_outputs2", "croppedmriregistration_ou
                     cancelled = True
                     break
 
+        if (not error) and (not cancelled):
+            print(hyperparameters["slurmid"])
+            exit()
+
         try:
             loss2 = np.genfromtxt(lossfile, delimiter=",")# [:-1
             reg2 = np.genfromtxt(localpath / runname /"regularization.txt", delimiter=",")

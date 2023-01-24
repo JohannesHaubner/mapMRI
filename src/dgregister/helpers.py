@@ -15,7 +15,8 @@ def print_overloaded(*args):
     else:
         pass
 
-def get_bounding_box(x):
+
+def get_bounding_box_limits(x):
     """ Calculates the bounding box of a ndarray"""
     mask = x == 0
     bbox = []
@@ -32,7 +33,7 @@ def get_bounding_box(x):
     return bbox
 
 
-def get_largest_box(imagefiles):
+def crop_rectangular(imagefiles):
 
     largest_box = np.zeros((256, 256, 256))
 
@@ -41,10 +42,13 @@ def get_largest_box(imagefiles):
 
         # mfile = os.path.join(datapath, pat, "MASKS", "parenchyma.mgz")
 
-        mask = nibabel.load(mfile).get_fdata()# .astype(bool)
+        if isinstance(mfile, np.ndarray):
+            mask = mfile
+        else:
+            mask = nibabel.load(mfile).get_fdata()# .astype(bool)
 
-        boundary = get_bounding_box(mask)
-        print(boundary)
+        boundary = get_bounding_box_limits(mask)
+        # print(boundary)
 
         box = np.ones((256, 256, 256))
         
@@ -61,31 +65,27 @@ def get_largest_box(imagefiles):
         mz[:, :, zlim[0]:(zlim[1])] = 1
 
         box *= mx * my * mz
-        assert boundary == get_bounding_box(box)
+        assert boundary == get_bounding_box_limits(box)
 
         largest_box += box
 
+    # bz:
+    # why did I comment this out? This should be called to obtain a Rectangular box
     # largest_box = get_bounding_box(largest_box)
 
-    return largest_box
-
-
-
+    return np.where(largest_box >=1, True, False)
 
 
 def cut_to_box(image, box, inverse=False, cropped_image=None):
 
-    box_boundary = get_bounding_box(box)
-
-    
-
+    box_boundary = get_bounding_box_limits(box)
 
     xlim_box = [box_boundary[0].start, box_boundary[0].stop]
     ylim_box = [box_boundary[1].start, box_boundary[1].stop]
     zlim_box = [box_boundary[2].start, box_boundary[2].stop]
 
 
-    boundary = get_bounding_box(image)
+    boundary = get_bounding_box_limits(image)
     xlim = [boundary[0].start, boundary[0].stop]
     ylim = [boundary[1].start, boundary[1].stop]
     zlim = [boundary[2].start, boundary[2].stop]
