@@ -206,7 +206,7 @@ def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,
 
 
 
-def make_mapping(cubemesh, velocities, hyperparameters, ocd, dgtransport: bool = False):
+def make_mapping(cubemesh, velocities, state_space, state_degree, parserargs, ocd, dgtransport: bool = False):
 
     mappings = []
 
@@ -242,23 +242,29 @@ def make_mapping(cubemesh, velocities, hyperparameters, ocd, dgtransport: bool =
                 from dgregister.DGTransport import DGTransport as Transport
 
                 print("Using DG transport")
-                V1 = FunctionSpace(cubemesh, hyperparameters["state_functionspace"], hyperparameters["state_functiondegree"])
+                V1 = FunctionSpace(cubemesh, state_space, state_degree)
             
             xin = interpolate(Expression(coordinate, degree=1), V1) # cubeimg.function_space())
             
             print_overloaded("Interpolated ", coordinate)
 
-            if hyperparameters["smoothen"]:
 
-                assert "VelocityField" in hyperparameters["velocityfilename"] or "CurrentV" in hyperparameters["velocityfilename"]
-                assert "Control.hdf" not in hyperparameters["velocityfilename"]
+            idx = 0
+            for key, (velocity, hyperparameters) in velocities.items():
 
-            for idx, velocity in enumerate(velocities):
+                if hyperparameters["smoothen"]:
+
+                    assert "VelocityField" in parserargs["velocityfilename"] or "CurrentV" in parserargs["velocityfilename"]
+                    assert "Control.hdf" not in parserargs["velocityfilename"]
+
 
                 assert norm(velocity) > 0
 
                 print_overloaded("Calling Transport()", "cgtransport=", cgtransport, "velocity field", idx + 1 / len(velocities))
-                
+
+                if MPI.rank(MPI.comm_world) == 0:
+                    idx += 1
+
                 xout = Transport(Img=xin, Wind=-velocity, preconditioner=hyperparameters["preconditioner"], 
                                 MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
                                 solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])

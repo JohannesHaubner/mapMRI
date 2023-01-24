@@ -1,16 +1,15 @@
 #!/bin/bash
 #SBATCH --job-name=mriregister
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=64
-#SBATCH --exclusive
+#SBATCH --ntasks=128
+## SBATCH --exclusive
 ### =user
-#SBATCH --ntasks-per-node=64
+#SBATCH --ntasks-per-node=128
 #################################################################
-#SBATCH --partition=milanq
+## SBATCH --partition=milanq
 ## SBATCH --partition=fpgaq
 ## SBATCH --partition=defq
-## SBATCH --partition=slowq
-## SBATCH --partition=rome16q
+#SBATCH --partition=habanaq
 #################################################################
 #SBATCH --time 13-00:00:0
 ##SBATCH --time 6-24 ##--time=99:00:00
@@ -45,8 +44,10 @@ LOGOUTFILE=/home/bastian/D1/registration/mrislurm/${SLURM_JOB_ID}_log_python_sru
 
 
 
-ITERS=$1
-ALPHA=$2
+# ITERS=$1
+# ALPHA=$2
+ITERS=90
+ALPHA=1e-2
 LBFGS=100
 
 echo "ITERS=" ${ITERS}
@@ -57,13 +58,13 @@ OUTFOLDERNAME=None
 
 
 
-# OUTPUTDIR=/home/bastian/D1/registration/croppedmriregistration_outputs2/
-# IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/cropped/cropped_abbytoernie.mgz
-# IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/cropped/cropped_ernie_brain.mgz
+OUTPUTDIR=/home/bastian/D1/registration/croppedmriregistration_outputs2/tukey/
+IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/cropped/cropped_abbytoernie.mgz
+IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/cropped/cropped_ernie_brain.mgz
 
-OUTPUTDIR=/home/bastian/D1/registration/test/affine_croppedmriregistration_outputs/tukeyC1/
-IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/affine_registered/cropped_abbytoernie_affine.mgz
-IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/affine_registered/cropped_ernie_brain.mgz
+# OUTPUTDIR=/home/bastian/D1/registration/affine_croppedmriregistration_outputs/tukeyC1/
+# IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/affine_registered/cropped_abbytoernie_affine.mgz
+# IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/affine_registered/cropped_ernie_brain.mgz
 
 
 mkdir -pv ${OUTPUTDIR}
@@ -73,11 +74,11 @@ echo "IMG1=" ${IMG1}
 echo "IMG2=" ${IMG2}
 
 
-srun -n 64 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
+srun -n 128 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
 --tukey --tukey_c 1 \
 --timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
-
+# --tukey --tukey_c 1 \
 # --tukey \
 # --starting_guess /home/bastian/D1/registration/croppedmriregistration_outputs/E100A0.01LBFGS100/VelocityField.hdf --readname "-1" --multigrid \
 

@@ -113,8 +113,8 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
         print_overloaded("mean_residual", mean_residual)
         print_overloaded("std_residual", std_residual)
 
-        print("mean_residual (same as when printd only once?)", mean_residual)
-        print("std_residual (same as when printd only once?)", std_residual)
+        # print("mean_residual (same as when printd only once?)", mean_residual)
+        # print("std_residual (same as when printd only once?)", std_residual)
 
 
         try:
@@ -132,9 +132,9 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
         return loss
 
 
-    arrname = hyperparameters["outputfolder"] + "/residual" + str(MPI.rank(MPI.comm_world)) + ".npy"
-    resvec = Img_deformed.vector()[:] - Img_goal.vector()[:]
-    np.save(arrname, resvec)
+    # arrname = hyperparameters["outputfolder"] + "/residual" + str(MPI.rank(MPI.comm_world)) + ".npy"
+    # resvec = Img_deformed.vector()[:] - Img_goal.vector()[:]
+    # np.save(arrname, resvec)
 
     if hyperparameters["tukey"]:
         print_overloaded("Using tukey loss")
@@ -264,11 +264,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
         nprocs = comm.Get_size()
 
         # MPI.comm_world.Get_size()
-
-        if nprocs > 100:
-
-            raise ValueError("are you sure you want to use more than 100 tasks ? ")
-
+        
         current_pde_solution = state.tape_value()
         current_pde_solution.rename("Img", "")
         current_control = cont.tape_value()

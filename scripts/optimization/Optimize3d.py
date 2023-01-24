@@ -19,9 +19,6 @@ def print_overloaded(*args):
 comm = MPI.comm_world
 nprocs = comm.Get_size()
 
-if nprocs > 100:
-
-    raise ValueError("are you sure you want to use more than 100 tasks ? ")
 
 print_overloaded("Setting parameters parameters['ghost_mode'] = 'shared_facet'")
 parameters['ghost_mode'] = 'shared_facet'
