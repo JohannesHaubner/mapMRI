@@ -76,34 +76,38 @@ def crop_rectangular(imagefiles):
     return np.where(largest_box >=1, True, False)
 
 
-def cut_to_box(image, box, inverse=False, cropped_image=None):
+def cut_to_box(image, box_bounds, inverse=False, cropped_image=None):
 
-    box_boundary = get_bounding_box_limits(box)
+    # box_boundary = get_bounding_box_limits(box)
+
+    box_boundary = box_bounds
 
     xlim_box = [box_boundary[0].start, box_boundary[0].stop]
     ylim_box = [box_boundary[1].start, box_boundary[1].stop]
     zlim_box = [box_boundary[2].start, box_boundary[2].stop]
-
-
-    boundary = get_bounding_box_limits(image)
-    xlim = [boundary[0].start, boundary[0].stop]
-    ylim = [boundary[1].start, boundary[1].stop]
-    zlim = [boundary[2].start, boundary[2].stop]
     size = [xlim_box[1] - xlim_box[0], ylim_box[1] - ylim_box[0], zlim_box[1] - zlim_box[0]]
     size = [np.ceil(x).astype(int) for x in size]
 
-    assert size[0] >= xlim[1] - xlim[0]
-    assert size[1] >= ylim[1] - ylim[0]
-    assert size[2] >= zlim[1] -zlim[0]
+    # boundary = get_bounding_box_limits(image)
+    # xlim = [boundary[0].start, boundary[0].stop]
+    # ylim = [boundary[1].start, boundary[1].stop]
+    # zlim = [boundary[2].start, boundary[2].stop]
 
-    image_center = [xlim[1] + xlim[0], ylim[1] + ylim[0], zlim[1] + zlim[0]]
-    image_center = [int(x / 2) for x in image_center]
+
+    # assert size[0] >= xlim[1] - xlim[0]
+    # assert size[1] >= ylim[1] - ylim[0]
+    # assert size[2] >= zlim[1] -zlim[0]
+
+    # image_center = [xlim[1] + xlim[0], ylim[1] + ylim[0], zlim[1] + zlim[0]]
+    # image_center = [int(x / 2) for x in image_center]
     
     
     if inverse:
 
-        idx = np.zeros_like(box)
-        returnimage = np.zeros_like(box).astype(float)
+        raise NotImplementedError
+
+        idx = np.zeros_like(image)
+        returnimage = np.zeros_like(image).astype(float)
 
 
 
@@ -122,13 +126,14 @@ def cut_to_box(image, box, inverse=False, cropped_image=None):
 
         returnimage = np.zeros(tuple(size))
 
+        returnimage = image[xlim_box[0]:xlim_box[1], ylim_box[0]:ylim_box[1], zlim_box[0]:zlim_box[1],]
 
-        returnimage = image[image_center[0] - int(size[0] / 2):image_center[0] + int(size[0] / 2),
-                    image_center[1] - int(size[1] / 2):image_center[1] + int(size[1] / 2),
-                    image_center[2] - int(size[2] / 2):image_center[2] + int(size[2] / 2),
-        ]
+        # returnimage = image[image_center[0] - int(size[0] / 2):image_center[0] + int(size[0] / 2),
+        #             image_center[1] - int(size[1] / 2):image_center[1] + int(size[1] / 2),
+        #             image_center[2] - int(size[2] / 2):image_center[2] + int(size[2] / 2),
+        # ]
 
-        print("cropped shape", returnimage.shape)
+        print("cropped shape", returnimage.shape, "box boundary", box_bounds)
 
     return returnimage
 
