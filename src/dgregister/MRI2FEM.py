@@ -71,6 +71,7 @@ def fem2mri(function, shape):
 
 def read_image(filename, name, mesh=None, printout=True, threshold=True, 
                 state_functionspace="DG", state_functiondegree=1, 
+                normalization_scale=1, 
                 iscale=1, hyperparameters=None,
                 filter=False):
     
@@ -159,7 +160,9 @@ def read_image(filename, name, mesh=None, printout=True, threshold=True,
         
         data = np.where(data < 0, 0, data)
 
-    data /= 255
+    
+
+    data /= normalization_scale
 
     if name == "input":
         data *= np.sqrt(iscale)

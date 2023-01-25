@@ -1,15 +1,14 @@
 #!/bin/bash
 #SBATCH --job-name=timing
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=30
+#SBATCH --ntasks=150
+#SBATCH --nodes=1
+#SBATCH --exclusive
+## SBATCH --reservation=bastian_38
 #################################################################
-## SBATCH --partition=milanq
-## SBATCH --partition=fpgaq
 #SBATCH --partition=defq
-## SBATCH --partition=slowq
-## SBATCH --partition=rome16q
 #################################################################
-#SBATCH --time 0-4
+#SBATCH --time 0-5
 ##SBATCH --time 6-24 ##--time=99:00:00
 #SBATCH -o /home/bastian/D1/registration/mrislurm/%j.out
 #SBATCH --export=ALL
@@ -42,26 +41,21 @@ LOGOUTFILE=/home/bastian/D1/registration/mrislurm/${SLURM_JOB_ID}_log_python_sru
 
 
 
-ITERS=10
-ALPHA=3
-LBFGS=1
+ITERS=90
+ALPHA=1e-2
+LBFGS=2
 
 echo "ITERS=" ${ITERS}
 echo "ALPHA=" ${ALPHA}
 
 
-NP=30
+NP=256
 
-OUTFOLDERNAME=NP${NP}
+OUTFOLDERNAME=None
 
-# OUTPUTDIR=/home/bastian/D1/registration/croppedtiming/
-# IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/cropped/cropped_abbytoernie.mgz
-# IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/cropped/cropped_ernie_brain.mgz
-
-OUTPUTDIR=/home/bastian/D1/registration/coarsedtiming/
-DATAPATH=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/
-IMG1=${DATAPATH}coarsenedabbytoernie.mgz
-IMG2=${DATAPATH}coarsenedernie_brain.mgz
+OUTPUTDIR=/home/bastian/D1/registration/defqtiming/${NP}/
+IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/cropped/cropped_abbytoernie.mgz
+IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/cropped/cropped_ernie_brain.mgz
 
 
 mkdir -pv ${OUTPUTDIR}
@@ -72,9 +66,7 @@ echo "IMG2=" ${IMG2}
 
 srun -n ${NP} python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
---timing --timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
-#--state_functiondegree 0  --nosmoothen  --nosmoothen
-#  --timestepping explicitEuler --solver lu
-
+--tukey --tukey_c 1 \
+--timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 
 echo "success"

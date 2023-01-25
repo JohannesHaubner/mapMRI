@@ -47,7 +47,8 @@ parser.add_argument("--state_functiondegree", type=int, default=1)
 
 
 parser.add_argument("--tukey", default=False, action="store_true", help="Use tukey loss function")
-parser.add_argument("--tukey_c", type=float, default=4)
+parser.add_argument("--tukey_c", type=int, default=4)
+parser.add_argument("--normalization_scale", type=float, default=255, help="divide both images with this number")
 parser.add_argument("--readname", type=str, default="-1")
 parser.add_argument("--starting_guess", type=str, default=None)
 # parser.add_argument("--normalization", type=str, default="max")
@@ -99,6 +100,7 @@ elif hyperparameters["timestepping"] == "explicitEuler":
 
 if not hyperparameters["ocd"]:
     hyperparameters["outfoldername"] += str(int(hyperparameters["max_timesteps"]))
+
 hyperparameters["outfoldername"] += "A" + str(hyperparameters["alpha"])
 hyperparameters["outfoldername"] += "LBFGS" + str(int(hyperparameters["lbfgs_max_iterations"]))
 
@@ -108,6 +110,8 @@ if hyperparameters["nosmoothen"]:
 if hyperparameters["state_functiondegree"] == 0:
     hyperparameters["outfoldername"] += "DG0"
 
+if hyperparameters["tukey"]:
+    hyperparameters["outfoldername"] += "C" + str(hyperparameters["tukey_c"])
 
 hyperparameters["outfoldername"] += suffix
 
@@ -155,7 +159,7 @@ hyperparameters["iscale"] = iscale
 
 
 (domainmesh, Img, input_max) = read_image(filename=hyperparameters["input"], name="input", mesh=None, 
-            iscale=iscale, hyperparameters=hyperparameters,
+            iscale=iscale, hyperparameters=hyperparameters, normalization_scale=hyperparameters["normalization_scale"],
             state_functionspace=state_functionspace, state_functiondegree=state_functiondegree)
 
 vCG = VectorFunctionSpace(domainmesh, hyperparameters["velocity_functionspace"], hyperparameters["velocity_functiondegree"])
@@ -175,8 +179,10 @@ else:
     controlfun = None
 
 (mesh_goal, Img_goal, target_max) = read_image(hyperparameters["target"], name="target", mesh=domainmesh, 
-    iscale=iscale, hyperparameters=hyperparameters,
+    iscale=iscale, hyperparameters=hyperparameters,normalization_scale=hyperparameters["normalization_scale"],
         state_functionspace=state_functionspace, state_functiondegree=state_functiondegree,)
+
+
 
 
 hyperparameters["max_voxel_intensity"] = max(input_max, target_max)
@@ -250,6 +256,8 @@ files["lossfile"] = hyperparameters["outputfolder"] + '/loss.txt'
 files["l2lossfile"] = hyperparameters["outputfolder"] + '/l2loss.txt'
 files["regularizationfile"] = hyperparameters["outputfolder"] + '/regularization.txt'
 
+# files["memoryfile"] = hyperparameters["outputfolder"] + '/memory.txt'
+
 
 #####################################################################
 # Optimization
@@ -263,6 +271,7 @@ print_overloaded("Done with optimization, took", format(tcomp, ".1f"), "hours")
 hyperparameters["optimization_time_hours"] = tcomp
 hyperparameters["Jd_final"] = hyperparameters["Jd_current"]
 hyperparameters["Jreg_final"] = hyperparameters["Jreg_current"]
+hyperparameters["Jl2_final"] = hyperparameters["Jl2_current"]
 if MPI.rank(MPI.comm_world) == 0:
     with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as outfile:
         json.dump(hyperparameters, outfile, sort_keys=True, indent=4)

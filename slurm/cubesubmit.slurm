@@ -1,16 +1,16 @@
 #!/bin/bash
-#SBATCH --job-name=cuberegister
+#SBATCH --job-name=quicktest
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=50
+#SBATCH --ntasks=64
 #################################################################
-## SBATCH --partition=milanq
-#SBATCH --partition=fpgaq
+#SBATCH --partition=milanq
+## SBATCH --partition=fpgaq
 ## SBATCH --partition=defq
 ## SBATCH --partition=slowq
 ## SBATCH --partition=rome16q
 #################################################################
-#SBATCH --time 13-00:00:0
-##SBATCH --time 6-24 ##--time=99:00:00
+##SBATCH --time 13-00:00:0
+#SBATCH --time 0-24 ##--time=99:00:00
 #SBATCH -o /home/bastian/D1/registration/cubeslurm/%j.out
 #SBATCH --export=ALL
 #SBATCH --mail-user=bastian@simula.no
@@ -42,9 +42,9 @@ LOGOUTFILE=/home/bastian/D1/registration/cubeslurm/${SLURM_JOB_ID}_log_python_sr
 
 
 
-ITERS=$1
-ALPHA=$2
-LBFGS=2
+ITERS=42
+ALPHA=1e-2
+LBFGS=32
 
 echo "ITERS=" ${ITERS}
 echo "ALPHA=" ${ALPHA}
@@ -58,10 +58,11 @@ DATAPATH=${DPATH}/testdata_3d/
 IMG1=${DATAPATH}input.mgz
 IMG2=${DATAPATH}newtarget.mgz
 
-srun -n 50 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
+srun -n 64 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
---tukey --debug --solver krylov \
+--normalization_scale 1 \
 --timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
-# --tukey \
+# --tukey --tukey_c 1 \
+# --tukey --tukey_c 1 \
 
 echo "success"

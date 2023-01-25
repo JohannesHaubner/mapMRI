@@ -6,7 +6,7 @@ import os
 import numpy as np
 import nibabel
 import json
-
+import resource
 
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
@@ -347,7 +347,7 @@ def store_during_callback(current_iteration, hyperparameters, files, Jd, Jreg, l
 
     print_overloaded("Iter", format(current_iteration, ".0f"), 
                     "Jd =", format(Jd, ".4e"), 
-                    "L2loss =", format(l2loss, ".4e"), "Reg =", format(Jreg, ".2e"))
+                    "L2loss =", format(l2loss, ".4e"), "Reg =", format(Jreg, ".4e"))
 
 
 
@@ -361,9 +361,9 @@ def store_during_callback(current_iteration, hyperparameters, files, Jd, Jreg, l
             myfile.write(str(float(l2loss))+ ", ")
     
 
-    # 
     hyperparameters["Jd_current"] = float(Jd)
     hyperparameters["Jreg_current"] = float(Jreg)
+    hyperparameters["Jl2_current"] = float(l2loss)
     
     
     with XDMFFile(hyperparameters["outputfolder"] + "/State_checkpoint.xdmf") as xdmf:
