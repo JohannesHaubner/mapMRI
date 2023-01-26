@@ -235,9 +235,9 @@ for foldername in ["croppedmriregistration_outputs2", "croppedmriregistration_ou
                     cancelled = True
                     break
 
-        if (not error) and (not cancelled):
-            print(hyperparameters["slurmid"])
-            exit()
+        # if (not error) and (not cancelled):
+        #     print(hyperparameters["slurmid"])
+        #     exit()
 
         try:
             loss2 = np.genfromtxt(lossfile, delimiter=",")# [:-1
@@ -296,7 +296,9 @@ for foldername in ["croppedmriregistration_outputs2", "croppedmriregistration_ou
             markevery= 10
             linestlyle = "--"
 
-
+        if foldername == "croppedmriregistration_outputs2":
+            label += r" (new $\vec v$)"
+            linestlyle = "-."
 
         loss /= domain_size
 
