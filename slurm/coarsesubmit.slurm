@@ -42,7 +42,7 @@ LOGOUTFILE=/home/bastian/D1/registration/cubeslurm/${SLURM_JOB_ID}_log_python_sr
 
 
 
-ITERS=5
+ITERS=2
 ALPHA=1e-2
 LBFGS=10
 
@@ -51,7 +51,8 @@ echo "ALPHA=" ${ALPHA}
 
 OUTFOLDERNAME=None
 # OUTFOLDERNAME=Projector
-OUTFOLDERNAME=self2
+# OUTFOLDERNAME=preconditioning_func
+OUTFOLDERNAME=unity_preconditioning
 
 OUTPUTDIR=/home/bastian/D1/registration/coarsememorytests/
 # DPATH=/home/bastian/D1/registration
@@ -70,5 +71,6 @@ srun -n 64 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logf
 # --tukey --tukey_c 1 \
 # --tukey \
 # --projector \
+# --nosmoothen \
 
 echo "success"

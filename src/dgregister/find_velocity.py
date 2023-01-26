@@ -83,6 +83,9 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
     else:
         control_L2 = l2_controlfun
 
+
+    # velocity = control_L2
+    preconditioning = lambda x: x
     velocity = preconditioning(control_L2)
 
     velocity.rename("control", "")
@@ -254,65 +257,68 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
         global current_iteration
         current_iteration += 1
         
-        current_pde_solution = state.tape_value()
-        current_pde_solution.rename("Img", "")
-        current_l2_control = cont.tape_value()
-        current_pde_solution.vector().update_ghost_values()
-        current_l2_control.vector().update_ghost_values()
-        current_l2_control.rename("control", "")
-
-        if current_pde_solution.vector()[:].max() > hyperparameters["max_voxel_intensity"] * 5:
-            raise ValueError("State became > hyperparameters['max_voxel_intensity'] * 5 at some vertex, something is probably wrong")
-
-
-        l2loss = (current_pde_solution - Img_goal) ** 2
-        l2loss = assemble(0.5 * l2loss * dx)
-
-
-        if hyperparameters["tukey"]:
-            loss = tukeyloss(x=current_pde_solution, y=Img_goal, hyperparameters=hyperparameters)
-            Jd = assemble(0.5 * loss * dx)
- 
-        else:
-            Jd = l2loss
-
-        if hyperparameters["smoothen"]:
-            current_L2_control = transformation(current_l2_control, M_lumped_inv)
-        else:
-            current_L2_control = current_l2_control        
-        
-        velocityField = preconditioning(current_L2_control)
-        velocityField.rename("velocity", "")
-
-
-
-        # Jd = assemble(0.5 * (current_pde_solution - Img_goal)**2 * dx(domain=Img.function_space().mesh()))
-        Jreg = assemble(alpha*current_L2_control**2*dx(domain=Img.function_space().mesh()))
-
-        domainmesh = current_pde_solution.function_space().mesh()
-        
-        #compute CFL number
-        h = CellDiameter(domainmesh)
-        
-        # if hyperparameters["projector"]:
-        #     CFL = projectorU.project(sqrt(inner(velocityField, velocityField))*Constant(hyperparameters["DeltaT"]) / h)
-        
-        # else:
-        #     CFL = project(sqrt(inner(velocityField, velocityField))*Constant(hyperparameters["DeltaT"]) / h, FunctionSpace(domainmesh, "DG", 0))
-
-        # if(CFL.vector().max() > 1.0):
-            
-        #     raise CFLerror("DGTransport: WARNING: CFL = %le", CFL)
-                
-
-        store_during_callback(current_iteration=current_iteration, hyperparameters=hyperparameters, files=files, Jd=Jd, Jreg=Jreg, 
-                            l2loss=l2loss,
-                            domainmesh=domainmesh, velocityField=velocityField, 
-                            current_pde_solution=current_pde_solution, control=current_l2_control)
-
-
         mem = resource.getrusage(resource.RUSAGE_SELF)[2]
         print("Memory (TB)", (mem/(1e6*1024)), "current_iteration", current_iteration, "process", str(MPI.rank(MPI.comm_world)))
+
+        return 
+
+        with stop_annotating():
+            current_pde_solution = state.tape_value()
+            current_pde_solution.rename("Img", "")
+            current_l2_control = cont.tape_value()
+            current_pde_solution.vector().update_ghost_values()
+            current_l2_control.vector().update_ghost_values()
+            current_l2_control.rename("control", "")
+
+            if current_pde_solution.vector()[:].max() > hyperparameters["max_voxel_intensity"] * 5:
+                raise ValueError("State became > hyperparameters['max_voxel_intensity'] * 5 at some vertex, something is probably wrong")
+
+
+            l2loss = (current_pde_solution - Img_goal) ** 2
+            l2loss = assemble(0.5 * l2loss * dx)
+
+
+            if hyperparameters["tukey"]:
+                loss = tukeyloss(x=current_pde_solution, y=Img_goal, hyperparameters=hyperparameters)
+                Jd = assemble(0.5 * loss * dx)
+    
+            else:
+                Jd = l2loss
+
+            if hyperparameters["smoothen"]:
+                current_L2_control = transformation(current_l2_control, M_lumped_inv)
+            else:
+                current_L2_control = current_l2_control        
+            
+            velocityField = preconditioning(current_L2_control)
+            velocityField.rename("velocity", "")
+
+            # Jd = assemble(0.5 * (current_pde_solution - Img_goal)**2 * dx(domain=Img.function_space().mesh()))
+            Jreg = assemble(alpha*current_L2_control**2*dx(domain=Img.function_space().mesh()))
+
+
+            domainmesh = current_pde_solution.function_space().mesh()
+            
+            #compute CFL number
+            h = CellDiameter(domainmesh)
+            
+            # if hyperparameters["projector"]:
+            #     CFL = projectorU.project(sqrt(inner(velocityField, velocityField))*Constant(hyperparameters["DeltaT"]) / h)
+            
+            # else:
+            #     CFL = project(sqrt(inner(velocityField, velocityField))*Constant(hyperparameters["DeltaT"]) / h, FunctionSpace(domainmesh, "DG", 0))
+
+            # if(CFL.vector().max() > 1.0):
+                
+            #     raise CFLerror("DGTransport: WARNING: CFL = %le", CFL)
+                    
+
+            store_during_callback(current_iteration=current_iteration, hyperparameters=hyperparameters, files=files, Jd=Jd, Jreg=Jreg, 
+                                l2loss=l2loss,
+                                domainmesh=domainmesh, velocityField=velocityField, 
+                                current_pde_solution=current_pde_solution, control=current_l2_control)
+
+
 
     t0 = time.time()
 

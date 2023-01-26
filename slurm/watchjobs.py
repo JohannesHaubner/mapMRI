@@ -5,6 +5,7 @@ jobpaths = [
 # "/home/bastian/Oscar-Image-Registration-via-Transport-Equation/2dslurm/",
 "/home/bastian/D1/registration/mrislurm/",
 "/home/bastian/D1/registration/transportslurm/",
+"/home/bastian/D1/registration/cubeslurm/",
 ]
 
 while True:
@@ -21,7 +22,7 @@ while True:
 
             if job.endswith(".out"):
                 jobid = int(job.replace(".out", ""))
-                if jobid < 436619:
+                if jobid < 437261:
                     continue
             else:
                 continue
@@ -55,5 +56,5 @@ while True:
 
 
         #    print(Lines[-5:])
-    print("Sleeping for one hour")
-    time.sleep(60 * 60)
+    print("Sleeping for one half hour")
+    time.sleep(60 * 30)
