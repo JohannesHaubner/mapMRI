@@ -359,7 +359,8 @@ def store_during_callback(current_iteration, hyperparameters, files, Jd, Jreg, l
             myfile.write(str(float(Jreg))+ ", ")
         with open(files["l2lossfile"], "a") as myfile:
             myfile.write(str(float(l2loss))+ ", ")
-    
+        with open(files["totallossfile"], "a") as myfile:
+            myfile.write(str(float(Jd + Jreg))+ ", ")
 
     hyperparameters["Jd_current"] = float(Jd)
     hyperparameters["Jreg_current"] = float(Jreg)

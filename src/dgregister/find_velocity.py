@@ -15,6 +15,22 @@ from dgregister.helpers import store_during_callback
 
 set_log_level(LogLevel.CRITICAL)
 
+class Projector():
+    def __init__(self, V):
+        self.v = TestFunction(V)
+        u = TrialFunction(V)
+        form = inner(u, self.v)*dx
+        self.A = assemble(form, annotate=False)
+        self.solver = LUSolver(self.A)
+        self.uh = Function(V)
+    def project(self, f):
+        L = inner(f, self.v)*dx
+        b = assemble(L, annotate=False)
+        self.solver.solve(self.uh.vector(), b)
+        return self.uh
+
+
+
 
 class CFLerror(ValueError):
     '''raise this when CFL is violated'''
@@ -52,27 +68,28 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
     set_working_tape(Tape())
 
     # initialize control
-    controlfun = Function(vCG)
+    l2_controlfun = Function(vCG)
 
     if (hyperparameters["starting_guess"] is not None) and (not hyperparameters["multigrid"]):
-        controlfun.assign(starting_guess)
+        raise NotImplementedError("Double check that you are reading the correct file")
+        l2_controlfun.assign(starting_guess)
         print_overloaded("*"*20, "assigned starting guess to control")
-        assert norm(controlfun) > 0
+        assert norm(l2_controlfun) > 0
 
 
     if hyperparameters["smoothen"]:
         print_overloaded("Transforming l2 control to L2 control")
-        controlf = transformation(controlfun, M_lumped_inv)
+        control_L2 = transformation(l2_controlfun, M_lumped_inv)
     else:
-        controlf = controlfun
+        control_L2 = l2_controlfun
 
-    control = preconditioning(controlf)
+    velocity = preconditioning(control_L2)
 
-    control.rename("control", "")
+    velocity.rename("control", "")
 
     print_overloaded("Running Transport() with dt = ", hyperparameters["DeltaT"])
 
-    Img_deformed = DGTransport(starting_image, control, preconditioner=hyperparameters["preconditioner"],
+    Img_deformed = DGTransport(starting_image, velocity, preconditioner=hyperparameters["preconditioner"],
                             MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
                             solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
 
@@ -80,7 +97,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
     # solve forward and evaluate objective
     alpha = Constant(hyperparameters["alpha"]) #regularization
     state = Control(Img_deformed)  # The Control type enables easy access to tape values after replays.
-    cont = Control(controlfun)
+    cont = Control(l2_controlfun)
 
 
     def tukeyloss(x, y, hyperparameters):
@@ -105,8 +122,8 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
             try:
                 input_for_loss = (x.vector()[:] - y.vector()[:] - mean_residual) / std_residual
 
-                if np.max(np.abs(input_for_loss)) < 1:
-                    print("process", MPI.rank(MPI.comm_world), "max of normalized residual < 1")
+                if np.max(np.abs(input_for_loss)) > 1:
+                    print("process", MPI.rank(MPI.comm_world), "max of normalized residual > 1")
             except:
                 pass
 
@@ -142,18 +159,19 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
         
         l2loss = Jd
 
-
-        mem = resource.getrusage(resource.RUSAGE_SELF)[2]
-        print_overloaded("Current memory usage (after assembling l2 loss only): %g (MB)" % (mem/1024))
-
-    
     
 
     print_overloaded("Assembled error between transported image and target, Jdata=", Jd)
     print_overloaded("L2 error between transported image and target, Jdata_L2=", l2loss)
 
-    Jreg = assemble(alpha*(controlf)**2*dx) # (domain=Img.function_space().mesh()))
+    Jreg = assemble(alpha*control_L2**2*dx) # (domain=Img.function_space().mesh()))
     
+    print_overloaded("At init:")
+    print_overloaded("Jd", Jd)
+    print_overloaded("Reg", Jreg)
+
+    J = Jd + Jreg
+
 
     if MPI.rank(MPI.comm_world) == 0:
     
@@ -163,13 +181,11 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
             myfile.write(str(float(Jreg))+ ", ")
         with open(files["l2lossfile"], "a") as myfile:
             myfile.write(str(float(l2loss))+ ", ")
+        with open(files["totallossfile"], "a") as myfile:
+            myfile.write(str(float(J))+ ", ")
     
 
-    print_overloaded("At init:")
-    print_overloaded("Jd", Jd)
-    print_overloaded("Reg", Jreg)
 
-    J = Jd + Jreg
     
     hyperparameters["Jd_init"] = float(Jd)
     hyperparameters["Jreg_init"] = float(Jreg)
@@ -204,9 +220,6 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
             print_overloaded("timing iteration", i, "took", dt0 / 3600, "h")
             print_overloaded("Using", MPI.comm_world.Get_size(), "processes")
         
-        
-
-
         if MPI.rank(MPI.comm_world) == 0:
             hyperparameters["times"] = times
             hyperparameters["processes"] = MPI.comm_world.Get_size()
@@ -218,23 +231,22 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
         exit()
 
     files["stateFile"].write(Img_deformed, str(0))
-    files["controlFile"].write(control, str(0))
+    files["controlFile"].write(l2_controlfun, str(0))
 
-    if hyperparameters["debug"]:
+    # if hyperparameters["debug"]:
 
-        print_overloaded("Running convergence test")
-        h = Function(vCG)
-        h.vector()[:] = 0.1
-        h.vector().apply("")
-        conv_rate = taylor_test(Jhat, control, h)
-        print_overloaded(conv_rate)
-        print_overloaded("convergence test done, exiting")
+    #     print_overloaded("Running convergence test")
+    #     h = Function(vCG)
+    #     h.vector()[:] = 0.1
+    #     h.vector().apply("")
+    #     conv_rate = taylor_test(Jhat, velocity, h)
+    #     print_overloaded(conv_rate)
+    #     print_overloaded("convergence test done, exiting")
+    #     hyperparameters["conv_rate"] = float(conv_rate)  
+    #     exit()
         
-        hyperparameters["conv_rate"] = float(conv_rate)
-        
-        exit()
-        
-        # return 
+    if hyperparameters["projector"]:
+        projectorU = Projector(FunctionSpace(Img.function_space().mesh(), "DG", 0))
 
 
 
@@ -244,63 +256,63 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
         
         current_pde_solution = state.tape_value()
         current_pde_solution.rename("Img", "")
-        current_control = cont.tape_value()
+        current_l2_control = cont.tape_value()
         current_pde_solution.vector().update_ghost_values()
-        current_control.vector().update_ghost_values()
-        current_control.rename("control", "")
+        current_l2_control.vector().update_ghost_values()
+        current_l2_control.rename("control", "")
 
         if current_pde_solution.vector()[:].max() > hyperparameters["max_voxel_intensity"] * 5:
             raise ValueError("State became > hyperparameters['max_voxel_intensity'] * 5 at some vertex, something is probably wrong")
 
 
         l2loss = (current_pde_solution - Img_goal) ** 2
-
         l2loss = assemble(0.5 * l2loss * dx)
 
 
         if hyperparameters["tukey"]:
-            
             loss = tukeyloss(x=current_pde_solution, y=Img_goal, hyperparameters=hyperparameters)
-
             Jd = assemble(0.5 * loss * dx)
  
-        
         else:
             Jd = l2loss
+
+        if hyperparameters["smoothen"]:
+            current_L2_control = transformation(current_l2_control, M_lumped_inv)
+        else:
+            current_L2_control = current_l2_control        
         
-        mem = resource.getrusage(resource.RUSAGE_SELF)[2]
-        print("Memory (TB)", (mem/(1e6*1024)), "current_iteration", current_iteration, "process", str(MPI.rank(MPI.comm_world)))
+        velocityField = preconditioning(current_L2_control)
+        velocityField.rename("velocity", "")
 
 
 
         # Jd = assemble(0.5 * (current_pde_solution - Img_goal)**2 * dx(domain=Img.function_space().mesh()))
-        Jreg = assemble(alpha*(current_control)**2*dx(domain=Img.function_space().mesh()))
+        Jreg = assemble(alpha*current_L2_control**2*dx(domain=Img.function_space().mesh()))
 
         domainmesh = current_pde_solution.function_space().mesh()
         
         #compute CFL number
         h = CellDiameter(domainmesh)
-        CFL = project(sqrt(inner(current_control, current_control))*Constant(hyperparameters["DeltaT"]) / h, FunctionSpace(domainmesh, "DG", 0))
+        
+        if hyperparameters["projector"]:
+            CFL = projectorU.project(sqrt(inner(velocityField, velocityField))*Constant(hyperparameters["DeltaT"]) / h)
+        
+        else:
+            CFL = project(sqrt(inner(velocityField, velocityField))*Constant(hyperparameters["DeltaT"]) / h, FunctionSpace(domainmesh, "DG", 0))
 
         if(CFL.vector().max() > 1.0):
             
             raise CFLerror("DGTransport: WARNING: CFL = %le", CFL)
                 
-        if hyperparameters["smoothen"]:
-            controlfunction = current_control
-            scaledControl = transformation(current_control, M_lumped_inv)
-        else:
-            scaledControl = current_control
-            controlfunction = None
-
-        velocityField = preconditioning(scaledControl)
-        velocityField.rename("velocity", "")
 
         store_during_callback(current_iteration=current_iteration, hyperparameters=hyperparameters, files=files, Jd=Jd, Jreg=Jreg, 
                             l2loss=l2loss,
                             domainmesh=domainmesh, velocityField=velocityField, 
-                            current_pde_solution=current_pde_solution, control=controlfunction)
+                            current_pde_solution=current_pde_solution, control=current_l2_control)
 
+
+        mem = resource.getrusage(resource.RUSAGE_SELF)[2]
+        print("Memory (TB)", (mem/(1e6*1024)), "current_iteration", current_iteration, "process", str(MPI.rank(MPI.comm_world)))
 
     t0 = time.time()
 
@@ -314,17 +326,15 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
     current_pde_solution.rename("finalstate", "")
     # File(hyperparameters["outputfolder"] + '/Finalstate.pvd') << current_pde_solution
 
-    current_control = cont.tape_value()
-    current_control.rename("control", "")
+    final_l2_control = cont.tape_value()
+    final_l2_control.rename("control", "")
 
     if hyperparameters["smoothen"]:
-        scaledControl = transformation(current_control, M_lumped_inv)
-        returncontrol = current_control
+        scaledControl = transformation(final_l2_control, M_lumped_inv)
     else:
-        scaledControl = current_control
-        returncontrol = None
+        scaledControl = final_l2_control
 
     velocityField = preconditioning(scaledControl)
     velocityField.rename("velocity", "")
 
-    return current_pde_solution, velocityField, returncontrol
+    return current_pde_solution, velocityField, final_l2_control

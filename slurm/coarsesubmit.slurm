@@ -1,16 +1,16 @@
 #!/bin/bash
 #SBATCH --job-name=quicktest
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=16
+#SBATCH --ntasks=64
 #################################################################
 ## SBATCH --partition=milanq
-#SBATCH --partition=fpgaq
-## SBATCH --partition=defq
+## SBATCH --partition=fpgaq
+#SBATCH --partition=defq
+#SBATCH --reservation=bastian_39
 ## SBATCH --partition=slowq
 ## SBATCH --partition=rome16q
 #################################################################
-##SBATCH --time 13-00:00:0
-#SBATCH --time 0-24 ##--time=99:00:00
+#SBATCH --time 0-3 ##--time=99:00:00
 #SBATCH -o /home/bastian/D1/registration/cubeslurm/%j.out
 #SBATCH --export=ALL
 #SBATCH --mail-user=bastian@simula.no
@@ -43,27 +43,32 @@ LOGOUTFILE=/home/bastian/D1/registration/cubeslurm/${SLURM_JOB_ID}_log_python_sr
 
 
 ITERS=10
-ALPHA=1e-1
+ALPHA=1e-2
 LBFGS=10
 
 echo "ITERS=" ${ITERS}
 echo "ALPHA=" ${ALPHA}
 
-# OUTFOLDERNAME=None
-OUTFOLDERNAME=Projector
+OUTFOLDERNAME=None
+# OUTFOLDERNAME=Projector
 
-OUTPUTDIR=/home/bastian/D1/registration/tests/
-DPATH=/home/bastian/D1/registration
-DATAPATH=${DPATH}/testdata_3d/
-IMG1=${DATAPATH}input.mgz
-IMG2=${DATAPATH}newtarget.mgz
+OUTPUTDIR=/home/bastian/D1/registration/coarsememorytests/
+# DPATH=/home/bastian/D1/registration
+# DATAPATH=${DPATH}/testdata_3d/
+# IMG1=${DATAPATH}input.mgz
+# IMG2=${DATAPATH}newtarget.mgz
 
-srun -n 16 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
+
+IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/coarsenedabbytoernie.mgz
+IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/coarsenedernie_brain.mgz
+
+srun -n 64 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} --normalization_scale 1 \
---tukey --projector \
+--tukey \
 --timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 # --tukey --tukey_c 1 \
 # --tukey --tukey_c 1 \
 # --tukey \
+--projector \
 
 echo "success"

@@ -1,8 +1,9 @@
 #!/bin/bash
 #SBATCH --job-name=mriregister
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=64
-#SBATCH --exclusive
+#SBATCH --ntasks=128
+#SBATCH --nodes=2
+## SBATCH --exclusive
 ### =user
 #SBATCH --ntasks-per-node=64
 #################################################################
@@ -61,7 +62,7 @@ OUTFOLDERNAME=None
 
 
 
-OUTPUTDIR=/home/bastian/D1/registration/hopefully_final/
+OUTPUTDIR=/home/bastian/D1/registration/hopefully_final_2nodes/
 IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/affine-rotated/abby.mgz
 IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/affine-rotated/ernie.mgz
 
@@ -77,7 +78,7 @@ echo "IMG1=" ${IMG1}
 echo "IMG2=" ${IMG2}
 
 
-srun -n 64 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
+srun -n 128 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
 --tukey --tukey_c 1 \
 --timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}

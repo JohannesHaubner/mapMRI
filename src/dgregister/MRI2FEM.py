@@ -165,10 +165,10 @@ def read_image(filename, name, mesh=None, printout=True, threshold=True,
     data /= normalization_scale
 
     if name == "input":
-        data *= np.sqrt(iscale)
+        data *= iscale
 
     elif name == "target":
-        data /= np.sqrt(iscale)
+        data /= iscale  
 
     else:
         raise ValueError

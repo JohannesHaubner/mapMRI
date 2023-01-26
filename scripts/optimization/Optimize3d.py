@@ -45,7 +45,7 @@ parser.add_argument("--lbfgs_max_iterations", type=float, default=400)
 parser.add_argument("--max_timesteps", type=float, default=None)
 parser.add_argument("--state_functiondegree", type=int, default=1)
 
-
+parser.add_argument("--projector", default=False, action="store_true")
 parser.add_argument("--tukey", default=False, action="store_true", help="Use tukey loss function")
 parser.add_argument("--tukey_c", type=int, default=4)
 parser.add_argument("--normalization_scale", type=float, default=255, help="divide both images with this number")
@@ -56,7 +56,7 @@ parser.add_argument("--multigrid", default=False, action="store_true", help="Use
 
 parser.add_argument("--filter", default=False, action="store_true", help="median filter on input and output")
 parser.add_argument("--debug", default=False, action="store_true", help="Debug")
-parser.add_argument("--timing", default=False, action="store_true", help="Debug")
+parser.add_argument("--timing", default=False, action="store_true")
 parser.add_argument("--ocd", default=False, action="store_true")
 parser.add_argument("--input", default="mridata_3d/091registeredto205_padded_coarsened.mgz")
 parser.add_argument("--target", default="mridata_3d/205_cropped_padded_coarsened.mgz")
@@ -255,6 +255,7 @@ t0 = time.time()
 files["lossfile"] = hyperparameters["outputfolder"] + '/loss.txt'
 files["l2lossfile"] = hyperparameters["outputfolder"] + '/l2loss.txt'
 files["regularizationfile"] = hyperparameters["outputfolder"] + '/regularization.txt'
+files["totallossfile"] = hyperparameters["outputfolder"] + '/loss.txt'
 
 # files["memoryfile"] = hyperparameters["outputfolder"] + '/memory.txt'
 
@@ -292,8 +293,7 @@ with XDMFFile(hyperparameters["outputfolder"] + "/Finalvelocity.xdmf") as xdmf:
     xdmf.write_checkpoint(FinalVelocity, "FinalV", 0.)
 
 files["velocityFile"].write(FinalVelocity, "-1")
-if FinalControl is not None:
-    files["controlFile"].write(FinalControl, "-1")
+files["controlFile"].write(FinalControl, "-1")
 files["stateFile"].write(FinalImg, "-1")
 
 print_overloaded("Stored final State, Control, Velocity to .hdf files")
