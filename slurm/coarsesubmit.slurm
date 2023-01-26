@@ -42,7 +42,7 @@ LOGOUTFILE=/home/bastian/D1/registration/cubeslurm/${SLURM_JOB_ID}_log_python_sr
 
 
 
-ITERS=10
+ITERS=5
 ALPHA=1e-2
 LBFGS=10
 
@@ -51,6 +51,7 @@ echo "ALPHA=" ${ALPHA}
 
 OUTFOLDERNAME=None
 # OUTFOLDERNAME=Projector
+OUTFOLDERNAME=self
 
 OUTPUTDIR=/home/bastian/D1/registration/coarsememorytests/
 # DPATH=/home/bastian/D1/registration
@@ -64,11 +65,10 @@ IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/coars
 
 srun -n 64 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} --normalization_scale 1 \
---tukey \
 --timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 # --tukey --tukey_c 1 \
 # --tukey --tukey_c 1 \
 # --tukey \
---projector \
+# --projector \
 
 echo "success"

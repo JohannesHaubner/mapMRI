@@ -119,11 +119,13 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservati
 
     mesh = Space.mesh()
     #compute CFL number
-    h = CellDiameter(mesh)
-    CFL = project(sqrt(inner(Wind, Wind))*Constant(DeltaT)/h, FunctionSpace(mesh, "DG", 0))
+
+
+    # h = CellDiameter(mesh)
+    # CFL = project(sqrt(inner(Wind, Wind))*Constant(DeltaT)/h, FunctionSpace(mesh, "DG", 0))
     
-    if(CFL.vector().max() > 1.0):
-        raise ValueError("DGTransport: WARNING: CFL = %le", CFL)
+    # if(CFL.vector().max() > 1.0):
+    #     raise ValueError("DGTransport: WARNING: CFL = %le", CFL)
 
     #Make form:
     n = FacetNormal(mesh)
@@ -179,10 +181,9 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservati
         a = a + Form(Img_deformed)
     elif timestepping == "RungeKutta":
         # in this case we assemble the RHS during the loop
-        pass 
-    elif timestepping == "RungeKuttaBug":
-        # in this case we assemble the RHS during the loop
-        pass 
+        dImg = TrialFunction(Img_deformed.function_space())
+        dI = Function(Img_deformed.function_space())
+
     elif timestepping == "CrankNicolson":
         a = a + 0.5*(Form(Img_deformed) + Form(Img_next))
     else:
@@ -218,8 +219,7 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservati
         print_overloaded("Iteration ", i + 1, "/", MaxIter, "in Transport()")
 
         if timestepping == "RungeKutta" or timestepping == "RungeKuttaBug":
-            dImg = TrialFunction(Img_deformed.function_space())
-            dI = Function(Img_deformed.function_space())
+
             
             solve(inner(dImg, v)*dx == Form(Img_deformed), dI)
             # A = assemble(lhs(tempA))

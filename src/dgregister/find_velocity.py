@@ -294,15 +294,15 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
         #compute CFL number
         h = CellDiameter(domainmesh)
         
-        if hyperparameters["projector"]:
-            CFL = projectorU.project(sqrt(inner(velocityField, velocityField))*Constant(hyperparameters["DeltaT"]) / h)
+        # if hyperparameters["projector"]:
+        #     CFL = projectorU.project(sqrt(inner(velocityField, velocityField))*Constant(hyperparameters["DeltaT"]) / h)
         
-        else:
-            CFL = project(sqrt(inner(velocityField, velocityField))*Constant(hyperparameters["DeltaT"]) / h, FunctionSpace(domainmesh, "DG", 0))
+        # else:
+        #     CFL = project(sqrt(inner(velocityField, velocityField))*Constant(hyperparameters["DeltaT"]) / h, FunctionSpace(domainmesh, "DG", 0))
 
-        if(CFL.vector().max() > 1.0):
+        # if(CFL.vector().max() > 1.0):
             
-            raise CFLerror("DGTransport: WARNING: CFL = %le", CFL)
+        #     raise CFLerror("DGTransport: WARNING: CFL = %le", CFL)
                 
 
         store_during_callback(current_iteration=current_iteration, hyperparameters=hyperparameters, files=files, Jd=Jd, Jreg=Jreg, 

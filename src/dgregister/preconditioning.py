@@ -84,24 +84,28 @@ class Preconditioning():
         else:
             C = func.function_space()
             dim = func.geometric_dimension()
-            BC = DirichletBC(C, Constant((0.0,)*dim), "on_boundary")
-            c = TrialFunction(C)
-            psi = TestFunction(C)
+
+            if not hasattr(self, "BC"):
+
+                self.BC = DirichletBC(C, Constant((0.0,)*dim), "on_boundary")
+                self.c = TrialFunction(C)
+                self.psi = TestFunction(C)
+                self.cc = Function(C)
             
 
             if not hasattr(self, "solver"):
-                a = inner(grad(c), grad(psi)) * dx
+                a = inner(grad(self.c), grad(self.psi)) * dx
                 # a = inner(grad(c), grad(psi)) * dx
                 self.A = assemble(a)
                 print_overloaded("Assembled A in Preconditioning()")
             
-            L = inner(func, psi) * dx
+            L = inner(func, self.psi) * dx
             
             
             tmp = assemble(L)
-            BC.apply(tmp)
+            self.BC.apply(tmp)
             
-            BC.apply(self.A)
+            self.BC.apply(self.A)
             # solve(a == L, c, BC)
 
             if not hasattr(self, "solver"):
@@ -125,10 +129,10 @@ class Preconditioning():
             # x = args[0]
             # b = args[1]
 
-            cc = Function(C)
-            self.solver.solve(cc.vector(), tmp)
+            
+            self.solver.solve(self.cc.vector(), tmp)
 
-        return cc
+        return self.cc
 
 
 preconditioning = Preconditioning()
