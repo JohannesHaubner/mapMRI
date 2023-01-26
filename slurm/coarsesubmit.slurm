@@ -51,7 +51,7 @@ echo "ALPHA=" ${ALPHA}
 
 OUTFOLDERNAME=None
 # OUTFOLDERNAME=Projector
-OUTFOLDERNAME=self
+OUTFOLDERNAME=self2
 
 OUTPUTDIR=/home/bastian/D1/registration/coarsememorytests/
 # DPATH=/home/bastian/D1/registration

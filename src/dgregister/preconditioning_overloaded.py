@@ -61,14 +61,17 @@ class PreconditioningBlock(Block):
             tmp = adj_inputs[0].copy()
             C = inputs[idx].function_space()
             dim = inputs[idx].geometric_dimension()
-            BC = DirichletBC(C, Constant((0.0,) * dim), "on_boundary")
-            c = TrialFunction(C)
-            psi = TestFunction(C)
+            if not hasattr(self, "BC"):
+                self.BC = DirichletBC(C, Constant((0.0,) * dim), "on_boundary")
+                self.c = TrialFunction(C)
+                self.psi = TestFunction(C)
+                self.ct = Function(C)
+                self.ctest = TestFunction(C)
             
             if not hasattr(self, "solver"):
-                a = inner(grad(c), grad(psi)) * dx
+                a = inner(grad(self.c), grad(self.psi)) * dx
                 self.A = assemble(a)
-                BC.apply(self.A)
+                self.BC.apply(self.A)
 
                 print_overloaded("Assembled A in PreconditioningBlock()")
                 
@@ -91,13 +94,13 @@ class PreconditioningBlock(Block):
             
             # a = inner(grad(c), grad(psi)) * dx
             # A = assemble(a)
-            ct = Function(C)
             
-            BC.apply(tmp)
-            self.solver.solve(ct.vector(), tmp)
+            
+            self.BC.apply(tmp)
+            self.solver.solve(self.ct.vector(), tmp)
             # solve(self.A, ct.vector(), tmp)
-            ctest = TestFunction(C)
-            tmp = assemble(inner(ctest, ct) * dx)
+            
+            tmp = assemble(inner(self.ctest, self.ct) * dx)
         
         
         return tmp
@@ -106,3 +109,5 @@ class PreconditioningBlock(Block):
         return backend_preconditioning(inputs[0])
 
 preconditioning = overload_function(preconditioning, PreconditioningBlock)
+
+#preconditioning = lambda x: x

@@ -7,6 +7,7 @@ def print_overloaded(*args):
     else:
         pass
 # if ocd:
+
 if "optimize" in config.hyperparameters.keys() and (not config.hyperparameters["optimize"]):
     print_overloaded("Not importing dolfin-adjoint")
 else:
@@ -136,3 +137,5 @@ class Preconditioning():
 
 
 preconditioning = Preconditioning()
+
+# preconditioning = lambda x: x
