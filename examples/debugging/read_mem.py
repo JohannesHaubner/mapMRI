@@ -36,3 +36,20 @@ def read_memory(filename):
     return mema, outfoldername
 
     
+def check_for_error(filename):
+
+    file = open(filename)
+    Lines = file.readlines()
+
+    mems = {}
+    for line in Lines:
+
+        if "error" in line:
+            print(filename)
+            print("--", line)
+            return True
+
+        if "success" in line:
+            return True
+    
+    #

@@ -45,6 +45,11 @@ parser.add_argument("--lbfgs_max_iterations", type=float, default=400)
 parser.add_argument("--max_timesteps", type=float, default=None)
 parser.add_argument("--state_functiondegree", type=int, default=1)
 
+
+parser.add_argument("--preconditioning", required=True, type=str, choices=["none", "preconditioning"])
+parser.add_argument("--memdebug", default=False, action="store_true")
+parser.add_argument("--maxcor", default=10, type=int)
+
 parser.add_argument("--projector", default=False, action="store_true")
 parser.add_argument("--tukey", default=False, action="store_true", help="Use tukey loss function")
 parser.add_argument("--tukey_c", type=int, default=4)

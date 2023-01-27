@@ -49,6 +49,10 @@ current_iteration = 0
 
 def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess):
 
+
+    ny = Expression(('0.0','1.0', '0.0'), degree=0)
+
+
     vol = assemble(1*dx(Img.function_space().mesh()))
 
     hyperparameters["vol"] = vol
@@ -77,18 +81,31 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
         assert norm(l2_controlfun) > 0
 
 
-    if hyperparameters["smoothen"]:
-        print_overloaded("Transforming l2 control to L2 control")
-        control_L2 = transformation(l2_controlfun, M_lumped_inv)
-    else:
+    # control_L2 = l2_controlfun
+
+    # # velocity = control_L2
+    # preconditioning = lambda x: x
+
+    if hyperparameters["memdebug"] and hyperparameters["preconditioning"] == "none":
         control_L2 = l2_controlfun
+        velocity = control_L2
+        print_overloaded("Setting velocity = l2_controlfun")
+    else:
+        #######################
+        #######################
+        assert hyperparameters["preconditioning"] == "preconditioning"
+        #######################
+        #######################
+        if hyperparameters["smoothen"]:
+            print_overloaded("Transforming l2 control to L2 control")
+            control_L2 = transformation(l2_controlfun, M_lumped_inv)
+        else:
+            control_L2 = l2_controlfun
 
+        print_overloaded("Preconditioning L2_controlfun")
+        velocity = preconditioning(control_L2)
 
-    # velocity = control_L2
-    preconditioning = lambda x: x
-    velocity = preconditioning(control_L2)
-
-    velocity.rename("control", "")
+        # velocity.rename("control", "")
 
     print_overloaded("Running Transport() with dt = ", hyperparameters["DeltaT"])
 
@@ -96,6 +113,12 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
                             MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
                             solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
 
+    
+
+    # Img_deformed = project(dot(velocity, ny), Img.function_space())
+    # Img_deformed = velocity[0]
+
+    # Img_deformed = starting_image
 
     # solve forward and evaluate objective
     alpha = Constant(hyperparameters["alpha"]) #regularization
@@ -160,7 +183,9 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
         loss = (Img_deformed - Img_goal) ** 2
         Jd = assemble(0.5 * loss * dx)
         
-        l2loss = Jd
+
+        with stop_annotating():
+            l2loss = Jd
 
     
 
@@ -232,6 +257,8 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
 
         print_overloaded("Timing done, exiting")
         exit()
+
+
 
     files["stateFile"].write(Img_deformed, str(0))
     files["controlFile"].write(l2_controlfun, str(0))
@@ -318,15 +345,30 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
                                 domainmesh=domainmesh, velocityField=velocityField, 
                                 current_pde_solution=current_pde_solution, control=current_l2_control)
 
-
+    print_overloaded("Using maxcor =", hyperparameters["maxcor"], "in LBFGS-B")
 
     t0 = time.time()
 
-    minimize(Jhat,  method = 'L-BFGS-B', options = {"iprint": 0, "disp": None, "maxiter": hyperparameters["lbfgs_max_iterations"]}, tol=1e-08, callback = cb)
+    minimize(Jhat,  method = 'L-BFGS-B', options = {"iprint": 0, "disp": None, "maxiter": hyperparameters["lbfgs_max_iterations"],
+                # "maxls": 1,  "ftol": 0, "gtol": 0, 
+                "maxcor": hyperparameters["maxcor"],
+                }, 
+                # tol = 1e-100, # 
+                tol=1e-12, 
+                callback = cb)
 
     dt0 = time.time() - t0
 
     hyperparameters["minimization_time_hours"] = dt0 / 3600
+
+
+    if MPI.rank(MPI.comm_world) == 0:
+        with open(hyperparameters["outputfolder"] + '/hyperparameters_after_min.json', 'w') as outfile:
+            json.dump(hyperparameters, outfile, sort_keys=True, indent=4)
+
+
+    if hyperparameters["memdebug"]:
+        exit()
 
     current_pde_solution = state.tape_value()
     current_pde_solution.rename("finalstate", "")
