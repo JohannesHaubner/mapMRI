@@ -46,7 +46,7 @@ parser.add_argument("--max_timesteps", type=float, default=None)
 parser.add_argument("--state_functiondegree", type=int, default=1)
 
 
-parser.add_argument("--preconditioning", required=True, type=str, choices=["none", "preconditioning"])
+parser.add_argument("--preconditioning", default="preconditioning", type=str, choices=["none", "preconditioning"])
 parser.add_argument("--memdebug", default=False, action="store_true")
 parser.add_argument("--maxcor", default=10, type=int)
 

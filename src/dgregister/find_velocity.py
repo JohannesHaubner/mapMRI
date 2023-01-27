@@ -51,12 +51,12 @@ current_iteration = 0
 
 def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess):
 
-    if hyperparameters["projector"]:
-        projectorU = Projector(FunctionSpace(Img.function_space().mesh(), "DG", 0))
+    # if hyperparameters["projector"]:
+    #     projectorU = Projector(FunctionSpace(Img.function_space().mesh(), "DG", 0))
 
 
-    ny = Expression(('0.0','1.0', '0.0'), degree=0)
-    # l2loss = 42
+    # ny = Expression(('0.0','1.0', '0.0'), degree=0)
+    # # l2loss = 42
 
 
     vol = assemble(1*dx(Img.function_space().mesh()))
@@ -115,15 +115,15 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
 
     print_overloaded("Running Transport() with dt = ", hyperparameters["DeltaT"])
 
-    # Img_deformed = DGTransport(starting_image, velocity, preconditioner=hyperparameters["preconditioner"],
-    #                         MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
-    #                         solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
+    Img_deformed = DGTransport(starting_image, velocity, preconditioner=hyperparameters["preconditioner"],
+                            MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
+                            solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
 
     
-    if hyperparameters["projector"]:
-        Img_deformed = projectorU.project(dot(velocity, ny))
-    else:
-        Img_deformed = project(dot(velocity, ny), Img.function_space())
+    # if hyperparameters["projector"]:
+    #     Img_deformed = projectorU.project(dot(velocity, ny))
+    # else:
+    #     Img_deformed = project(dot(velocity, ny), Img.function_space())
 
 
     # solve forward and evaluate objective
@@ -285,7 +285,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
         mem = resource.getrusage(resource.RUSAGE_SELF)[2]
         print("Memory (TB)", (mem/(1e6*1024)), "current_iteration", current_iteration, "process", str(MPI.rank(MPI.comm_world)))
 
-        return 
+        # return 
 
         with stop_annotating():
             current_pde_solution = state.tape_value()

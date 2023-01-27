@@ -39,7 +39,9 @@ GPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/
 SPATH=${GPATH}scripts/optimization
 LOGOUTFILE=/home/bastian/D1/registration/cubeslurm/${SLURM_JOB_ID}_log_python_srun.txt
 
+NP=1
 
+meshn=64
 
 ITERS=2
 ALPHA=1e-2
@@ -67,7 +69,11 @@ OUTPUTDIR=/home/bastian/D1/registration/coarsememorytests/
 IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/coarsenedabbytoernie.mgz
 IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/coarsenedernie_brain.mgz
 
-srun -n 1 python3 -u ${SPATH}/Poisson.py --maxcor ${NC} > ${LOGOUTFILE}
+echo "NTASKS="$NP
+echo "NCOR="$NC
+echo "meshn="$meshn
+
+srun -n $NP python3 -u ${SPATH}/Poisson.py --maxcor ${NC} --meshn ${meshn} > ${LOGOUTFILE}
 
 # srun -n 32 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 # --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} --normalization_scale 1 \

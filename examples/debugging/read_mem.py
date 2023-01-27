@@ -3,6 +3,24 @@ import numpy as np
 
 nprocs = 16
 
+def read(filename):
+
+    ntasks, maxcor, meshn = None, None, 32
+
+    file = open(filename)
+    Lines = file.readlines()
+
+    for line in Lines:
+        if "NTASKS" in line:
+            ntasks = parse("NTASKS={}", line)[0]
+        if "NCOR" in line:
+            maxcor = parse("NCOR={}", line)[0]
+        if "meshn" in line:
+            meshn = parse("meshn={}", line)[0]
+    return ntasks, maxcor, meshn
+
+
+
 def read_memory(filename):
 
     outfoldername = ""

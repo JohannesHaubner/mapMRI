@@ -8,10 +8,6 @@ import resource
 set_log_level(LogLevel.CRITICAL)
 
 
-mesh = UnitSquareMesh(32, 32)
-V = FunctionSpace(mesh, "CG", 1)
-
-dt = 0.001
 
 
 def main(ic, annotate=False):
@@ -71,8 +67,15 @@ if __name__ == "__main__":
 
     parser.add_argument("--lbfgs_max_iterations", type=float, default=50)
     parser.add_argument("--maxcor", default=10, type=int)
+    parser.add_argument("--meshn", type=int, required=True)
 
     hyperparameters = vars(parser.parse_args())
+
+
+    mesh = UnitSquareMesh(hyperparameters["meshn"], hyperparameters["meshn"])
+    V = FunctionSpace(mesh, "CG", 1)
+
+    dt = 0.001
 
 
     true_ic = interpolate(Expression("sin(2*pi*x[0])*sin(2*pi*x[1])", degree=1), V)
