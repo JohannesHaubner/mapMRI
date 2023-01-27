@@ -349,12 +349,18 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
 
     t0 = time.time()
 
+    if hyperparameters["memdebug"]:
+        tol = 1e-32
+
+    else:
+        tol = 1e-8
+
     minimize(Jhat,  method = 'L-BFGS-B', options = {"iprint": 0, "disp": None, "maxiter": hyperparameters["lbfgs_max_iterations"],
                 # "maxls": 1,  "ftol": 0, "gtol": 0, 
                 "maxcor": hyperparameters["maxcor"],
                 }, 
                 # tol = 1e-100, # 
-                tol=1e-12, 
+                tol=tol, 
                 callback = cb)
 
     dt0 = time.time() - t0

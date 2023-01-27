@@ -5,9 +5,9 @@
 #################################################################
 ## SBATCH --partition=milanq
 ## SBATCH --partition=fpgaq
-#SBATCH --partition=defq
-#SBATCH --reservation=bastian_39
-## SBATCH --partition=habanaq
+##SBATCH --partition=defq
+##SBATCH --reservation=bastian_39
+#SBATCH --partition=habanaq
 #################################################################
 #SBATCH --time 0-3 ##--time=99:00:00
 #SBATCH -o /home/bastian/D1/registration/cubeslurm/%j.out
@@ -43,7 +43,7 @@ LOGOUTFILE=/home/bastian/D1/registration/cubeslurm/${SLURM_JOB_ID}_log_python_sr
 
 ITERS=2
 ALPHA=1e-2
-LBFGS=20
+LBFGS=50
 
 echo "ITERS=" ${ITERS}
 echo "ALPHA=" ${ALPHA}
@@ -54,7 +54,7 @@ NC=$1
 prec=none
 prec=preconditioning
 
-OUTFOLDERNAME=NC${NC}_${prec}
+OUTFOLDERNAME=NC${NC}_${prec}_nosmoothen
 # _nosmoothen
 
 OUTPUTDIR=/home/bastian/D1/registration/coarsememorytests/
@@ -69,7 +69,7 @@ IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/coars
 
 srun -n 32 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} --normalization_scale 1 \
---memdebug --maxcor ${NC} --preconditioning ${prec} \
+--memdebug --maxcor ${NC} --preconditioning ${prec} --nosmoothen \
 --timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 # --tukey --tukey_c 1 \
 # --tukey --tukey_c 1 \
