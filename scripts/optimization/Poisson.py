@@ -8,7 +8,7 @@ import resource
 set_log_level(LogLevel.CRITICAL)
 
 
-mesh = UnitSquareMesh(64, 64)
+mesh = UnitSquareMesh(32, 32)
 V = FunctionSpace(mesh, "CG", 1)
 
 dt = 0.001
