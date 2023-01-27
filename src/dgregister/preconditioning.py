@@ -110,7 +110,7 @@ class Preconditioning():
                 a = inner(grad(self.c), grad(self.psi)) * dx
                 # a = inner(grad(c), grad(psi)) * dx
                 self.A = assemble(a)
-                print_overloaded("Assembled A in Preconditioning()")
+                print_overloaded("Assembled A in Preconditioning() with ", func)
             
             L = inner(func, self.psi) * dx
             
@@ -135,7 +135,7 @@ class Preconditioning():
                     self.solver = PETScKrylovSolver("gmres", hyperparameters["preconditioner"])
                     self.solver.set_operators(self.A, self.A)
 
-                    print_overloaded("Created Krylov solver in Preconditioning()")
+                    print_overloaded("Created Krylov solver in Preconditioning() with ", func)
 
 
             # BC.apply(self.A)

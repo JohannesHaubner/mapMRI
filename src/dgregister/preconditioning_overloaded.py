@@ -72,7 +72,7 @@ class PreconditioningBlock(Block):
         self.A = assemble(a)
         self.BC.apply(self.A)
 
-        print_overloaded("Assembled A in PreconditioningBlock()")
+        print_overloaded("Assembled A in PreconditioningBlock() with ", func)
         
         # if True:
         if hyperparameters["solver"] == "lu":
@@ -86,7 +86,7 @@ class PreconditioningBlock(Block):
             # 
             # print_overloaded("type of A", type(self.A), self.A)
             # print_overloaded("type of self.solver", type(self.solver))
-            print_overloaded("Created Krylov solver in PreconditioningBlock()")
+            print_overloaded("Created Krylov solver in PreconditioningBlock() with ", func)
 
             self.solver.set_operators(self.A, self.A)
     

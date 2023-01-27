@@ -2,18 +2,18 @@
 #SBATCH --job-name=mriregister
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks=128
-#SBATCH --nodes=1
+#SBATCH --nodes=2
 ## SBATCH --exclusive
 ### =user
-#SBATCH --ntasks-per-node=128
+#SBATCH --ntasks-per-node=64
 #################################################################
 ## SBATCH --partition=milanq
 ## SBATCH --partition=fpgaq
 ##
-##SBATCH --partition=defq
-##SBATCH --reservation=bastian_39
+#SBATCH --partition=defq
+#SBATCH --reservation=bastian_39
 ##
-#SBATCH --partition=habanaq
+##SBATCH --partition=habanaq
 #################################################################
 #SBATCH --time 13-00:00:0
 ##SBATCH --time 6-24 ##--time=99:00:00
@@ -62,7 +62,7 @@ OUTFOLDERNAME=None
 
 
 
-OUTPUTDIR=/home/bastian/D1/registration/test/
+OUTPUTDIR=/home/bastian/D1/registration/affine-rotated-outputs/
 IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/affine-rotated/abby.mgz
 IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/affine-rotated/ernie.mgz
 
@@ -80,8 +80,11 @@ echo "IMG2=" ${IMG2}
 
 srun -n 128 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
+--tukey --tukey_c 2 --maxcor 8 \
 --timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
-# --tukey --tukey_c 1 \
+
+# --tukey --tukey_c 1 
+#
 # --tukey --tukey_c 1 \
 # --tukey \
 # --starting_guess /home/bastian/D1/registration/croppedmriregistration_outputs/E100A0.01LBFGS100/VelocityField.hdf --readname "-1" --multigrid \

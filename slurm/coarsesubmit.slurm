@@ -6,6 +6,7 @@
 ## SBATCH --partition=milanq
 ## SBATCH --partition=fpgaq
 #SBATCH --partition=defq
+#SBATCH --exclusive
 #SBATCH --reservation=bastian_39
 ##SBATCH --partition=habanaq
 #################################################################
