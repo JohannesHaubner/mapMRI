@@ -5,6 +5,8 @@ nprocs = 16
 
 def read_memory(filename):
 
+    outfoldername = ""
+
     file = open(filename)
     Lines = file.readlines()
 
@@ -35,14 +37,41 @@ def read_memory(filename):
 
     return mema, outfoldername
 
-    
-def check_for_error(filename):
+
+def check(filename):
+
+    assert "out" not in str(filename)
 
     file = open(filename)
     Lines = file.readlines()
 
-    mems = {}
     for line in Lines:
+
+        if "Transforming l2 control to L2 control" in line:
+            assert "none" not in str(filename)
+
+        if "Created Krylov solver in Preconditioning()" in line:
+            assert "none" not in str(filename)
+            assert "NOSMOOTHEN" not in str(filename)
+
+        if "Setting velocity = l2_controlfun" in line:
+            found_1 = True
+
+    
+    if "none" in str(filename):
+        assert found_1
+
+
+
+def check_for_error(filename):
+
+    assert "out" in str(filename)
+
+    file = open(filename)
+    Lines = file.readlines()
+
+    for line in Lines:
+
 
         if "error" in line:
             print(filename)
@@ -52,4 +81,3 @@ def check_for_error(filename):
         if "success" in line:
             return True
     
-    #

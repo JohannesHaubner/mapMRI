@@ -14,6 +14,7 @@ if "optimize" in config.hyperparameters.keys() and (not config.hyperparameters["
 else:
     print_overloaded("Importing dolfin-adjoint")
     from dolfin_adjoint import *
+
 import nibabel
 import numpy as np
 from nibabel.affines import apply_affine
@@ -165,10 +166,10 @@ def read_image(filename, name, mesh=None, printout=True, threshold=True,
     data /= normalization_scale
 
     if name == "input":
-        data *= iscale
+        data *= np.sqrt(iscale)
 
     elif name == "target":
-        data /= iscale  
+        data /= np.sqrt(iscale)
 
     else:
         raise ValueError

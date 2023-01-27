@@ -47,10 +47,16 @@ parameters['ghost_mode'] = 'shared_facet'
 
 current_iteration = 0
 
+
+
 def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess):
+
+    if hyperparameters["projector"]:
+        projectorU = Projector(FunctionSpace(Img.function_space().mesh(), "DG", 0))
 
 
     ny = Expression(('0.0','1.0', '0.0'), degree=0)
+    # l2loss = 42
 
 
     vol = assemble(1*dx(Img.function_space().mesh()))
@@ -109,16 +115,16 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
 
     print_overloaded("Running Transport() with dt = ", hyperparameters["DeltaT"])
 
-    Img_deformed = DGTransport(starting_image, velocity, preconditioner=hyperparameters["preconditioner"],
-                            MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
-                            solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
+    # Img_deformed = DGTransport(starting_image, velocity, preconditioner=hyperparameters["preconditioner"],
+    #                         MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
+    #                         solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
 
     
+    if hyperparameters["projector"]:
+        Img_deformed = projectorU.project(dot(velocity, ny))
+    else:
+        Img_deformed = project(dot(velocity, ny), Img.function_space())
 
-    # Img_deformed = project(dot(velocity, ny), Img.function_space())
-    # Img_deformed = velocity[0]
-
-    # Img_deformed = starting_image
 
     # solve forward and evaluate objective
     alpha = Constant(hyperparameters["alpha"]) #regularization
@@ -126,45 +132,41 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
     cont = Control(l2_controlfun)
 
 
-    def tukeyloss(x, y, hyperparameters):
-
-        tukey_c = hyperparameters["tukey_c"]
-
-        residual = x - y
-
-        mean_residual = assemble(residual * dx) / vol
-
-        std_residual = sqrt( assemble((residual - mean_residual) ** 2 * dx) / vol )
-
-
-        with stop_annotating():
-            arrname = hyperparameters["outputfolder"] + "/normalized_residual" + str(MPI.rank(MPI.comm_world)) + ".npy"
-            resvec = (x.vector()[:] - y.vector()[:] - mean_residual) / std_residual
-            np.save(arrname, resvec)
-
-            print_overloaded("mean_residual", mean_residual)
-            print_overloaded("std_residual", std_residual)
-
-            try:
-                input_for_loss = (x.vector()[:] - y.vector()[:] - mean_residual) / std_residual
-
-                if np.max(np.abs(input_for_loss)) > 1:
-                    print("process", MPI.rank(MPI.comm_world), "max of normalized residual > 1")
-            except:
-                pass
-
-        residual = (residual - mean_residual) / std_residual
-        
-        loss = tukey(x=residual, c=tukey_c)
-        
-        return loss
-
-
-    # arrname = hyperparameters["outputfolder"] + "/residual" + str(MPI.rank(MPI.comm_world)) + ".npy"
-    # resvec = Img_deformed.vector()[:] - Img_goal.vector()[:]
-    # np.save(arrname, resvec)
-
     if hyperparameters["tukey"]:
+
+        def tukeyloss(x, y, hyperparameters):
+
+            tukey_c = hyperparameters["tukey_c"]
+
+            residual = x - y
+
+            mean_residual = assemble(residual * dx) / vol
+
+            std_residual = sqrt( assemble((residual - mean_residual) ** 2 * dx) / vol )
+
+
+            with stop_annotating():
+                arrname = hyperparameters["outputfolder"] + "/normalized_residual" + str(MPI.rank(MPI.comm_world)) + ".npy"
+                resvec = (x.vector()[:] - y.vector()[:] - mean_residual) / std_residual
+                np.save(arrname, resvec)
+
+                print_overloaded("mean_residual", mean_residual)
+                print_overloaded("std_residual", std_residual)
+
+                try:
+                    input_for_loss = (x.vector()[:] - y.vector()[:] - mean_residual) / std_residual
+
+                    if np.max(np.abs(input_for_loss)) > 1:
+                        print("process", MPI.rank(MPI.comm_world), "max of normalized residual > 1")
+                except:
+                    pass
+
+            residual = (residual - mean_residual) / std_residual
+            
+            loss = tukey(x=residual, c=tukey_c)
+            
+            return loss
+
         print_overloaded("Using tukey loss")
         loss = tukeyloss(x=Img_deformed, y=Img_goal, hyperparameters=hyperparameters)
         Jd = assemble(0.5 * loss * dx)
@@ -180,10 +182,8 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
         print_overloaded("Current memory usage (after assembling l2 loss): %g (MB)" % (mem/1024))
 
     else:
-        loss = (Img_deformed - Img_goal) ** 2
-        Jd = assemble(0.5 * loss * dx)
+        Jd = assemble(0.5 * (Img_deformed - Img_goal) ** 2 * dx)
         
-
         with stop_annotating():
             l2loss = Jd
 
@@ -275,8 +275,6 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
     #     hyperparameters["conv_rate"] = float(conv_rate)  
     #     exit()
         
-    if hyperparameters["projector"]:
-        projectorU = Projector(FunctionSpace(Img.function_space().mesh(), "DG", 0))
 
 
 
@@ -357,11 +355,10 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
 
     minimize(Jhat,  method = 'L-BFGS-B', options = {"iprint": 0, "disp": None, "maxiter": hyperparameters["lbfgs_max_iterations"],
                 # "maxls": 1,  "ftol": 0, "gtol": 0, 
-                "maxcor": hyperparameters["maxcor"],
-                }, 
-                # tol = 1e-100, # 
-                tol=tol, 
-                callback = cb)
+                "maxcor": hyperparameters["maxcor"]}, tol=tol, callback = cb)
+
+
+    # minimize(Jhat,  method = 'CG', options = {"disp": False, "maxiter": hyperparameters["lbfgs_max_iterations"], "gtol":tol}, tol=tol, callback = cb)
 
     dt0 = time.time() - t0
 
