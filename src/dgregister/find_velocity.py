@@ -372,7 +372,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
     else:
         tol = 1e-8
 
-    minimize(Jhat,  method = 'L-BFGS-B', options = {"iprint": 0, "disp": None, "maxiter": hyperparameters["lbfgs_max_iterations"],
+    minimize(Jhat,  method = 'L-BFGS-B', options = {"iprint": 99, "disp": None, "maxiter": hyperparameters["lbfgs_max_iterations"],
                 # "maxls": 1,  "ftol": 0, "gtol": 0, 
                 "maxcor": hyperparameters["maxcor"]}, tol=tol, callback = cb)
 

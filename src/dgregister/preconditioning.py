@@ -100,9 +100,12 @@ class Preconditioning():
 
             if not hasattr(self, "solver"):
                 a = inner(grad(self.c), grad(self.psi)) * dx
-                # a = inner(grad(c), grad(psi)) * dx
                 self.A = assemble(a)
+
                 print_overloaded("Assembled A in Preconditioning() with ", func)
+
+                self.BC.apply(self.A)
+                print_overloaded("Applying BC (at init, i.e. only once?) to func=", func)
             
             L = inner(func, self.psi) * dx
             
@@ -110,7 +113,9 @@ class Preconditioning():
             tmp = assemble(L)
             self.BC.apply(tmp)
             
-            self.BC.apply(self.A)
+            # self.BC.apply(self.A)
+            # print_overloaded("Applying BC! to func=", func)
+
             # solve(a == L, c, BC)
 
             if not hasattr(self, "solver"):

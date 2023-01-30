@@ -33,6 +33,7 @@ class TransformationBlock(Block):
 
     def evaluate_adj_component(self, inputs, adj_inputs, block_variable, idx, prepared=None):
         tmp = adj_inputs[0].copy()
+        raise NotImplementedError
         tmp = backend_transformation(tmp, self.diag_matrix)
         return tmp
 

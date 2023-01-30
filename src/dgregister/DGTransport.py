@@ -164,9 +164,8 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservati
 
             # BZ: potentially factor dt / 2 missing in front of dI ?
             factor = DeltaT / 2.
-
-            if timestepping == "RungeKuttaBug":
-                factor = 1
+            # if timestepping == "RungeKuttaBug":
+            #     factor = 1
 
             da = Form(Img_deformed + factor * dI)
             
