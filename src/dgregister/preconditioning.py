@@ -16,21 +16,13 @@ from dolfin import *
 #     from dolfin_adjoint import *
 
 from dolfin_adjoint import *
-
-def print_overloaded(*args):
-    if MPI.rank(MPI.comm_world) == 0:
-        # set_log_level(PROGRESS)
-        print(*args)
-    else:
-        pass
-
 from dgregister.config import hyperparameters
 assert len(hyperparameters) > 1
 
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
         # set_log_level(PROGRESS)
-        print(*args)
+        print(*args, flush=True)
     else:
         pass
 
@@ -135,7 +127,7 @@ class Preconditioning():
                     self.solver = PETScKrylovSolver("gmres", hyperparameters["preconditioner"])
                     self.solver.set_operators(self.A, self.A)
 
-                    print_overloaded("Created Krylov solver in Preconditioning() with ", func)
+                    print_overloaded("Created Krylov solver (For the first time ? ) in Preconditioning() with ", func)
 
 
             # BC.apply(self.A)
@@ -149,64 +141,64 @@ class Preconditioning():
 
 
 
-#preconditioning = Preconditioning()
+preconditioning = Preconditioning()
 
 
-def preconditioning(func):
+# def preconditioning(func):
 
-    if not hyperparameters["smoothen"]:
+#     if not hyperparameters["smoothen"]:
 
-        # print_overloaded("applying BC to func in Preconditioning()")
-        cc = func.copy()
+#         # print_overloaded("applying BC to func in Preconditioning()")
+#         cc = func.copy()
 
-        # breakpoint()
+#         # breakpoint()
 
-        # print_overloaded("Debugging: cc ", cc.vector()[:].min(), cc.vector()[:].max(), cc.vector()[:].mean())
-        C = cc.function_space()
-        dim = cc.geometric_dimension()
-        BC=DirichletBC(C, Constant((0.0,)*dim), "on_boundary")
-        BC.apply(cc.vector())
-    else:
-        C = func.function_space()
-        dim = func.geometric_dimension()
+#         # print_overloaded("Debugging: cc ", cc.vector()[:].min(), cc.vector()[:].max(), cc.vector()[:].mean())
+#         C = cc.function_space()
+#         dim = cc.geometric_dimension()
+#         BC=DirichletBC(C, Constant((0.0,)*dim), "on_boundary")
+#         BC.apply(cc.vector())
+#     else:
+#         C = func.function_space()
+#         dim = func.geometric_dimension()
 
 
 
-        BC = DirichletBC(C, Constant((0.0,)*dim), "on_boundary")
-        c = TrialFunction(C)
-        psi = TestFunction(C)
-        cc = Function(C)
-        # self.matrix
+#         BC = DirichletBC(C, Constant((0.0,)*dim), "on_boundary")
+#         c = TrialFunction(C)
+#         psi = TestFunction(C)
+#         cc = Function(C)
+#         # self.matrix
 
-        a = inner(grad(c), grad(psi)) * dx
-        # a = inner(grad(c), grad(psi)) * dx
-        A = assemble(a)
-        print_overloaded("Assembled A in Preconditioning()")
+#         a = inner(grad(c), grad(psi)) * dx
+#         # a = inner(grad(c), grad(psi)) * dx
+#         A = assemble(a)
+#         print_overloaded("Assembled A in Preconditioning() with", func)
         
-        L = inner(func, psi) * dx
+#         L = inner(func, psi) * dx
         
         
-        tmp = assemble(L)
-        BC.apply(tmp)
+#         tmp = assemble(L)
+#         BC.apply(tmp)
         
-        BC.apply(A)
-        # solve(a == L, c, BC)
+#         BC.apply(A)
+#         # solve(a == L, c, BC)
 
 
-        solver = PETScKrylovSolver("gmres", hyperparameters["preconditioner"])
-        solver.set_operators(A, A)
+#         solver = PETScKrylovSolver("gmres", hyperparameters["preconditioner"])
+#         solver.set_operators(A, A)
 
-        print_overloaded("Created Krylov solver in Preconditioning()")
+#         print_overloaded("Created Krylov solver in Preconditioning() with ", func)
 
 
-        # BC.apply(self.A)
-        # x = args[0]
-        # b = args[1]
+#         # BC.apply(self.A)
+#         # x = args[0]
+#         # b = args[1]
 
         
-        solver.solve(cc.vector(), tmp)
+#         solver.solve(cc.vector(), tmp)
 
-    return cc
+#     return cc
 
 
 # preconditioning = lambda x: x

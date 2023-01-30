@@ -38,7 +38,7 @@ class CFLerror(ValueError):
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
         # set_log_level(PROGRESS)
-        print(*args)
+        print(*args, flush=True)
     else:
         pass
 
@@ -93,6 +93,15 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
     # preconditioning = lambda x: x
 
     if hyperparameters["memdebug"] and hyperparameters["preconditioning"] == "none":
+
+        # def preconditioning(x):
+        #     print_overloaded("Not doing preconditioning")
+        #     return x 
+    
+        # def transformation(x, y):
+        #     print_overloaded("Not doing transform")
+        #     return x 
+
         control_L2 = l2_controlfun
         velocity = control_L2
         print_overloaded("Setting velocity = l2_controlfun")
@@ -108,7 +117,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
         else:
             control_L2 = l2_controlfun
 
-        print_overloaded("Preconditioning L2_controlfun")
+        print_overloaded("Preconditioning L2_controlfun, name=", control_L2)
         velocity = preconditioning(control_L2)
 
         # velocity.rename("control", "")
@@ -153,13 +162,13 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
                 print_overloaded("mean_residual", mean_residual)
                 print_overloaded("std_residual", std_residual)
 
-                try:
-                    input_for_loss = (x.vector()[:] - y.vector()[:] - mean_residual) / std_residual
+                # try:
+                #     input_for_loss = (x.vector()[:] - y.vector()[:] - mean_residual) / std_residual
 
-                    if np.max(np.abs(input_for_loss)) > 1:
-                        print("process", MPI.rank(MPI.comm_world), "max of normalized residual > 1")
-                except:
-                    pass
+                #     if np.max(np.abs(input_for_loss)) > 1:
+                #         print("process", MPI.rank(MPI.comm_world), "max of normalized residual > 1")
+                # except:
+                #     pass
 
             residual = (residual - mean_residual) / std_residual
             
@@ -285,6 +294,8 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
         mem = resource.getrusage(resource.RUSAGE_SELF)[2]
         print("Memory (TB)", (mem/(1e6*1024)), "current_iteration", current_iteration, "process", str(MPI.rank(MPI.comm_world)))
 
+
+
         # return 
 
         with stop_annotating():
@@ -295,7 +306,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
             current_l2_control.vector().update_ghost_values()
             current_l2_control.rename("control", "")
 
-            if current_pde_solution.vector()[:].max() > hyperparameters["max_voxel_intensity"] * 5:
+            if not hyperparameters["memdebug"] and (current_pde_solution.vector()[:].max() > hyperparameters["max_voxel_intensity"] * 5):
                 raise ValueError("State became > hyperparameters['max_voxel_intensity'] * 5 at some vertex, something is probably wrong")
 
 
@@ -310,17 +321,21 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
             else:
                 Jd = l2loss
 
-            if hyperparameters["smoothen"]:
-                current_L2_control = transformation(current_l2_control, M_lumped_inv)
-            else:
-                current_L2_control = current_l2_control        
+            # if hyperparameters["smoothen"]:
+            #     current_L2_control = transformation(current_l2_control, M_lumped_inv)
+            # else:
+            #     current_L2_control = current_l2_control        
             
-            velocityField = preconditioning(current_L2_control)
-            velocityField.rename("velocity", "")
+            # velocityField = preconditioning(current_L2_control)
+            # velocityField.rename("velocity", "")
 
-            # Jd = assemble(0.5 * (current_pde_solution - Img_goal)**2 * dx(domain=Img.function_space().mesh()))
-            Jreg = assemble(alpha*current_L2_control**2*dx(domain=Img.function_space().mesh()))
+            # # Jd = assemble(0.5 * (current_pde_solution - Img_goal)**2 * dx(domain=Img.function_space().mesh()))
+            # Jreg = assemble(alpha*current_L2_control**2*dx(domain=Img.function_space().mesh()))
 
+            current_L2_control = current_l2_control
+            velocityField = current_L2_control
+
+            Jreg = 42
 
             domainmesh = current_pde_solution.function_space().mesh()
             
@@ -337,6 +352,10 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
                 
             #     raise CFLerror("DGTransport: WARNING: CFL = %le", CFL)
                     
+
+            mem = resource.getrusage(resource.RUSAGE_SELF)[2]
+            print("Memory (TB)", (mem/(1e6*1024)), "current_iteration", current_iteration + 0.5, "process", str(MPI.rank(MPI.comm_world)))
+
 
             store_during_callback(current_iteration=current_iteration, hyperparameters=hyperparameters, files=files, Jd=Jd, Jreg=Jreg, 
                                 l2loss=l2loss,

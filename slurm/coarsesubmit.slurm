@@ -1,17 +1,17 @@
 #!/bin/bash
 #SBATCH --job-name=quicktest
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=1
+#SBATCH --ntasks=64
 #################################################################
 ## SBATCH --partition=milanq
 ## SBATCH --partition=fpgaq
 #SBATCH --partition=defq
-#SBATCH --exclusive
+## SBATCH --exclusive
 #SBATCH --reservation=bastian_39
 ##SBATCH --partition=habanaq
 #################################################################
 #SBATCH --time 0-3 ##--time=99:00:00
-#SBATCH -o /home/bastian/D1/registration/cubeslurm/%j.out
+#SBATCH -o /home/bastian/D1/registration/mrislurm/%j.out
 #SBATCH --export=ALL
 #SBATCH --mail-user=bastian@simula.no
 #module load gcc
@@ -38,26 +38,25 @@ echo "starting to run"
 
 GPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/
 SPATH=${GPATH}scripts/optimization
-LOGOUTFILE=/home/bastian/D1/registration/cubeslurm/${SLURM_JOB_ID}_log_python_srun.txt
+LOGOUTFILE=/home/bastian/D1/registration/mrislurm/${SLURM_JOB_ID}_log_python_srun.txt
 
-NP=1
+NP=64
 
 meshn=64
 
-ITERS=2
+ITERS=1
 ALPHA=1e-2
-LBFGS=50
+LBFGS=10
 
 echo "ITERS=" ${ITERS}
 echo "ALPHA=" ${ALPHA}
 
 OUTFOLDERNAME=None
 
-NC=$1
 prec=none
 # prec=preconditioning
 
-OUTFOLDERNAME=NC${NC}_${prec}_noTransport_projector_CG
+OUTFOLDERNAME=NP${NP}_${prec}_nocb
 # _nosmoothen
 
 OUTPUTDIR=/home/bastian/D1/registration/coarsememorytests/
@@ -71,14 +70,21 @@ IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/coars
 IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/coarsenedernie_brain.mgz
 
 echo "NTASKS="$NP
-echo "NCOR="$NC
 echo "meshn="$meshn
 
-srun -n $NP python3 -u ${SPATH}/Poisson.py --maxcor ${NC} --meshn ${meshn} > ${LOGOUTFILE}
+
+srun -n $NP python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
+--input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
+--maxcor 4 --preconditioning ${prec} --memdebug \
+--timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+
+# hyperparameters["memdebug"]
+
+# srun -n $NP python3 -u ${SPATH}/Poisson.py --maxcor ${NC} --meshn ${meshn} > ${LOGOUTFILE}
 
 # srun -n 32 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 # --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} --normalization_scale 1 \
-# --memdebug --maxcor ${NC} --preconditioning ${prec} --projector \
+# --memdebug  ${NC} --preconditioning ${prec} --projector \
 # --timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 # --tukey --tukey_c 1 \
 # --tukey --tukey_c 1 \
