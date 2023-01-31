@@ -120,7 +120,7 @@ if __name__ == "__main__":
 
         return 
 
-    minimize(rf,  method = 'L-BFGS-B', options = {"iprint": 0, "disp": None, "maxiter": hyperparameters["lbfgs_max_iterations"],
+    minimize(rf,  method = 'L-BFGS-B', options = {"iprint": 99, "disp": None, "maxiter": hyperparameters["lbfgs_max_iterations"],
             # "maxls": 1,  "ftol": 0, "gtol": 0, 
             "maxcor": hyperparameters["maxcor"]}, tol=1e-16, callback = cb)
 

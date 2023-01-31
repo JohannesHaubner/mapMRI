@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=quicktest
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=16
+#SBATCH --ntasks=8
 #################################################################
 ## SBATCH --partition=milanq
 #SBATCH --partition=fpgaq
@@ -44,7 +44,7 @@ LOGOUTFILE=/home/bastian/D1/registration/cubeslurm/${SLURM_JOB_ID}_log_python_sr
 
 ITERS=2
 ALPHA=1e-2
-LBFGS=30
+LBFGS=10
 
 echo "ITERS=" ${ITERS}
 echo "ALPHA=" ${ALPHA}
@@ -60,9 +60,9 @@ DATAPATH=${DPATH}/testdata_3d/
 IMG1=${DATAPATH}input.mgz
 IMG2=${DATAPATH}newtarget.mgz
 
-srun -n 16 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
+srun -n 8 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} --normalization_scale 1 \
---maxcor 3 \
+--maxcor 3 --memdebug \
 --timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 # --nosmoothen 
 # --tukey --tukey_c 1 \

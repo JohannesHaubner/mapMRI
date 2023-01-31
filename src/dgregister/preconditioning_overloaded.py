@@ -116,6 +116,8 @@ class PreconditioningBlock(Block):
             
             
             self.BC.apply(tmp)
+            
+            print_overloaded("Solving in preconditioning_overloaded, tmp=", tmp)
             self.solver.solve(self.ct.vector(), tmp)
             # solve(self.A, ct.vector(), tmp)
             

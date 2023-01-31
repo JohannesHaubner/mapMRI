@@ -1,11 +1,11 @@
 #!/bin/bash
 #SBATCH --job-name=mriregister
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=128
-#SBATCH --nodes=1
-## SBATCH --exclusive
+#SBATCH --ntasks=32
+## SBATCH --nodes=1
+#SBATCH --exclusive
 ### =user
-#SBATCH --ntasks-per-node=128
+## SBATCH --ntasks-per-node=32
 #################################################################
 ## SBATCH --partition=milanq
 ## SBATCH --partition=fpgaq
@@ -62,7 +62,7 @@ OUTFOLDERNAME=prec_class
 
 
 
-OUTPUTDIR=/home/bastian/D1/registration/affine-rotated-outputs2/
+OUTPUTDIR=/home/bastian/D1/registration/affine-rotated-outputs3/
 IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/affine-rotated/abby.mgz
 IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/affine-rotated/ernie.mgz
 
@@ -78,9 +78,9 @@ echo "IMG1=" ${IMG1}
 echo "IMG2=" ${IMG2}
 
 
-srun -n 128 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
+srun -n 32 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
---maxcor 4 \
+--tukey \
 --timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 
 # --tukey --tukey_c 2 

@@ -50,8 +50,11 @@ def read_memory(filename):
 
         mems2[key] = sum(item)
 
+        # assert 16 == len(item)
 
     mema = np.array(list(mems2.items())).astype(float)
+
+    # print("--", np.max(mema[:, 1]))
 
     return mema, outfoldername
 

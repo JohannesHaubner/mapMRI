@@ -105,7 +105,7 @@ class Preconditioning():
                 print_overloaded("Assembled A in Preconditioning() with ", func)
 
                 self.BC.apply(self.A)
-                print_overloaded("Applying BC (at init, i.e. only once?) to func=", func)
+                print("Applying BC (at init, i.e. only once?) to func=", func, flush=True)
             
             L = inner(func, self.psi) * dx
             
@@ -139,7 +139,7 @@ class Preconditioning():
             # x = args[0]
             # b = args[1]
 
-            
+            print_overloaded("Solving in preconditioning, func=", func)
             self.solver.solve(self.cc.vector(), tmp)
 
             return self.cc

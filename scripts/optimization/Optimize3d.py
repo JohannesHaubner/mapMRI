@@ -260,7 +260,7 @@ t0 = time.time()
 files["lossfile"] = hyperparameters["outputfolder"] + '/loss.txt'
 files["l2lossfile"] = hyperparameters["outputfolder"] + '/l2loss.txt'
 files["regularizationfile"] = hyperparameters["outputfolder"] + '/regularization.txt'
-files["totallossfile"] = hyperparameters["outputfolder"] + '/loss.txt'
+files["totallossfile"] = hyperparameters["outputfolder"] + '/totalloss.txt'
 
 # files["memoryfile"] = hyperparameters["outputfolder"] + '/memory.txt'
 
