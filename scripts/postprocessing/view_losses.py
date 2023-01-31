@@ -20,7 +20,11 @@ def read_loss_from_log(file1):
 
     history = []
 
-    for line in Lines:
+    line_searches = {}
+    iterk = 1
+
+
+    for idx, line in enumerate(Lines):
 
         if "Iter" in line:
             result = parse("Iter{}Jd={}L2loss={}Reg={}", line.replace(" ", ""))
@@ -43,6 +47,15 @@ def read_loss_from_log(file1):
             result = parse("Reg {}", line) # .replace(" ", ""))
             start_values[3] = float(result[0])
 
+        if not iterk in line_searches.keys():
+            if "At iterate    " + str(iterk) in line:
+                for k in range(5):
+                    if "LINE SEARCH" in Lines[idx + k]:
+                        result = parse("LINESEARCH{}times;normofstep={}\n", Lines[idx + k].replace(" ", ""))
+                        # breakpoint()
+                        line_searches[iterk] = result[0]
+                        iterk += 1
+                #  LINE SEARCH           1  times; norm of step =    5.0000000000000000
 
         
         if None not in start_values and len(history) == 0:
@@ -51,7 +64,7 @@ def read_loss_from_log(file1):
                 
     history = np.array(history)
 
-    return history
+    return history, line_searches
 
 
 dpi = None
@@ -78,7 +91,7 @@ fig3, ax3 = plt.subplots(dpi=dpi, figsize=figsize)
 
 
 
-for foldername in ["hopefully_final", # "hopefully_final_2nodes"
+for foldername in ["affine-rotated-outputs3"
                     ]:
 
     localpath = pathlib.Path("/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration") / foldername
@@ -152,12 +165,15 @@ for foldername in ["hopefully_final", # "hopefully_final_2nodes"
         
         assert foldername in hyperparameters["output_dir"]
 
-        logfiles = [x for x in os.listdir(localpath / runname) if "_log_python_srun.txt" in x]
+        logfiles = [x for x in os.listdir(localpath / runname) if x.endswith("_log_python_srun.txt")]
+        # breakpoint()
         assert len(logfiles) == 1
 
 
         file1 = open(localpath / runname / logfiles[0], 'r')
-        loss = read_loss_from_log(file1)
+        loss, line_searches = read_loss_from_log(file1)
+
+        print(runname, line_searches)
 
         startloss = None
         startjd0 = None
@@ -207,15 +223,18 @@ for foldername in ["hopefully_final", # "hopefully_final_2nodes"
                     break
 
 
-        l2loss2 = np.genfromtxt(l2lossfile, delimiter=",")[:-1]
-        loss2 = np.genfromtxt(lossfile, delimiter=",")[:-1]
-        reg2 = np.genfromtxt(localpath / runname /"regularization.txt", delimiter=",")[:-1]
-
-        assert loss2.size == loss.shape[0]
+        # l2loss2 = np.genfromtxt(l2lossfile, delimiter=",")[:-1]
+        # loss2 = np.genfromtxt(lossfile, delimiter=",")[:-1]
+        # reg2 = np.genfromtxt(localpath / runname /"regularization.txt", delimiter=",")[:-1]
 
         # breakpoint()
+        # loss2 = np.unique(loss2)
+        # # assert loss2.size == loss.shape[0]
 
-        loss[:, 1] = loss2
+
+        # # breakpoint()
+
+        # loss[:, 1] = loss2
 
         running = "Jd_final" not in hyperparameters.keys()
 
@@ -273,6 +292,9 @@ for foldername in ["hopefully_final", # "hopefully_final_2nodes"
     ax2.set_ylabel("Regularization")
     ax1.set_ylabel(r"$L^2$-loss")
     ax3.set_ylabel(r"Data loss (either L2 or Tukey)")
+
+
+    
 
     for ax in [ax1, ax2, ax3]:
         plt.sca(ax)
