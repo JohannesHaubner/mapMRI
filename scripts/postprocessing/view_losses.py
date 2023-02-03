@@ -91,7 +91,9 @@ fig3, ax3 = plt.subplots(dpi=dpi, figsize=figsize)
 
 
 
-for foldername in ["affine-rotated-outputs3"
+for foldername in ["affine-rotated-outputs3",
+                    "affine-rotated-outputs_noscale", 
+                    "affine-rotated-outputs_restart"
                     ]:
 
     localpath = pathlib.Path("/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration") / foldername
@@ -179,6 +181,8 @@ for foldername in ["affine-rotated-outputs3"
         startjd0 = None
 
         if hyperparameters["starting_guess"] is not None:
+
+            # breakpoint()
             
             raise NotImplementedError
 
@@ -284,17 +288,16 @@ for foldername in ["affine-rotated-outputs3"
         c = p[0].get_color()
         
         fac = loss[0, 1]
-        fac = 1
         ax3.plot(loss[:, 0], loss[:, 1] / fac , color=c, linestyle=linestlyle, label=label, marker=marker, markevery=markevery)
 
         ax2.semilogy(loss[:, 0], loss[:, 3], color=c, linestyle=linestlyle, label=label)
 
     ax2.set_ylabel("Regularization")
     ax1.set_ylabel(r"$L^2$-loss")
-    ax3.set_ylabel(r"Data loss (either L2 or Tukey)")
+    ax3.set_ylabel(r"Reduction in Data loss (either L2 or Tukey)")
 
 
-    
+    print(hyperparameters["slurmid"], foldername, runname)
 
     for ax in [ax1, ax2, ax3]:
         plt.sca(ax)
