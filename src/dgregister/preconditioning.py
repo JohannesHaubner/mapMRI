@@ -9,7 +9,7 @@ assert len(hyperparameters) > 1
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
         # set_log_level(PROGRESS)
-        print(*args)
+        print(*args, flush=True)
     else:
         pass
 

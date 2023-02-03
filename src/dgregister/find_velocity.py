@@ -120,7 +120,9 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
         print_overloaded("Preconditioning L2_controlfun, name=", control_L2)
         velocity = preconditioning(control_L2)
 
-        # velocity.rename("control", "")
+    l2_controlfun.rename("control_l2", "")
+    control_L2.rename("control_L2", "")
+    velocity.rename("velocity", "")
 
     print_overloaded("Running Transport() with dt = ", hyperparameters["DeltaT"])
 
@@ -190,7 +192,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
     print_overloaded("Assembled error between transported image and target, Jdata=", Jd)
     print_overloaded("L2 error between transported image and target, Jdata_L2=", l2loss)
 
-    Jreg = assemble(alpha*control_L2**2*dx) # (domain=Img.function_space().mesh()))
+    Jreg = assemble(alpha*(control_L2)**2*dx) # (domain=Img.function_space().mesh()))
     
     print_overloaded("At init:")
     print_overloaded("Jd", Jd)

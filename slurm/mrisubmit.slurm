@@ -3,14 +3,14 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks=32
 ## SBATCH --nodes=1
-## SBATCH --exclusive
+#SBATCH --exclusive
 ### =user
 ## SBATCH --ntasks-per-node=32
 #################################################################
 #SBATCH --partition=milanq
 ## SBATCH --partition=fpgaq
 ##
-##SBATCH --partition=defq
+## SBATCH --partition=defq
 ##SBATCH --reservation=bastian_39
 ##
 ## SBATCH --partition=habanaq
@@ -50,9 +50,9 @@ LOGOUTFILE=/home/bastian/D1/registration/mrislurm/${SLURM_JOB_ID}_log_python_sru
 
 # ITERS=$1
 # ALPHA=$2
-ITERS=70
-ALPHA=1e-2
-LBFGS=10
+ITERS=100
+ALPHA=1e-1
+LBFGS=50
 
 echo "ITERS=" ${ITERS}
 echo "ALPHA=" ${ALPHA}
@@ -61,8 +61,8 @@ OUTFOLDERNAME=None
 OUTFOLDERNAME=None
 
 
-
-OUTPUTDIR=/home/bastian/D1/registration/affine-rotated-outputs_restart/
+OUTPUTDIR=/home/bastian/D1/registration/affine-rotated-outputs_milanq/
+# OUTPUTDIR=/home/bastian/D1/registration/affine-rotated-outputs_restart/
 IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/affine-rotated/abby.mgz
 IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/affine-rotated/ernie.mgz
 
@@ -80,9 +80,12 @@ echo "IMG2=" ${IMG2}
 
 srun -n 32 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
---starting_guess /home/bastian/D1/registration/affine-rotated-outputs3/E70A0.01LBFGS70prec_class/CurrentControl.hdf --readname "function" \
---starting_state /home/bastian/D1/registration/affine-rotated-outputs3/E70A0.01LBFGS70prec_class/State_checkpoint.xdmf \
+--tukey \
 --timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+
+# #
+# --starting_guess /home/bastian/D1/registration/affine-rotated-outputs3/E70A0.01LBFGS70prec_class/CurrentControl.hdf --readname "function" \
+# --starting_state /home/bastian/D1/registration/affine-rotated-outputs3/E70A0.01LBFGS70prec_class/State_checkpoint.xdmf \
 
 
 # --tukey --tukey_c 2 
