@@ -105,7 +105,7 @@ class Preconditioning():
                 print_overloaded("Assembled A in Preconditioning() with ", func)
 
                 self.BC.apply(self.A)
-                print("Applying BC (at init, i.e. only once?) to func=", func, flush=True)
+                print_overloaded("Applying BC (at init, i.e. only once?) to func=", func)
             
             L = inner(func, self.psi) * dx
             

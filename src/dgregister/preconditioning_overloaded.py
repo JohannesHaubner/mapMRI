@@ -107,9 +107,16 @@ class PreconditioningBlock(Block):
             tmp = adj_inputs[0].copy()
             BC.apply(tmp)
         else:
-            tmp = adj_inputs[0]
-            # tmp = adj_inputs[0].copy()
+            # tmp = adj_inputs[0]
             
+            # tmp = adj_inputs[0]
+            # print_overloaded("NOT copying")
+            # print_overloaded("*"*80)
+
+
+            tmp = adj_inputs[0].copy()
+            print_overloaded("Copying")
+            print_overloaded("*"*80)
             
             # a = inner(grad(c), grad(psi)) * dx
             # A = assemble(a)

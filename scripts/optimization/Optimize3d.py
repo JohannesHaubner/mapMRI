@@ -52,19 +52,20 @@ parser.add_argument("--maxcor", default=10, type=int)
 
 parser.add_argument("--projector", default=False, action="store_true")
 parser.add_argument("--tukey", default=False, action="store_true", help="Use tukey loss function")
-parser.add_argument("--tukey_c", type=int, default=4)
+parser.add_argument("--tukey_c", type=int, default=1)
 parser.add_argument("--normalization_scale", type=float, default=255, help="divide both images with this number")
 parser.add_argument("--readname", type=str, default="-1")
 parser.add_argument("--starting_guess", type=str, default=None)
+parser.add_argument("--starting_state", type=str, default=None)
 # parser.add_argument("--normalization", type=str, default="max")
-parser.add_argument("--multigrid", default=False, action="store_true", help="Use starting guess & another transform")
+# parser.add_argument("--multigrid", default=False, action="store_true", help="Use starting guess & another transform")
 
 parser.add_argument("--filter", default=False, action="store_true", help="median filter on input and output")
 parser.add_argument("--debug", default=False, action="store_true", help="Debug")
 parser.add_argument("--timing", default=False, action="store_true")
 parser.add_argument("--ocd", default=False, action="store_true")
-parser.add_argument("--input", default="mridata_3d/091registeredto205_padded_coarsened.mgz")
-parser.add_argument("--target", default="mridata_3d/205_cropped_padded_coarsened.mgz")
+parser.add_argument("--input", type=str)
+parser.add_argument("--target", type=str)
 
 hyperparameters = vars(parser.parse_args())
 hyperparameters["interpolate"] = False
@@ -171,13 +172,23 @@ vCG = VectorFunctionSpace(domainmesh, hyperparameters["velocity_functionspace"],
 
 
 if hyperparameters["starting_guess"] is not None:
-    if hyperparameters["multigrid"] and hyperparameters["smoothen"]:
-        assert "control" not in hyperparameters["starting_guess"].lower()
-    else:
-        assert "CurrentV.hdf" not in hyperparameters["starting_guess"]
-        assert "Velocity" not in hyperparameters["starting_guess"]
+
+    assert hyperparameters["starting_state"] is not None
+
+    # if hyperparameters["multigrid"] and hyperparameters["smoothen"]:
+    #     assert "control" not in hyperparameters["starting_guess"].lower()
+    # else:
+    assert "CurrentV.hdf" not in hyperparameters["starting_guess"]
+    assert "Velocity" not in hyperparameters["starting_guess"]
 
     controlfun = load_control(hyperparameters, vCG)
+
+
+
+    with XDMFFile(hyperparameters["starting_state"]) as xdmf:
+        xdmf.read_checkpoint(Img, "CurrentState")
+
+        print_overloaded("Loaded ", hyperparameters["starting_state"], "as starting guess for state")
 
 
 else:

@@ -5,23 +5,32 @@ nprocs = 16
 
 def read(filename):
 
+
     ntasks, maxcor, meshn = None, None, 32
 
     file = open(filename)
     Lines = file.readlines()
 
-    for line in Lines:
+    for idx, line in enumerate(Lines):
+
         if "NTASKS" in line:
             ntasks = parse("NTASKS={}", line)[0]
         if "NCOR" in line:
             maxcor = parse("NCOR={}", line)[0]
         if "meshn" in line:
             meshn = parse("meshn={}", line)[0]
+    
+
+    
     return ntasks, maxcor, meshn
 
 
 
 def read_memory(filename):
+
+    line_searches = {}
+    iterk = 1
+
 
     outfoldername = ""
 
@@ -29,18 +38,27 @@ def read_memory(filename):
     Lines = file.readlines()
 
     mems = {}
-    for line in Lines:
+    for idx, line in enumerate(Lines):
 
         if "outfoldername : " in line:
             outfoldername = parse("outfoldername : {}", line)[0]
 
-        if not "Memory (TB) " in line:
-            continue
-        result=parse("Memory (TB) {} current_iteration {} process {}", line)
-        try:
-            mems[result[1]].append(float(result[0]))
-        except KeyError:
-            mems[result[1]] = [float(result[0])]
+        if "Memory (TB) " in line:
+            result=parse("Memory (TB) {} current_iteration {} process {}", line)
+            try:
+                mems[result[1]].append(float(result[0]))
+            except KeyError:
+                mems[result[1]] = [float(result[0])]
+
+
+        if not iterk in line_searches.keys():
+            if "At iterate    " + str(iterk) in line:
+                for k in range(9):
+                    if "LINE SEARCH" in Lines[idx + k]:
+                        result = parse("LINESEARCH{}times;normofstep={}\n", Lines[idx + k].replace(" ", ""))
+                        # breakpoint()
+                        line_searches[iterk] = result[0]
+                        iterk += 1
 
     mems2 = {}
     for key, item in mems.items():
@@ -56,7 +74,7 @@ def read_memory(filename):
 
     # print("--", np.max(mema[:, 1]))
 
-    return mema, outfoldername
+    return mema, outfoldername, line_searches
 
 
 def check(filename):

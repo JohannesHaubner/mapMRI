@@ -1,11 +1,11 @@
 from dolfin import *
 # import dgregister.config as config
-# def print_overloaded(*args):
-#     if MPI.rank(MPI.comm_world) == 0:
-#         # set_log_level(PROGRESS)
-#         print(*args)
-#     else:
-#         pass
+def print_overloaded(*args):
+    if MPI.rank(MPI.comm_world) == 0:
+        # set_log_level(PROGRESS)
+        print(*args, flush=True)
+    else:
+        pass
 # # if ocd:
 # if "optimize" in config.hyperparameters.keys() and (not config.hyperparameters["optimize"]):
 #     print_overloaded("Not importing dolfin-adjoint")
@@ -32,7 +32,16 @@ class TransformationBlock(Block):
         return 'TransformationBlock'
 
     def evaluate_adj_component(self, inputs, adj_inputs, block_variable, idx, prepared=None):
-        tmp = adj_inputs[0].copy()
+
+        tmp = adj_inputs[0]
+        print_overloaded("NOT Copying")
+        print_overloaded("*"*80)
+
+
+        # tmp = adj_inputs[0].copy()
+        # print_overloaded("Copying")
+        # print_overloaded("*"*80)
+
         # raise NotImplementedError
         tmp = backend_transformation(tmp, self.diag_matrix)
         return tmp

@@ -63,25 +63,25 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
 
     hyperparameters["vol"] = vol
 
-    if hyperparameters["multigrid"]:
-        print_overloaded("Start transporting with starting guess, now transport with the new control in addition")
-        starting_image = DGTransport(Img, Wind=starting_guess, preconditioner=hyperparameters["preconditioner"],
-                                MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
-                                solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
+    # if hyperparameters["multigrid"]:
+    #     print_overloaded("Start transporting with starting guess, now transport with the new control in addition")
+    #     starting_image = DGTransport(Img, Wind=starting_guess, preconditioner=hyperparameters["preconditioner"],
+    #                             MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
+    #                             solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
 
-        print_overloaded("Done transporting with starting guess, now transport with the new control in addition")
-        print_overloaded("*"*80)
+    #     print_overloaded("Done transporting with starting guess, now transport with the new control in addition")
+    #     print_overloaded("*"*80)
 
-    else:
-        starting_image = Img
+    # else:
+    starting_image = Img
 
     set_working_tape(Tape())
 
     # initialize control
     l2_controlfun = Function(vCG)
 
-    if (hyperparameters["starting_guess"] is not None) and (not hyperparameters["multigrid"]):
-        raise NotImplementedError("Double check that you are reading the correct file")
+    if (hyperparameters["starting_guess"] is not None):
+        # raise NotImplementedError("Double check that you are reading the correct file")
         l2_controlfun.assign(starting_guess)
         print_overloaded("*"*20, "assigned starting guess to control")
         assert norm(l2_controlfun) > 0
@@ -149,28 +149,17 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
 
             residual = x - y
 
-            mean_residual = assemble(residual * dx) / vol
+            # mean_residual = assemble(residual * dx) / vol
 
-            std_residual = sqrt( assemble((residual - mean_residual) ** 2 * dx) / vol )
+            # std_residual = sqrt( assemble((residual - mean_residual) ** 2 * dx) / vol )
 
 
             with stop_annotating():
                 arrname = hyperparameters["outputfolder"] + "/normalized_residual" + str(MPI.rank(MPI.comm_world)) + ".npy"
-                resvec = (x.vector()[:] - y.vector()[:] - mean_residual) / std_residual
+                resvec = x.vector()[:] - y.vector()[:] #  - mean_residual) / std_residual
                 np.save(arrname, resvec)
 
-                print_overloaded("mean_residual", mean_residual)
-                print_overloaded("std_residual", std_residual)
-
-                # try:
-                #     input_for_loss = (x.vector()[:] - y.vector()[:] - mean_residual) / std_residual
-
-                #     if np.max(np.abs(input_for_loss)) > 1:
-                #         print("process", MPI.rank(MPI.comm_world), "max of normalized residual > 1")
-                # except:
-                #     pass
-
-            residual = (residual - mean_residual) / std_residual
+                print_overloaded("Stored residuals")
             
             loss = tukey(x=residual, c=tukey_c)
             
@@ -340,7 +329,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
             domainmesh = current_pde_solution.function_space().mesh()
             
             #compute CFL number
-            h = CellDiameter(domainmesh)
+            # h = CellDiameter(domainmesh)
             
             # if hyperparameters["projector"]:
             #     CFL = projectorU.project(sqrt(inner(velocityField, velocityField))*Constant(hyperparameters["DeltaT"]) / h)
