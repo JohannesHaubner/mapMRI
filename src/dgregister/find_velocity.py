@@ -51,28 +51,10 @@ current_iteration = 0
 
 def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess):
 
-    # if hyperparameters["projector"]:
-    #     projectorU = Projector(FunctionSpace(Img.function_space().mesh(), "DG", 0))
-
-
-    # ny = Expression(('0.0','1.0', '0.0'), degree=0)
-    # # l2loss = 42
-
-
     vol = assemble(1*dx(Img.function_space().mesh()))
 
     hyperparameters["vol"] = vol
 
-    # if hyperparameters["multigrid"]:
-    #     print_overloaded("Start transporting with starting guess, now transport with the new control in addition")
-    #     starting_image = DGTransport(Img, Wind=starting_guess, preconditioner=hyperparameters["preconditioner"],
-    #                             MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
-    #                             solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
-
-    #     print_overloaded("Done transporting with starting guess, now transport with the new control in addition")
-    #     print_overloaded("*"*80)
-
-    # else:
     starting_image = Img
 
     set_working_tape(Tape())

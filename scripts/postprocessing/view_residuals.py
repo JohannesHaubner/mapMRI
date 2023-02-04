@@ -8,16 +8,18 @@ from parse import parse
 import argparse
 from scipy.stats import norm
 
-foldername = "affine_croppedmriregistration_outputs"
+foldername = "affine-rotated-outputs_noscale"
 
 localpath = pathlib.Path("/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration") / foldername
-expath = pathlib.Path("/home/bastian/D1/registration/test/") / foldername
+expath = pathlib.Path("/home/bastian/D1/registration/") / foldername
 
-subfolders = ["tukey/E100A0.01LBFGS100/", "l2/E100A0.01LBFGS100/"]
+subfolders = ["E70A0.01LBFGS20C1/", 
+                #"tukey/E100A0.01LBFGS100/", "l2/E100A0.01LBFGS100/"
+            ]
 
 
-subprocess.run("rsync -r ex:" + "/home/bastian/D1/registration/mrislurm/436253_log_python_srun.txt" + " " + str(localpath / "tukey/E100A0.01LBFGS100/" / ""), shell=True)
-subprocess.run("rsync -r ex:" + "/home/bastian/D1/registration/mrislurm/436252_log_python_srun.txt" + " " + str(localpath / "l2/E100A0.01LBFGS100/" / ""), shell=True)
+# subprocess.run("rsync -r ex:" + "/home/bastian/D1/registration/mrislurm/436253_log_python_srun.txt" + " " + str(localpath / "tukey/E100A0.01LBFGS100/" / ""), shell=True)
+# subprocess.run("rsync -r ex:" + "/home/bastian/D1/registration/mrislurm/436252_log_python_srun.txt" + " " + str(localpath / "l2/E100A0.01LBFGS100/" / ""), shell=True)
 
 for subfolder in subfolders:
 
@@ -28,8 +30,8 @@ for subfolder in subfolders:
 
     for file in [#"*.npy", 
                     "*.txt", "*.json"]:
-        pass
-        # subprocess.run("rsync -r ex:" + str(expath /subfolder / file) + " " + str(localpath /subfolder / ""), shell=True)
+        
+        subprocess.run("rsync -r ex:" + str(expath /subfolder / file) + " " + str(localpath /subfolder / ""), shell=True)
 
     res = []
     nres = []

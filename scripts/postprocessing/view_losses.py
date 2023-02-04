@@ -91,8 +91,8 @@ fig3, ax3 = plt.subplots(dpi=dpi, figsize=figsize)
 
 
 
-for foldername in ["affine-rotated-outputs3",
-                    "affine-rotated-outputs_noscale", 
+for foldername in [# "affine-rotated-outputs3",
+                    # "affine-rotated-outputs_noscale", 
                     "affine-rotated-outputs_restart"
                     ]:
 
@@ -182,22 +182,43 @@ for foldername in ["affine-rotated-outputs3",
 
         if hyperparameters["starting_guess"] is not None:
 
+            starting_guess_dir = pathlib.Path(hyperparameters["starting_guess"].replace(str(expath.parent), str(localpath.parent))).parent
+
+            assert starting_guess_dir.is_dir()
+
+            starting_hyperparameters = json.load(open(starting_guess_dir / "hyperparameters.json"))
+
+            startlogfiles = [x for x in os.listdir(starting_guess_dir) if x.endswith("_log_python_srun.txt")]
+            assert len(startlogfiles) == 1
+
+            file2 = open(starting_guess_dir / startlogfiles[0], 'r')
+            startloss, _ = read_loss_from_log(file2)
+            
+            
+            loss = np.vstack([startloss, loss])
+
+            
             # breakpoint()
-            
-            raise NotImplementedError
-
-            if not "/croppedmriregistration_outputs/" in hyperparameters["starting_guess"]:
-                raise NotImplementedError
-            
-            startresultfolder = pathlib.Path("/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration") / "croppedmriregistration_outputs" / runname
-            startlogfiles = [x for x in os.listdir(startresultfolder) if "_log_python_srun.txt" in x]
-
-
-            file1 = open(startresultfolder / startlogfiles[0], 'r')
-            startloss, startreg, startjd0 = read_loss_from_log(file1, jd0=None, reg0=0)
+            loss[:, 0] = list(range(0, loss.shape[0]))
             
 
-            print(runname, "has starting guess")
+            exclude_keys = ["slurmid", "logfile", 
+                            "readname", "starting_guess", "lbfgs_max_iterations", "", "", 
+                            "output_dir"]
+
+            for key, item in starting_hyperparameters.items():
+                
+                if key in exclude_keys:
+                    continue
+                
+                try:
+                    if not hyperparameters[key] == item:
+                        print(key, "is different:")
+                        print(starting_hyperparameters[key])
+                        print(hyperparameters[key])
+                except KeyError:
+                    pass
+
         
 
         killed = False
@@ -278,11 +299,10 @@ for foldername in ["affine-rotated-outputs3",
 
         loss[:, 1:] /= domain_size
 
-        if hyperparameters["starting_guess"] is not None:
-            raise NotImplementedError("Make sure appending losses gives correct plot")
-
         # Iter{}Jd={}L2loss={}Reg={}"
-        fac = loss[0, 2]
+        # fac = loss[0, 2]
+        fac  = 1
+
         p = ax1.plot(loss[:, 0], loss[:, 2] / fac, linestyle=linestlyle, label=label, marker=marker, markevery=markevery)
 
         c = p[0].get_color()

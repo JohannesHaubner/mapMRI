@@ -26,7 +26,7 @@ parameters['ghost_mode'] = 'shared_facet'
 import dgregister.config as config
 config.hyperparameters = {"optimize": True}
 
-from dgregister.helpers import load_control, get_lumped_mass_matrices
+from dgregister.helpers import get_lumped_mass_matrices
 from dgregister.MRI2FEM import read_image, fem2mri
 
 parser = argparse.ArgumentParser()
@@ -174,23 +174,19 @@ vCG = VectorFunctionSpace(domainmesh, hyperparameters["velocity_functionspace"],
 if hyperparameters["starting_guess"] is not None:
 
     assert hyperparameters["starting_state"] is not None
-
-    # if hyperparameters["multigrid"] and hyperparameters["smoothen"]:
-    #     assert "control" not in hyperparameters["starting_guess"].lower()
-    # else:
     assert "CurrentV.hdf" not in hyperparameters["starting_guess"]
     assert "Velocity" not in hyperparameters["starting_guess"]
 
-    controlfun = load_control(hyperparameters, vCG)
+    controlfun = Function(vCG)
 
-
-
+    hdf = HDF5File(domainmesh.mpi_comm(), hyperparameters["starting_guess"], "r")
+    hdf.read(controlfun, hyperparameters["readname"])
+    hdf.close()
+    
     with XDMFFile(hyperparameters["starting_state"]) as xdmf:
         xdmf.read_checkpoint(Img, "CurrentState")
 
-        print_overloaded("Loaded ", hyperparameters["starting_state"], "as starting guess for state")
-
-
+    print_overloaded("Loaded ", hyperparameters["starting_state"], "as starting guess for state")
 else:
     controlfun = None
 
@@ -198,25 +194,9 @@ else:
     iscale=iscale, hyperparameters=hyperparameters,normalization_scale=hyperparameters["normalization_scale"],
         state_functionspace=state_functionspace, state_functiondegree=state_functiondegree,)
 
-
-
-
 hyperparameters["max_voxel_intensity"] = max(input_max, target_max)
 
-# # iscale = target_mean / input_mean
-# iscale = np.mean(Img_goal.vector()[:]) / np.mean(Img.vector()[:])
-# hyperparameters["iscale"] = iscale
-# print_overloaded("Intensity scale factor =", iscale)
-
-# Img.vector()[:] *= sqrt(iscale)
-# Img_goal.vector()[:] /= sqrt(iscale)
-
 print_overloaded("check:norms:", assemble(Img*dx(domainmesh)), assemble(Img_goal*dx(domainmesh)))
-
-# assert np.allclose(assemble(Img*dx(domainmesh)), assemble(Img_goal*dx(domainmesh)), rtol=1e-1)
-
-
-
 
 T_final = 1
 
@@ -234,8 +214,6 @@ if MPI.rank(MPI.comm_world) == 0:
 else:
     pass
 
-# print_overloaded("Img.vector()[:].mean()", Img.vector()[:].mean())
-# print_overloaded("Img_goal.vector()[:].mean()", Img_goal.vector()[:].mean())
 
 controlFile = HDF5File(domainmesh.mpi_comm(), hyperparameters["outputfolder"] + "/Control.hdf", "w")
 controlFile.write(domainmesh, "mesh")
