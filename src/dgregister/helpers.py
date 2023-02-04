@@ -1,4 +1,3 @@
-import pathlib
 from fenics import *
 from fenics_adjoint import *
 import os
@@ -6,6 +5,7 @@ import os
 import numpy as np
 import nibabel
 import json
+import pathlib
 import resource
 
 def print_overloaded(*args):

@@ -3,7 +3,7 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks=32
 ## SBATCH --nodes=1
-#SBATCH --exclusive
+##SBATCH --exclusive
 ### =user
 ## SBATCH --ntasks-per-node=32
 #################################################################
@@ -61,15 +61,22 @@ OUTFOLDERNAME=None
 OUTFOLDERNAME=None
 
 
-OUTPUTDIR=/home/bastian/D1/registration/affine-rotated-outputs_milanq/
-# OUTPUTDIR=/home/bastian/D1/registration/affine-rotated-outputs_restart/
-IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/affine-rotated/abby.mgz
-IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/affine-rotated/ernie.mgz
+# OUTPUTDIR=/home/bastian/D1/registration/affine-rotated-outputs_milanq/
+# # OUTPUTDIR=/home/bastian/D1/registration/affine-rotated-outputs_restart/
+# IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/affine-rotated/abby.mgz
+# IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/affine-rotated/ernie.mgz
 
-# OUTPUTDIR=/home/bastian/D1/registration/affine_croppedmriregistration_outputs/tukeyC1/
-# IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/affine_registered/cropped_abbytoernie_affine.mgz
-# IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/affine_registered/cropped_ernie_brain.mgz
+# # OUTPUTDIR=/home/bastian/D1/registration/affine_croppedmriregistration_outputs/tukeyC1/
+# # IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/affine_registered/cropped_abbytoernie_affine.mgz
+# # IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/affine_registered/cropped_ernie_brain.mgz
 
+# OUTPUTDIR=/home/bastian/D1/registration/cropped-outputs_milanq/
+# IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/cropped/cropped_abbytoernie.mgz
+# IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/cropped/cropped_ernie_brain.mgz
+
+OUTPUTDIR=/home/bastian/D1/registration/coarsecropped-outputs_noprec_fixedImports/
+IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/coarsenedabbytoernie.mgz
+IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/coarsenedernie_brain.mgz
 
 mkdir -pv ${OUTPUTDIR}
 echo "OUTPUTDIR=" $OUTPUTDIR
@@ -80,7 +87,7 @@ echo "IMG2=" ${IMG2}
 
 srun -n 32 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
---tukey \
+--tukey --preconditioning none \
 --timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 
 # #

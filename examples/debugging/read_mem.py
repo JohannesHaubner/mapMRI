@@ -57,8 +57,13 @@ def read_memory(filename):
                     if "LINE SEARCH" in Lines[idx + k]:
                         result = parse("LINESEARCH{}times;normofstep={}\n", Lines[idx + k].replace(" ", ""))
                         # breakpoint()
-                        line_searches[iterk] = result[0]
+                        line_searches[iterk] = int(result[0])
                         iterk += 1
+
+                        break
+
+                # print(result)
+                # exit()
 
     mems2 = {}
     for key, item in mems.items():

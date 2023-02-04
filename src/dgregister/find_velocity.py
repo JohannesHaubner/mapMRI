@@ -69,12 +69,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
         assert norm(l2_controlfun) > 0
 
 
-    # control_L2 = l2_controlfun
-
-    # # velocity = control_L2
-    # preconditioning = lambda x: x
-
-    if hyperparameters["memdebug"] and hyperparameters["preconditioning"] == "none":
+    if hyperparameters["preconditioning"] == "none":
 
         # def preconditioning(x):
         #     print_overloaded("Not doing preconditioning")
@@ -269,7 +264,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
 
 
 
-        # return 
+        return 
 
         with stop_annotating():
             current_pde_solution = state.tape_value()

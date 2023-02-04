@@ -1,5 +1,6 @@
 #solver for transporting images
 from fenics import *
+from fenics_adjoint import *
 
 import dgregister.config as config
 def print_overloaded(*args):
@@ -9,11 +10,11 @@ def print_overloaded(*args):
     else:
         pass
 
-if "optimize" in config.hyperparameters.keys() and (not config.hyperparameters["optimize"]):
-    print_overloaded("Not importing dolfin-adjoint")
-else:
-    print_overloaded("Importing dolfin-adjoint")
-    from dolfin_adjoint import *
+# if "optimize" in config.hyperparameters.keys() and (not config.hyperparameters["optimize"]):
+#     print_overloaded("Not importing dolfin-adjoint")
+# else:
+#     print_overloaded("Importing dolfin-adjoint")
+#     from dolfin_adjoint import *
 
 
 def print_overloaded(*args):
