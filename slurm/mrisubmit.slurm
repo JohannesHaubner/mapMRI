@@ -1,21 +1,21 @@
 #!/bin/bash
 #SBATCH --job-name=mriregister
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=32
-## SBATCH --nodes=1
-##SBATCH --exclusive
+#SBATCH --ntasks=40
+#SBATCH --nodes=1
+## SBATCH --exclusive
 ### =user
-## SBATCH --ntasks-per-node=32
+## SBATCH --ntasks-per-node=40
 #################################################################
-#SBATCH --partition=milanq
-## SBATCH --partition=fpgaq
+##SBATCH --partition=milanq
+##SBATCH --partition=fpgaq
 ##
-## SBATCH --partition=defq
+#SBATCH --partition=defq
 ##SBATCH --reservation=bastian_39
 ##
 ## SBATCH --partition=habanaq
 #################################################################
-#SBATCH --time 3-00:00:0
+#SBATCH --time 1-00:00:0
 ##SBATCH --time 6-24 ##--time=99:00:00
 #SBATCH -o /home/bastian/D1/registration/mrislurm/%j.out
 #SBATCH --export=ALL
@@ -47,12 +47,16 @@ SPATH=${GPATH}scripts/optimization
 LOGOUTFILE=/home/bastian/D1/registration/mrislurm/${SLURM_JOB_ID}_log_python_srun.txt
 
 
+# echo "Running dijitso clean"
+# dijitso clean
+
+
 
 # ITERS=$1
 # ALPHA=$2
 ITERS=100
 ALPHA=1e-1
-LBFGS=50
+LBFGS=40
 
 echo "ITERS=" ${ITERS}
 echo "ALPHA=" ${ALPHA}
@@ -70,27 +74,52 @@ OUTFOLDERNAME=None
 # # IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/affine_registered/cropped_abbytoernie_affine.mgz
 # # IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/affine_registered/cropped_ernie_brain.mgz
 
-# OUTPUTDIR=/home/bastian/D1/registration/cropped-outputs_milanq/
+# OUTPUTDIR=/home/bastian/D1/registration/cropped-outputs/${SLURM_JOB_ID}/
 # IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/cropped/cropped_abbytoernie.mgz
 # IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/cropped/cropped_ernie_brain.mgz
 
-OUTPUTDIR=/home/bastian/D1/registration/coarsecropped-outputs_noprec_fixedImports/
+OUTPUTDIR=/home/bastian/D1/registration/coarsecropped-outputs/${SLURM_JOB_ID}/
 IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/coarsenedabbytoernie.mgz
 IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/coarsenedernie_brain.mgz
 
+
+
+
+dijitso show
+dijitso config
+
 mkdir -pv ${OUTPUTDIR}
+
+DIJITSODIR=${OUTPUTDIR}.cache/dijitso
+mkdir -pv ${DIJITSODIR}
+export DIJITSO_CACHE_DIR=${DIJITSODIR}
+
+echo "Setting new dijitso cache dir"
+dijitso show
+dijitso config
+
+
+
+
+
 echo "OUTPUTDIR=" $OUTPUTDIR
 echo "OUTFOLDERNAME=" $OUTFOLDERNAME
 echo "IMG1=" ${IMG1}
 echo "IMG2=" ${IMG2}
 
 
-srun -n 32 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
+srun -n 40 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
---tukey --preconditioning none \
 --timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
-
-# #
+# --padding 0 
+#--not_store_solver 
+# --not_store_solver 
+# --solver cg 
+########## --preconditioning none 
+########## ADD --exclusive IF RUNNING WITHOUT PRECONDITIONING
+#########
+# --nosmoothen
+# #--preconditioning none 
 # --starting_guess /home/bastian/D1/registration/affine-rotated-outputs3/E70A0.01LBFGS70prec_class/CurrentControl.hdf --readname "function" \
 # --starting_state /home/bastian/D1/registration/affine-rotated-outputs3/E70A0.01LBFGS70prec_class/State_checkpoint.xdmf \
 

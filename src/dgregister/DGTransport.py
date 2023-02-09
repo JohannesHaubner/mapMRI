@@ -141,6 +141,11 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservati
         solver = LUSolver()
         solver.set_operator(A)
         print_overloaded("Assembled A, using LU solver")
+    elif solver == "cg":
+        solver = KrylovSolver(method="cg", preconditioner=preconditioner)
+        solver.set_operators(A, A)
+
+        print_overloaded("Assembled A, using CG solver")
 
         # solver = PETScLUSolver(A, "mumps")
     else:
@@ -179,6 +184,8 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservati
         
         #solver.solve(Img_deformed.vector(), b)
         solver.solve(Img.vector(), b)
+
+        # # solve(self.A, ct.vector(), tmp)
         Img_deformed.assign(Img)
 
         

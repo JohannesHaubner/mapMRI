@@ -78,44 +78,69 @@ class Preconditioning():
             psi = TestFunction(C)
             
 
-            if not hasattr(self, "solver"):
-                a = inner(grad(c), grad(psi)) * dx
-                # a = inner(grad(c), grad(psi)) * dx
-                self.A = assemble(a)
-                print_overloaded("Assembled A in Preconditioning()")
-            
-            L = inner(func, psi) * dx
-            
-            
-            tmp = assemble(L)
-            BC.apply(tmp)
-            
-            BC.apply(self.A)
-            # solve(a == L, c, BC)
+            if "not_store_solver" in hyperparameters.keys() and hyperparameters["not_store_solver"]:
+                print_overloaded("not storing solver and copying stuff, i.e., working with cc = func.copy()")
 
-            if not hasattr(self, "solver"):
+                cc = func.copy()
+                A = assemble(inner(grad(c), grad(psi)) * dx)
 
-                if hyperparameters["solver"] == "lu":
+                L = inner(cc, psi) * dx
+                tmp = assemble(L)
+                BC.apply(tmp)
+                BC.apply(A)
+
+
+                cc = Function(C)
+                solve(A, cc.vector(), tmp)
+
+                print_overloaded("Called solve")
+
+            else:
+
+                if not hasattr(self, "solver"):
+                    a = inner(grad(c), grad(psi)) * dx
+                    # a = inner(grad(c), grad(psi)) * dx
+                    self.A = assemble(a)
+                    print_overloaded("Assembled A in Preconditioning()")
+                
+                L = inner(func, psi) * dx
+                
+                
+                tmp = assemble(L)
+                BC.apply(tmp)
+                
+                BC.apply(self.A)
+                # solve(a == L, c, BC)
+
+                if not hasattr(self, "solver"):
+
+                    if hyperparameters["solver"] == "lu":
+                        
+                        self.solver = LUSolver()
+                        self.solver.set_operator(self.A)
+
+                        print_overloaded("Created LU solver in Preconditioning()")
                     
-                    self.solver = LUSolver()
-                    self.solver.set_operator(self.A)
+                    elif hyperparameters["solver"] == "cg":
+                        self.solver = KrylovSolver(method="cg", preconditioner=hyperparameters["preconditioner"])
+                        self.solver.set_operators(self.A, self.A)
 
-                    print_overloaded("Created LU solver in Preconditioning()")
+                        print_overloaded("Assembled A, using CG solver")
 
-                elif hyperparameters["solver"] == "krylov":
-                    # self.solver = PETScKrylovSolver(method="gmres", preconditioner=self.hyperparameters["preconditioner"])
-                    self.solver = PETScKrylovSolver("gmres", hyperparameters["preconditioner"])
-                    self.solver.set_operators(self.A, self.A)
+                    elif hyperparameters["solver"] == "krylov":
+                        # self.solver = PETScKrylovSolver(method="gmres", preconditioner=self.hyperparameters["preconditioner"])
+                        self.solver = PETScKrylovSolver("gmres", hyperparameters["preconditioner"])
+                        self.solver.set_operators(self.A, self.A)
 
-                    print_overloaded("Created Krylov solver in Preconditioning()")
+                        print_overloaded("Created Krylov solver in Preconditioning()")
 
 
-            # BC.apply(self.A)
-            # x = args[0]
-            # b = args[1]
+                # BC.apply(self.A)
+                # x = args[0]
+                # b = args[1]
 
-            cc = Function(C)
-            self.solver.solve(cc.vector(), tmp)
+                cc = Function(C)
+                self.solver.solve(cc.vector(), tmp)
 
         return cc
 

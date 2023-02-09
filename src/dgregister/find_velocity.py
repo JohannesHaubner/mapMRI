@@ -15,19 +15,19 @@ from dgregister.helpers import store_during_callback
 
 set_log_level(LogLevel.CRITICAL)
 
-class Projector():
-    def __init__(self, V):
-        self.v = TestFunction(V)
-        u = TrialFunction(V)
-        form = inner(u, self.v)*dx
-        self.A = assemble(form, annotate=False)
-        self.solver = LUSolver(self.A)
-        self.uh = Function(V)
-    def project(self, f):
-        L = inner(f, self.v)*dx
-        b = assemble(L, annotate=False)
-        self.solver.solve(self.uh.vector(), b)
-        return self.uh
+# class Projector():
+#     def __init__(self, V):
+#         self.v = TestFunction(V)
+#         u = TrialFunction(V)
+#         form = inner(u, self.v)*dx
+#         self.A = assemble(form, annotate=False)
+#         self.solver = LUSolver(self.A)
+#         self.uh = Function(V)
+#     def project(self, f):
+#         L = inner(f, self.v)*dx
+#         b = assemble(L, annotate=False)
+#         self.solver.solve(self.uh.vector(), b)
+#         return self.uh
 
 
 
@@ -103,11 +103,16 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
 
     print_overloaded("Running Transport() with dt = ", hyperparameters["DeltaT"])
 
+    mem = resource.getrusage(resource.RUSAGE_SELF)[2]
+    print("Memory (TB)", (mem/(1e6*1024)), "current_iteration", "-6", "process", str(MPI.rank(MPI.comm_world)))
+
     Img_deformed = DGTransport(starting_image, velocity, preconditioner=hyperparameters["preconditioner"],
                             MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
                             solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
 
-    
+    mem = resource.getrusage(resource.RUSAGE_SELF)[2]
+    print("Memory (TB)", (mem/(1e6*1024)), "current_iteration", "-5", "process", str(MPI.rank(MPI.comm_world)))
+
     # if hyperparameters["projector"]:
     #     Img_deformed = projectorU.project(dot(velocity, ny))
     # else:
@@ -164,6 +169,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
         with stop_annotating():
             l2loss = Jd
 
+    assert Jd > 0
     
 
     print_overloaded("Assembled error between transported image and target, Jdata=", Jd)
@@ -199,6 +205,9 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
     print_overloaded("Assembled functional, J=", J)
 
     Jhat = ReducedFunctional(J, cont)
+
+    mem = resource.getrusage(resource.RUSAGE_SELF)[2]
+    print("Memory (TB)", (mem/(1e6*1024)), "current_iteration", "-4", "process", str(MPI.rank(MPI.comm_world)))
 
     mem = resource.getrusage(resource.RUSAGE_SELF)[2]
     print_overloaded("Current memory usage (after creating reduced functional): %g (MB)" % (mem/1024))
@@ -340,7 +349,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
     else:
         tol = 1e-8
 
-    minimize(Jhat,  method = 'L-BFGS-B', options = {"iprint": 99, "disp": None, "maxiter": hyperparameters["lbfgs_max_iterations"],
+    minimize(Jhat,  method = 'L-BFGS-B', options = {"iprint": 0, "disp": None, "maxiter": hyperparameters["lbfgs_max_iterations"],
                 # "maxls": 1,  "ftol": 0, "gtol": 0, 
                 "maxcor": hyperparameters["maxcor"]}, tol=tol, callback = cb)
 

@@ -6,6 +6,9 @@ import time
 import argparse
 import numpy as np
 import nibabel
+import resource
+
+PETScOptions.set("mat_mumps_icntl_4", 3)   # verbosity
 
 set_log_level(LogLevel.CRITICAL)
 
@@ -36,7 +39,7 @@ parser.add_argument("--code_dir", type=str, default="/home/bastian/Oscar-Image-R
 parser.add_argument("--logfile", type=str, default=None)
 parser.add_argument("--output_dir", type=str, default=None)
 parser.add_argument("--slurmid", type=str, required=True)
-parser.add_argument("--solver", default="krylov", choices=["lu", "krylov"])
+parser.add_argument("--solver", default="krylov", choices=["lu", "krylov", "cg"])
 parser.add_argument("--timestepping", default="RungeKutta", choices=["RungeKutta", "CrankNicolson", "explicitEuler"])
 parser.add_argument("--smoothen", default=True, action="store_true", help="Obsolete flag. Use proper scalar product")
 parser.add_argument("--nosmoothen", default=False, action="store_true", help="Sets smoothen=False")
@@ -45,10 +48,13 @@ parser.add_argument("--lbfgs_max_iterations", type=float, default=400)
 parser.add_argument("--max_timesteps", type=float, default=None)
 parser.add_argument("--state_functiondegree", type=int, default=1)
 
-
+parser.add_argument("--not_store_solver", default=False, action="store_true", help="Do not store solve in preconditioning")
 parser.add_argument("--preconditioning", default="preconditioning", type=str, choices=["none", "preconditioning"])
 parser.add_argument("--memdebug", default=False, action="store_true")
 parser.add_argument("--maxcor", default=10, type=int)
+parser.add_argument("--padding", default=None, type=int)
+
+
 
 parser.add_argument("--projector", default=False, action="store_true")
 parser.add_argument("--tukey", default=False, action="store_true", help="Use tukey loss function")
@@ -164,9 +170,18 @@ iscale = np.mean(nibabel.load(hyperparameters["target"]).get_fdata()) / np.mean(
 hyperparameters["iscale"] = iscale
 
 
-(domainmesh, Img, input_max) = read_image(filename=hyperparameters["input"], name="input", mesh=None, 
+mem = resource.getrusage(resource.RUSAGE_SELF)[2]
+print("Memory (TB)", (mem/(1e6*1024)), "current_iteration", "-10", "process", str(MPI.rank(MPI.comm_world)))
+
+
+
+
+(domainmesh, Img, input_max, projector) = read_image(filename=hyperparameters["input"], name="input", mesh=None, 
             iscale=iscale, hyperparameters=hyperparameters, normalization_scale=hyperparameters["normalization_scale"],
             state_functionspace=state_functionspace, state_functiondegree=state_functiondegree)
+
+mem = resource.getrusage(resource.RUSAGE_SELF)[2]
+print("Memory (TB)", (mem/(1e6*1024)), "current_iteration", "-9", "process", str(MPI.rank(MPI.comm_world)))
 
 vCG = VectorFunctionSpace(domainmesh, hyperparameters["velocity_functionspace"], hyperparameters["velocity_functiondegree"])
 
@@ -190,9 +205,13 @@ if hyperparameters["starting_guess"] is not None:
 else:
     controlfun = None
 
-(mesh_goal, Img_goal, target_max) = read_image(hyperparameters["target"], name="target", mesh=domainmesh, 
+(mesh_goal, Img_goal, target_max, _) = read_image(hyperparameters["target"], name="target", mesh=domainmesh, projector=projector,
     iscale=iscale, hyperparameters=hyperparameters,normalization_scale=hyperparameters["normalization_scale"],
         state_functionspace=state_functionspace, state_functiondegree=state_functiondegree,)
+
+mem = resource.getrusage(resource.RUSAGE_SELF)[2]
+print("Memory (TB)", (mem/(1e6*1024)), "current_iteration", "-8", "process", str(MPI.rank(MPI.comm_world)))
+
 
 hyperparameters["max_voxel_intensity"] = max(input_max, target_max)
 
@@ -253,6 +272,13 @@ files["totallossfile"] = hyperparameters["outputfolder"] + '/totalloss.txt'
 
 # files["memoryfile"] = hyperparameters["outputfolder"] + '/memory.txt'
 
+
+# print_overloaded("Deleting projector")
+
+# del projector
+
+mem = resource.getrusage(resource.RUSAGE_SELF)[2]
+print("Memory (TB)", (mem/(1e6*1024)), "current_iteration", "-7", "process", str(MPI.rank(MPI.comm_world)))
 
 #####################################################################
 # Optimization

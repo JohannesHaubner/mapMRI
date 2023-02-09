@@ -42,6 +42,9 @@ def read_memory(filename):
 
         if "outfoldername : " in line:
             outfoldername = parse("outfoldername : {}", line)[0]
+        if "outputfolder : " in line:
+            outputfolder = parse("outputfolder : {}", line)[0].replace("\n", "")
+
 
         if "Memory (TB) " in line:
             result=parse("Memory (TB) {} current_iteration {} process {}", line)
@@ -66,20 +69,28 @@ def read_memory(filename):
                 # exit()
 
     mems2 = {}
+    kk = 0
     for key, item in mems.items():
 
         # if "cubeslurm" in str(filename):
         #     assert len(item) == nprocs
 
-        mems2[key] = sum(item)
+        if kk > 0 and len(mems[list(mems.keys())[0]]) != len(item):
 
-        # assert 16 == len(item)
+            print("*"*80, "WARNING: last iterate did not print memory of all processes")
 
+            return np.array(list(mems2.items())).astype(float), outfoldername, line_searches, outputfolder
+        else:
+            mems2[key] = sum(item)
+
+        # assert len(mems[list(mems.keys())[0]]) == len(item)
+        
+        kk += 1
     mema = np.array(list(mems2.items())).astype(float)
 
     # print("--", np.max(mema[:, 1]))
 
-    return mema, outfoldername, line_searches
+    return mema, outfoldername, line_searches, outputfolder
 
 
 def check(filename):

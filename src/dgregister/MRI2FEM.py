@@ -71,7 +71,32 @@ def fem2mri(function, shape):
         return retimage
 
 
-def read_image(filename, name, mesh=None, printout=True, threshold=True, 
+
+class Projector():
+    def __init__(self, V):
+        self.v = TestFunction(V)
+        u = TrialFunction(V)
+        form = inner(u, self.v)*dx
+        self.A = assemble(form, annotate=False)
+        # self.solver = LUSolver(self.A)
+        self.V = V
+        self.solver = KrylovSolver()
+        self.solver.set_operators(self.A, self.A)
+        print_overloaded("Solver in Projector: Krylov")
+        # self.uh = Function(V)
+    
+    
+    def project(self, f):
+        L = inner(f, self.v)*dx
+        b = assemble(L, annotate=False)
+        
+        uh = Function(self.V)
+        self.solver.solve(uh.vector(), b)
+        
+        return uh
+
+
+def read_image(filename, name, mesh=None, printout=True, threshold=True, projector=None,
                 state_functionspace="DG", state_functiondegree=1, 
                 normalization_scale=1, 
                 iscale=1, hyperparameters=None,
@@ -90,6 +115,20 @@ def read_image(filename, name, mesh=None, printout=True, threshold=True,
         data = np.array(img)
 
         data = np.expand_dims(data, -1)
+
+
+    if "padding" in hyperparameters.keys() and hyperparameters["padding"] is  not None:
+
+
+        from dgregister.helpers import pad_with
+        assert "coarse" in filename
+
+        print_overloaded("before padding:", data.shape, data.size)
+
+        data = np.pad(data, hyperparameters["padding"], pad_with)
+
+        print_overloaded("padded data with ", hyperparameters["padding"])
+        print_overloaded("after padding:", data.shape, data.size)
 
     if filter:
         from scipy import ndimage
@@ -188,11 +227,20 @@ def read_image(filename, name, mesh=None, printout=True, threshold=True,
     else:
         u_data.vector()[:] = data[i, j]
 
-    space = FunctionSpace(mesh, state_functionspace, state_functiondegree)
-    
-    u_data = project(u_data, space)
+    # space = FunctionSpace(mesh, state_functionspace, state_functiondegree)
+    # projector = None    
+    # u_data = project(u_data, space)
+    # print_overloaded("Projected")
 
-    return mesh, u_data, np.max(data)
+
+    if projector is None:
+        projector = Projector(FunctionSpace(mesh, state_functionspace, state_functiondegree))
+        print_overloaded("Initialized projector")
+    else:
+        print_overloaded("Reusing projector")
+    u_data = projector.project(u_data)
+
+    return mesh, u_data, np.max(data), projector
 
 if __name__ == "__main__":
 

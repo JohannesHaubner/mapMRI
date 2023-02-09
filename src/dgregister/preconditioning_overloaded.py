@@ -57,40 +57,66 @@ class PreconditioningBlock(Block):
             BC = DirichletBC(C, Constant((0.0,) * dim), "on_boundary")
             c = TrialFunction(C)
             psi = TestFunction(C)
-            
-            if not hasattr(self, "solver"):
+
+
+            if "not_store_solver" in hyperparameters.keys() and hyperparameters["not_store_solver"]:
+
                 a = inner(grad(c), grad(psi)) * dx
-                self.A = assemble(a)
-                BC.apply(self.A)
+                A = assemble(a)
+                BC.apply(A)
 
-                print_overloaded("Assembled A in PreconditioningBlock()")
+                BC.apply(tmp)
+                x = Function(C)
+
+                solve(A, x.vector(), tmp, "gmres", hyperparameters["preconditioner"])
+
+                ctest = TestFunction(C)
+                tmp = assemble(inner(ctest, x) * dx)
+
+            else:
+
+            
+                if not hasattr(self, "solver"):
+                    a = inner(grad(c), grad(psi)) * dx
+                    self.A = assemble(a)
+                    BC.apply(self.A)
+
+                    print_overloaded("Assembled A in PreconditioningBlock()")
+                    
+                    # if True:
+                    if hyperparameters["solver"] == "lu":
+
+                        self.solver = LUSolver()
+                        self.solver.set_operator(self.A)
+                        print_overloaded("Created LU solver in PreconditioningBlock()")
+
+
+                    elif hyperparameters["solver"] == "cg":
+                        self.solver = KrylovSolver(method="cg", preconditioner=hyperparameters["preconditioner"])
+                        self.solver.set_operators(self.A, self.A)
+
+                        print_overloaded("Assembled A, using CG solver")
+
+
+                    elif hyperparameters["solver"] == "krylov":
+                        self.solver = PETScKrylovSolver("gmres", hyperparameters["preconditioner"])
+                        # 
+                        # print_overloaded("type of A", type(self.A), self.A)
+                        # print_overloaded("type of self.solver", type(self.solver))
+                        print_overloaded("Created Krylov solver in PreconditioningBlock()")
+
+                        self.solver.set_operators(self.A, self.A)
                 
-                # if True:
-                if hyperparameters["solver"] == "lu":
-
-                    self.solver = LUSolver()
-                    self.solver.set_operator(self.A)
-                    print_overloaded("Created LU solver in PreconditioningBlock()")
-
-                elif hyperparameters["solver"] == "krylov":
-                    self.solver = PETScKrylovSolver("gmres", hyperparameters["preconditioner"])
-                    # 
-                    # print_overloaded("type of A", type(self.A), self.A)
-                    # print_overloaded("type of self.solver", type(self.solver))
-                    print_overloaded("Created Krylov solver in PreconditioningBlock()")
-
-                    self.solver.set_operators(self.A, self.A)
             
-            
-            # a = inner(grad(c), grad(psi)) * dx
-            # A = assemble(a)
-            ct = Function(C)
-            
-            BC.apply(tmp)
-            self.solver.solve(ct.vector(), tmp)
-            # solve(self.A, ct.vector(), tmp)
-            ctest = TestFunction(C)
-            tmp = assemble(inner(ctest, ct) * dx)
+                # a = inner(grad(c), grad(psi)) * dx
+                # A = assemble(a)
+                ct = Function(C)
+                
+                BC.apply(tmp)
+                self.solver.solve(ct.vector(), tmp)
+                # solve(self.A, ct.vector(), tmp)
+                ctest = TestFunction(C)
+                tmp = assemble(inner(ctest, ct) * dx)
         
         
         return tmp
