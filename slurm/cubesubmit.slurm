@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=quicktest
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=16
+#SBATCH --ntasks=32
 #SBATCH --nodes=1
 #################################################################
 ## SBATCH --partition=milanq
@@ -31,9 +31,9 @@ SPATH=${GPATH}scripts/optimization
 LOGOUTFILE=/home/bastian/D1/registration/cubeslurm/${SLURM_JOB_ID}_log_python_srun.txt
 
 
-NP=16
+NP=32
 
-ITERS=30
+ITERS=32
 ALPHA=1e-1
 LBFGS=30
 
@@ -45,7 +45,7 @@ echo "NTASKS=" ${NP}
 OUTFOLDERNAME=None
 OUTFOLDERNAME=nosmoothen
 
-OUTPUTDIR=/home/bastian/D1/registration/cubememdebug2/${SLURM_JOB_ID}/
+OUTPUTDIR=/home/bastian/D1/registration/cuberegistration/
 DPATH=/home/bastian/D1/registration
 DATAPATH=${DPATH}/testdata_3d/
 IMG1=${DATAPATH}input.mgz
@@ -53,12 +53,13 @@ IMG2=${DATAPATH}newtarget.mgz
 
 mkdir -pv ${OUTPUTDIR}
 
-scp ${SPATH}/Optimize3d.py ${OUTPUTDIR}
-scp ${GPATH}/src/dgregister/*.py ${OUTPUTDIR}
+# scp ${SPATH}/Optimize3d.py ${OUTPUTDIR}
+# scp ${GPATH}/src/dgregister/*.py ${OUTPUTDIR}
 
 srun -n ${NP} python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} --normalization_scale 1 \
 --timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+
 # --nosmoothen  --preconditioning none \
 # RungeKutta
 # --tukey --tukey_c 1 \

@@ -7,12 +7,9 @@
 ### =user
 ## SBATCH --ntasks-per-node=40
 #################################################################
-##SBATCH --partition=milanq
-##SBATCH --partition=fpgaq
-##
-#SBATCH --partition=defq
-##SBATCH --reservation=bastian_39
-##
+#SBATCH --partition=milanq
+# #SBATCH --partition=fpgaq
+## SBATCH --partition=defq
 ## SBATCH --partition=habanaq
 #################################################################
 #SBATCH --time 1-00:00:0
@@ -50,7 +47,9 @@ LOGOUTFILE=/home/bastian/D1/registration/mrislurm/${SLURM_JOB_ID}_log_python_sru
 # echo "Running dijitso clean"
 # dijitso clean
 
+NP=40
 
+echo "NP=" ${NP}
 
 # ITERS=$1
 # ALPHA=$2
@@ -62,7 +61,8 @@ echo "ITERS=" ${ITERS}
 echo "ALPHA=" ${ALPHA}
 
 OUTFOLDERNAME=None
-OUTFOLDERNAME=None
+
+OUTFOLDERNAME=NP${NP}
 
 
 # OUTPUTDIR=/home/bastian/D1/registration/affine-rotated-outputs_milanq/
@@ -108,10 +108,10 @@ echo "IMG1=" ${IMG1}
 echo "IMG2=" ${IMG2}
 
 
-srun -n 40 python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
+srun -n ${NP} python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
---timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
-# --padding 0 
+--memdebug --timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+#--not_store_solver --padding 0 
 #--not_store_solver 
 # --not_store_solver 
 # --solver cg 

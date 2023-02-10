@@ -188,12 +188,9 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
     
         with open(files["lossfile"], "a") as myfile:
             myfile.write(str(float(Jd))+ ", ")
-        with open(files["regularizationfile"], "a") as myfile:
-            myfile.write(str(float(Jreg))+ ", ")
         with open(files["l2lossfile"], "a") as myfile:
             myfile.write(str(float(l2loss))+ ", ")
-        with open(files["totallossfile"], "a") as myfile:
-            myfile.write(str(float(J))+ ", ")
+
     
 
 
@@ -244,22 +241,22 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
         print_overloaded("Timing done, exiting")
         exit()
 
+    if not hyperparameters["memdebug"]:
 
+        files["stateFile"].write(Img_deformed, str(0))
+        files["controlFile"].write(l2_controlfun, str(0))
 
-    files["stateFile"].write(Img_deformed, str(0))
-    files["controlFile"].write(l2_controlfun, str(0))
+    if hyperparameters["debug"]:
 
-    # if hyperparameters["debug"]:
-
-    #     print_overloaded("Running convergence test")
-    #     h = Function(vCG)
-    #     h.vector()[:] = 0.1
-    #     h.vector().apply("")
-    #     conv_rate = taylor_test(Jhat, velocity, h)
-    #     print_overloaded(conv_rate)
-    #     print_overloaded("convergence test done, exiting")
-    #     hyperparameters["conv_rate"] = float(conv_rate)  
-    #     exit()
+        print_overloaded("Running convergence test")
+        h = Function(vCG)
+        h.vector()[:] = 0.1
+        h.vector().apply("")
+        conv_rate = taylor_test(Jhat, velocity, h)
+        print_overloaded(conv_rate)
+        print_overloaded("convergence test done, exiting")
+        hyperparameters["conv_rate"] = float(conv_rate)  
+        exit()
         
 
 
@@ -273,7 +270,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
 
 
 
-        return 
+        # return 
 
         with stop_annotating():
             current_pde_solution = state.tape_value()
@@ -282,6 +279,10 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
             current_pde_solution.vector().update_ghost_values()
             current_l2_control.vector().update_ghost_values()
             current_l2_control.rename("control", "")
+
+
+            if hyperparameters["memdebug"]:
+                return
 
             if not hyperparameters["memdebug"] and (current_pde_solution.vector()[:].max() > hyperparameters["max_voxel_intensity"] * 5):
                 raise ValueError("State became > hyperparameters['max_voxel_intensity'] * 5 at some vertex, something is probably wrong")
@@ -309,11 +310,6 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
             # # Jd = assemble(0.5 * (current_pde_solution - Img_goal)**2 * dx(domain=Img.function_space().mesh()))
             # Jreg = assemble(alpha*current_L2_control**2*dx(domain=Img.function_space().mesh()))
 
-            current_L2_control = current_l2_control
-            velocityField = current_L2_control
-
-            Jreg = 42
-
             domainmesh = current_pde_solution.function_space().mesh()
             
             #compute CFL number
@@ -334,10 +330,9 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
             print("Memory (TB)", (mem/(1e6*1024)), "current_iteration", current_iteration + 0.5, "process", str(MPI.rank(MPI.comm_world)))
 
 
-            store_during_callback(current_iteration=current_iteration, hyperparameters=hyperparameters, files=files, Jd=Jd, Jreg=Jreg, 
-                                l2loss=l2loss,
-                                domainmesh=domainmesh, velocityField=velocityField, 
-                                current_pde_solution=current_pde_solution, control=current_l2_control)
+            store_during_callback(current_iteration, hyperparameters, files, Jd, l2loss,
+                                        domainmesh, current_pde_solution, control=current_l2_control)
+
 
     print_overloaded("Using maxcor =", hyperparameters["maxcor"], "in LBFGS-B")
 

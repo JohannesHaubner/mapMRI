@@ -59,7 +59,7 @@ parser.add_argument("--padding", default=None, type=int)
 parser.add_argument("--projector", default=False, action="store_true")
 parser.add_argument("--tukey", default=False, action="store_true", help="Use tukey loss function")
 parser.add_argument("--tukey_c", type=int, default=1)
-parser.add_argument("--normalization_scale", type=float, default=255, help="divide both images with this number")
+parser.add_argument("--normalization_scale", type=float, default=1, help="divide both images with this number")
 parser.add_argument("--readname", type=str, default="-1")
 parser.add_argument("--starting_guess", type=str, default=None)
 parser.add_argument("--starting_state", type=str, default=None)
@@ -233,27 +233,30 @@ if MPI.rank(MPI.comm_world) == 0:
 else:
     pass
 
+files = {}
 
-controlFile = HDF5File(domainmesh.mpi_comm(), hyperparameters["outputfolder"] + "/Control.hdf", "w")
-controlFile.write(domainmesh, "mesh")
+if not hyperparameters["memdebug"]:
 
-stateFile = HDF5File(MPI.comm_world, hyperparameters["outputfolder"] + "/State.hdf", "w")
-stateFile.write(domainmesh, "mesh")
+    controlFile = HDF5File(domainmesh.mpi_comm(), hyperparameters["outputfolder"] + "/Control.hdf", "w")
+    controlFile.write(domainmesh, "mesh")
 
-velocityFile = HDF5File(MPI.comm_world, hyperparameters["outputfolder"] + "/VelocityField.hdf", "w")
-velocityFile.write(domainmesh, "mesh")
+    stateFile = HDF5File(MPI.comm_world, hyperparameters["outputfolder"] + "/State.hdf", "w")
+    stateFile.write(domainmesh, "mesh")
 
-with XDMFFile(hyperparameters["outputfolder"] + "/Target.xdmf") as xdmf:
-    xdmf.write_checkpoint(Img_goal, "Img_goal", 0.)
+    velocityFile = HDF5File(MPI.comm_world, hyperparameters["outputfolder"] + "/VelocityField.hdf", "w")
+    velocityFile.write(domainmesh, "mesh")
 
-with XDMFFile(hyperparameters["outputfolder"] + "/Input.xdmf") as xdmf:
-    xdmf.write_checkpoint(Img, "Img", 0.)
+    with XDMFFile(hyperparameters["outputfolder"] + "/Target.xdmf") as xdmf:
+        xdmf.write_checkpoint(Img_goal, "Img_goal", 0.)
 
-files = {
-    "velocityFile": velocityFile,
-    "stateFile": stateFile,
-    "controlFile":controlFile
-}
+    with XDMFFile(hyperparameters["outputfolder"] + "/Input.xdmf") as xdmf:
+        xdmf.write_checkpoint(Img, "Img", 0.)
+
+
+    files["velocityFile"] = velocityFile
+    files["stateFile"] = stateFile
+    files["controlFile"] = controlFile
+
 
 Img.rename("input", "")
 Img_goal.rename("target", "")
@@ -267,15 +270,7 @@ t0 = time.time()
 
 files["lossfile"] = hyperparameters["outputfolder"] + '/loss.txt'
 files["l2lossfile"] = hyperparameters["outputfolder"] + '/l2loss.txt'
-files["regularizationfile"] = hyperparameters["outputfolder"] + '/regularization.txt'
-files["totallossfile"] = hyperparameters["outputfolder"] + '/totalloss.txt'
 
-# files["memoryfile"] = hyperparameters["outputfolder"] + '/memory.txt'
-
-
-# print_overloaded("Deleting projector")
-
-# del projector
 
 mem = resource.getrusage(resource.RUSAGE_SELF)[2]
 print("Memory (TB)", (mem/(1e6*1024)), "current_iteration", "-7", "process", str(MPI.rank(MPI.comm_world)))
@@ -291,16 +286,13 @@ print_overloaded("Done with optimization, took", format(tcomp, ".1f"), "hours")
 
 hyperparameters["optimization_time_hours"] = tcomp
 hyperparameters["Jd_final"] = hyperparameters["Jd_current"]
-hyperparameters["Jreg_final"] = hyperparameters["Jreg_current"]
 hyperparameters["Jl2_final"] = hyperparameters["Jl2_current"]
 if MPI.rank(MPI.comm_world) == 0:
     with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as outfile:
         json.dump(hyperparameters, outfile, sort_keys=True, indent=4)
 
-if hyperparameters["timing"]:
+if hyperparameters["timing"] or hyperparameters["memdebug"]:
     exit()
-
-
 
 #####################################################################
 

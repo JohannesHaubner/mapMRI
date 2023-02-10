@@ -342,12 +342,12 @@ def interpolate_velocity(hyperparameters, domainmesh, vCG, controlfun, store_pvd
     return domainmesh, vCG, controlfun_fine
 
 
-def store_during_callback(current_iteration, hyperparameters, files, Jd, Jreg, l2loss,
-                            domainmesh, velocityField, current_pde_solution, control=None):
+def store_during_callback(current_iteration, hyperparameters, files, Jd, l2loss,
+                            domainmesh, current_pde_solution, control):
 
     print_overloaded("Iter", format(current_iteration, ".0f"), 
                     "Jd =", format(Jd, ".4e"), 
-                    "L2loss =", format(l2loss, ".4e"), "Reg =", format(Jreg, ".4e"))
+                    "L2loss =", format(l2loss, ".4e")) # , "Reg =", format(Jreg, ".4e"))
 
 
 
@@ -355,31 +355,32 @@ def store_during_callback(current_iteration, hyperparameters, files, Jd, Jreg, l
     
         with open(files["lossfile"], "a") as myfile:
             myfile.write(str(float(Jd))+ ", ")
-        with open(files["regularizationfile"], "a") as myfile:
-            myfile.write(str(float(Jreg))+ ", ")
+        # with open(files["regularizationfile"], "a") as myfile:
+        #     myfile.write(str(float(Jreg))+ ", ")
         with open(files["l2lossfile"], "a") as myfile:
             myfile.write(str(float(l2loss))+ ", ")
-        with open(files["totallossfile"], "a") as myfile:
-            myfile.write(str(float(Jd + Jreg))+ ", ")
+        # with open(files["totallossfile"], "a") as myfile:
+        #     myfile.write(str(float(Jd + Jreg))+ ", ")
 
     hyperparameters["Jd_current"] = float(Jd)
-    hyperparameters["Jreg_current"] = float(Jreg)
     hyperparameters["Jl2_current"] = float(l2loss)
     
     
     with XDMFFile(hyperparameters["outputfolder"] + "/State_checkpoint.xdmf") as xdmf:
         xdmf.write_checkpoint(current_pde_solution, "CurrentState", 0.)
-    with XDMFFile(hyperparameters["outputfolder"] + "/Velocity_checkpoint.xdmf") as xdmf:
-        xdmf.write_checkpoint(velocityField, "CurrentV", 0.)
 
-    file = HDF5File(domainmesh.mpi_comm(), hyperparameters["outputfolder"] + "/CurrentV.hdf", "w")
-    file.write(velocityField, "function")
-    file.close()        
 
-    if control is not None:
-        file = HDF5File(domainmesh.mpi_comm(), hyperparameters["outputfolder"] + "/CurrentControl.hdf", "w")
-        file.write(control, "function")
-        file.close()    
+    with XDMFFile(hyperparameters["outputfolder"] + "/Control_checkpoint.xdmf") as xdmf:
+        xdmf.write_checkpoint(control, "CurrentV", 0.)
+
+    # file = HDF5File(domainmesh.mpi_comm(), hyperparameters["outputfolder"] + "/CurrentV.hdf", "w")
+    # file.write(velocityField, "function")
+    # file.close()        
+
+
+    file = HDF5File(domainmesh.mpi_comm(), hyperparameters["outputfolder"] + "/CurrentControl.hdf", "w")
+    file.write(control, "function")
+    file.close()    
 
     # DO NOT DELETE 
     # ROUTINE TO STORE TRANSFORMED BRAIN DURING OPTIMIZATION
