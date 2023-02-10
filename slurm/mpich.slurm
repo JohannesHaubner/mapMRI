@@ -7,10 +7,10 @@
 ### =user
 ## SBATCH --ntasks-per-node=40
 #################################################################
-#SBATCH --partition=milanq
+## SBATCH --partition=milanq
 ## SBATCH --partition=fpgaq
 ## SBATCH --partition=defq
-## SBATCH --partition=habanaq
+#SBATCH --partition=habanaq
 #################################################################
 #SBATCH --time 1-00:00:0
 ##SBATCH --time 6-24 ##--time=99:00:00
@@ -24,6 +24,7 @@
 
 eval "$(conda shell.bash hook)"
 conda activate mri_inverse
+module load mpich-3.3.2
 
 # module load ipopt-3.13.3
 
@@ -53,7 +54,7 @@ echo "NP=" ${NP}
 
 # ITERS=$1
 # ALPHA=$2
-ITERS=100
+ITERS=10
 ALPHA=1e-1
 LBFGS=40
 
@@ -62,7 +63,7 @@ echo "ALPHA=" ${ALPHA}
 
 OUTFOLDERNAME=None
 
-OUTFOLDERNAME=NP${NP}
+OUTFOLDERNAME=NP${NP}_mpiexec
 
 
 # OUTPUTDIR=/home/bastian/D1/registration/affine-rotated-outputs_milanq/

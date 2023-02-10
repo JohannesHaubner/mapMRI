@@ -108,7 +108,7 @@ def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, star
 
     Img_deformed = DGTransport(starting_image, velocity, preconditioner=hyperparameters["preconditioner"],
                             MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
-                            solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
+                            solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"], reassign=hyperparameters["reassign"])
 
     mem = resource.getrusage(resource.RUSAGE_SELF)[2]
     print("Memory (TB)", (mem/(1e6*1024)), "current_iteration", "-5", "process", str(MPI.rank(MPI.comm_world)))

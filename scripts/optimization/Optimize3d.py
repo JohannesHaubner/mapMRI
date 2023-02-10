@@ -54,7 +54,7 @@ parser.add_argument("--memdebug", default=False, action="store_true")
 parser.add_argument("--maxcor", default=10, type=int)
 parser.add_argument("--padding", default=None, type=int)
 
-
+parser.add_argument("--reassign", default=False, action="store_true")
 
 parser.add_argument("--projector", default=False, action="store_true")
 parser.add_argument("--tukey", default=False, action="store_true", help="Use tukey loss function")

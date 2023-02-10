@@ -51,6 +51,8 @@ class Preconditioning():
         # self.smoothen = hyperparameters["smoothen"]
         # self.hyperparameters = hyperparameters
 
+        self.tmp = None
+        self.A = None
         pass
 
     def __call__(self, func):
@@ -98,18 +100,40 @@ class Preconditioning():
             else:
 
                 if not hasattr(self, "solver"):
+
                     a = inner(grad(c), grad(psi)) * dx
-                    # a = inner(grad(c), grad(psi)) * dx
-                    self.A = assemble(a)
-                    print_overloaded("Assembled A in Preconditioning()")
-                
+
+                    if hyperparameters["reassign"]:
+                        if self.A is None:
+
+                            self.A = assemble(a)
+
+                        else:
+                            self.A = assemble(a, tensor=self.A)
+                    else:
+                    
+                        
+                        # a = inner(grad(c), grad(psi)) * dx
+                        self.A = assemble(a)
+                        print_overloaded("Assembled A in Preconditioning()")
+                    
+
                 L = inner(func, psi) * dx
+                if hyperparameters["reassign"]:
+                    if self.tmp is None:
+                        self.tmp = assemble(L)
+                    else:
+                        self.tmp = assemble(L, tensor=self.tmp)
+                    
+                    BC.apply(self.tmp)
+                    BC.apply(self.A)
+
                 
+                else:
+                    tmp = assemble(L)
                 
-                tmp = assemble(L)
-                BC.apply(tmp)
-                
-                BC.apply(self.A)
+                    BC.apply(tmp)
+                    BC.apply(self.A)
                 # solve(a == L, c, BC)
 
                 if not hasattr(self, "solver"):
@@ -140,7 +164,10 @@ class Preconditioning():
                 # b = args[1]
 
                 cc = Function(C)
-                self.solver.solve(cc.vector(), tmp)
+                if hyperparameters["reassign"]:
+                    self.solver.solve(cc.vector(), self.tmp)
+                else:
+                    self.solver.solve(cc.vector(), tmp)
 
         return cc
 

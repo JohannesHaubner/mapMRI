@@ -34,6 +34,8 @@ class PreconditioningBlock(Block):
         self.add_dependency(func)
         # self.smoothen = smoothen
 
+        self.A = None
+
         # self.smoothen = hyperparameters["smoothen"]
 
     def __str__(self):
@@ -77,8 +79,16 @@ class PreconditioningBlock(Block):
 
             
                 if not hasattr(self, "solver"):
+
                     a = inner(grad(c), grad(psi)) * dx
-                    self.A = assemble(a)
+
+                    if hyperparameters["reassign"]:
+                        if self.A is None:
+                            self.A = assemble(a)
+                        else:
+                            self.A = assemble(a, tensor=self.A)
+                    else:                        
+                        self.A = assemble(a)
                     BC.apply(self.A)
 
                     print_overloaded("Assembled A in PreconditioningBlock()")

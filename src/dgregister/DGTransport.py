@@ -33,7 +33,7 @@ parameters['ghost_mode'] = 'shared_facet'
 
 
 def DGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservation=False, StoreHistory=False, FNameOut="",
-                solver=None, timestepping=None):
+                solver=None, timestepping=None, reassign=False):
     
     # assert timestepping in ["CrankNicolson", "explicitEuler"]
 
@@ -129,6 +129,9 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservati
         #a = Constant(1.0/DeltaT)*(inner(v, f_next)*dx - inner(v, Img)*dx) - Form(f_next)
         #a = Constant(1.0/DeltaT)*(inner(v, f_next)*dx - inner(v, Img)*dx) - Form(Img)
 
+    # if reassign:
+    #     A = assemble(lhs(a), tensor=A)
+    # else:
     A = assemble(lhs(a))
 
     if solver == "krylov":
@@ -155,6 +158,8 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservati
     if StoreHistory:
         FOut.write(Img_deformed, CurTime)
 
+    b = None
+
     for i in range(MaxIter):
         #solve(a==0, Img_next)
 
@@ -179,11 +184,19 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservati
         else:
             system_rhs = rhs(a)
 
-        b = assemble(system_rhs)
-        b.apply("")
+        if reassign:
+            if b is None:
+                b = assemble(system_rhs)
+            else:
+                b = assemble(system_rhs, tensor=b)
+            solver.solve(Img.vector(), b)
+
+        else:
+            b = assemble(system_rhs)
+            b.apply("")
         
-        #solver.solve(Img_deformed.vector(), b)
-        solver.solve(Img.vector(), b)
+            #solver.solve(Img_deformed.vector(), b)
+            solver.solve(Img.vector(), b)
 
         # # solve(self.A, ct.vector(), tmp)
         Img_deformed.assign(Img)

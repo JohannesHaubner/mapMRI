@@ -33,6 +33,7 @@ def read_memory(filename):
 
 
     outfoldername = ""
+    outputfolder = ""
 
     file = open(filename)
     Lines = file.readlines()
