@@ -34,7 +34,7 @@ LOGOUTFILE=/home/bastian/D1/registration/cubeslurm/${SLURM_JOB_ID}_log_python_sr
 NP=32
 
 ITERS=32
-ALPHA=1e-1
+ALPHA=1e-6
 LBFGS=30
 
 echo "ITERS=" ${ITERS}
@@ -53,11 +53,12 @@ IMG2=${DATAPATH}newtarget.mgz
 
 mkdir -pv ${OUTPUTDIR}
 
-# scp ${SPATH}/Optimize3d.py ${OUTPUTDIR}
-# scp ${GPATH}/src/dgregister/*.py ${OUTPUTDIR}
+# GUESSPATH=/home/bastian/D1/registration/cubememdebug2/441137/E32A0.1LBFGS30nosmoothen
+GUESSPATH=/home/bastian/D1/registration/cuberegistration/E32A0.0001LBFGS30nosmoothen
 
 srun -n ${NP} python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} --normalization_scale 1 \
+--starting_state ${GUESSPATH}/State_checkpoint.xdmf \
 --timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 
 # --nosmoothen  --preconditioning none \

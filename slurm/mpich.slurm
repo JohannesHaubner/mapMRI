@@ -8,9 +8,9 @@
 ## SBATCH --ntasks-per-node=40
 #################################################################
 ## SBATCH --partition=milanq
-## SBATCH --partition=fpgaq
+#SBATCH --partition=fpgaq
 ## SBATCH --partition=defq
-#SBATCH --partition=habanaq
+## SBATCH --partition=habanaq
 #################################################################
 #SBATCH --time 1-00:00:0
 ##SBATCH --time 6-24 ##--time=99:00:00

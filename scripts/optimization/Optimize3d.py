@@ -61,7 +61,7 @@ parser.add_argument("--tukey", default=False, action="store_true", help="Use tuk
 parser.add_argument("--tukey_c", type=int, default=1)
 parser.add_argument("--normalization_scale", type=float, default=1, help="divide both images with this number")
 parser.add_argument("--readname", type=str, default="-1")
-parser.add_argument("--starting_guess", type=str, default=None)
+# parser.add_argument("--starting_guess", type=str, default=None)
 parser.add_argument("--starting_state", type=str, default=None)
 # parser.add_argument("--normalization", type=str, default="max")
 # parser.add_argument("--multigrid", default=False, action="store_true", help="Use starting guess & another transform")
@@ -129,8 +129,8 @@ hyperparameters["outfoldername"] += suffix
 
 print_overloaded("Generated outfoldername", hyperparameters["outfoldername"])
 
-if hyperparameters["starting_guess"] is not None:
-    assert os.path.isfile(hyperparameters["starting_guess"])
+if hyperparameters["starting_state"] is not None:
+    assert os.path.isfile(hyperparameters["starting_state"])
 
 hyperparameters["normalize"] = False
 
@@ -186,18 +186,20 @@ print("Memory (TB)", (mem/(1e6*1024)), "current_iteration", "-9", "process", str
 vCG = VectorFunctionSpace(domainmesh, hyperparameters["velocity_functionspace"], hyperparameters["velocity_functiondegree"])
 
 
-if hyperparameters["starting_guess"] is not None:
+if hyperparameters["starting_state"] is not None:
 
-    assert hyperparameters["starting_state"] is not None
-    assert "CurrentV.hdf" not in hyperparameters["starting_guess"]
-    assert "Velocity" not in hyperparameters["starting_guess"]
+    # assert hyperparameters["starting_state"] is not None
+    # assert "CurrentV.hdf" not in hyperparameters["starting_guess"]
+    # assert "Velocity" not in hyperparameters["starting_guess"]
 
-    controlfun = Function(vCG)
+    # controlfun = Function(vCG)
 
-    hdf = HDF5File(domainmesh.mpi_comm(), hyperparameters["starting_guess"], "r")
-    hdf.read(controlfun, hyperparameters["readname"])
-    hdf.close()
+    # hdf = HDF5File(domainmesh.mpi_comm(), hyperparameters["starting_guess"], "r")
+    # hdf.read(controlfun, hyperparameters["readname"])
+    # hdf.close()
     
+    Img = Function(FunctionSpace(domainmesh, "DG", 1))
+
     with XDMFFile(hyperparameters["starting_state"]) as xdmf:
         xdmf.read_checkpoint(Img, "CurrentState")
 
@@ -278,8 +280,8 @@ print("Memory (TB)", (mem/(1e6*1024)), "current_iteration", "-7", "process", str
 #####################################################################
 # Optimization
 
-FinalImg, FinalVelocity, FinalControl = find_velocity(Img=Img, Img_goal=Img_goal, vCG=vCG, M_lumped_inv=M_lumped_inv, 
-    hyperparameters=hyperparameters, files=files, starting_guess=controlfun)
+FinalImg, FinalVelocity, FinalControl = find_velocity(starting_image=Img, Img_goal=Img_goal, vCG=vCG, M_lumped_inv=M_lumped_inv, 
+    hyperparameters=hyperparameters, files=files) , #starting_guess=controlfun)
 
 tcomp = (time.time()-t0) / 3600
 print_overloaded("Done with optimization, took", format(tcomp, ".1f"), "hours")

@@ -49,24 +49,22 @@ current_iteration = 0
 
 
 
-def find_velocity(Img, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess):
+def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, files): #, starting_guess):
 
-    vol = assemble(1*dx(Img.function_space().mesh()))
+    vol = assemble(1*dx(starting_image.function_space().mesh()))
 
     hyperparameters["vol"] = vol
-
-    starting_image = Img
 
     set_working_tape(Tape())
 
     # initialize control
     l2_controlfun = Function(vCG)
 
-    if (hyperparameters["starting_guess"] is not None):
-        # raise NotImplementedError("Double check that you are reading the correct file")
-        l2_controlfun.assign(starting_guess)
-        print_overloaded("*"*20, "assigned starting guess to control")
-        assert norm(l2_controlfun) > 0
+    # if (hyperparameters["starting_guess"] is not None):
+    #     # raise NotImplementedError("Double check that you are reading the correct file")
+    #     l2_controlfun.assign(starting_guess)
+    #     print_overloaded("*"*20, "assigned starting guess to control")
+    #     assert norm(l2_controlfun) > 0
 
 
     if hyperparameters["preconditioning"] == "none":
