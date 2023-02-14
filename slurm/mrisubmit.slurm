@@ -1,18 +1,16 @@
 #!/bin/bash
 #SBATCH --job-name=mriregister
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=40
-#SBATCH --nodes=1
-## SBATCH --exclusive
-### =user
-## SBATCH --ntasks-per-node=40
+#SBATCH --ntasks=32
+#SBATCH --nodes=2
+#SBATCH --ntasks-per-node=16
 #################################################################
 ## SBATCH --partition=milanq
-## SBATCH --partition=fpgaq
-#SBATCH --partition=defq
+#SBATCH --partition=fpgaq
+## SBATCH --partition=defq
 ## SBATCH --partition=habanaq
 #################################################################
-#SBATCH --time 3-00:00:0
+#SBATCH --time 1-00:00:0
 ##SBATCH --time 6-24 ##--time=99:00:00
 #SBATCH -o /home/bastian/D1/registration/mrislurm/%j.out
 #SBATCH --export=ALL
@@ -47,15 +45,15 @@ LOGOUTFILE=/home/bastian/D1/registration/mrislurm/${SLURM_JOB_ID}_log_python_sru
 # echo "Running dijitso clean"
 # dijitso clean
 
-NP=40
+NP=32
 
 echo "NP=" ${NP}
 
 # ITERS=$1
 # ALPHA=$2
-ITERS=100
-ALPHA=1e-2
-LBFGS=10
+ITERS=10
+ALPHA=1e0
+LBFGS=50
 
 echo "ITERS=" ${ITERS}
 echo "ALPHA=" ${ALPHA}
@@ -65,33 +63,34 @@ OUTFOLDERNAME=None
 # OUTFOLDERNAME=NP${NP}
 
 
-OUTPUTDIR=/home/bastian/D1/registration/affine_croppedmriregistration_outputs/
-IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/affine_registered/cropped_abbytoernie_affine.mgz
-IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/affine_registered/cropped_ernie_brain.mgz
+# OUTPUTDIR=/home/bastian/D1/registration/affine_croppedmriregistration_outputs/${SLURM_JOB_ID}/
+# IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/affine_registered/cropped_abbytoernie_affine.mgz
+# IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/affine_registered/cropped_ernie_brain.mgz
 
 # OUTPUTDIR=/home/bastian/D1/registration/cropped-outputs/${SLURM_JOB_ID}/
 # IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/cropped/cropped_abbytoernie.mgz
 # IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/cropped/cropped_ernie_brain.mgz
 
 # OUTPUTDIR=/home/bastian/D1/registration/coarsecropped-outputs/${SLURM_JOB_ID}/
-# IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/coarsenedabbytoernie.mgz
-# IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/coarsenedernie_brain.mgz
+OUTPUTDIR=/home/bastian/D1/registration/hubertest_coarse/${SLURM_JOB_ID}/
+IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/coarsenedabbytoernie.mgz
+IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/coarsenedernie_brain.mgz
 
 
 
 
-dijitso show
-dijitso config
+# dijitso show
+# dijitso config
 
-mkdir -pv ${OUTPUTDIR}
+# mkdir -pv ${OUTPUTDIR}
 
-DIJITSODIR=${OUTPUTDIR}.cache/dijitso
-mkdir -pv ${DIJITSODIR}
-export DIJITSO_CACHE_DIR=${DIJITSODIR}
+# DIJITSODIR=${OUTPUTDIR}.cache/dijitso
+# mkdir -pv ${DIJITSODIR}
+# export DIJITSO_CACHE_DIR=${DIJITSODIR}
 
-echo "Setting new dijitso cache dir"
-dijitso show
-dijitso config
+# echo "Setting new dijitso cache dir"
+# dijitso show
+# dijitso config
 
 
 echo "OUTPUTDIR=" $OUTPUTDIR
@@ -102,7 +101,17 @@ echo "IMG2=" ${IMG2}
 
 srun -n ${NP} python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
---tukey --timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+--slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+ 
+# --huber
+
+# --starting_guess /D1/registration/affine_croppedmriregistration_outputs/441848/E100A0.01LBFGS10C5/Control.hdf --readname -1 \
+
+# --tukey --tukey_c 5 
+# --starting_state  /home/bastian/D1/registration/affine_croppedmriregistration_outputs/441870/E100A0.01LBFGS10//State_checkpoint.xdmf \
+# --starting_guess /D1/registration/affine_croppedmriregistration_outputs/441848/E100A0.01LBFGS10C5/Control.hdf --readname -1
+# --starting_state /home/bastian/D1/registration/affine_croppedmriregistration_outputs/441849/E100A0.01LBFGS10/State_checkpoint.xdmf \
+# --tukey --tukey_c 1 
 # --memdebug --not_store_solver 
 #  --reassign --memdebug 
 #--not_store_solver --padding 0 

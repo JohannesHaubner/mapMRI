@@ -4,6 +4,7 @@ from dgregister.DGTransport import DGTransport
 from dgregister.transformation_overloaded import transformation
 from dgregister.preconditioning_overloaded import preconditioning
 from dgregister.tukey import tukey
+from dgregister.huber import huber
 import time, json
 import numpy as np
 import resource
@@ -49,7 +50,7 @@ current_iteration = 0
 
 
 
-def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, files): #, starting_guess):
+def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess=None): #, starting_guess):
 
     vol = assemble(1*dx(starting_image.function_space().mesh()))
 
@@ -60,11 +61,11 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
     # initialize control
     l2_controlfun = Function(vCG)
 
-    # if (hyperparameters["starting_guess"] is not None):
-    #     # raise NotImplementedError("Double check that you are reading the correct file")
-    #     l2_controlfun.assign(starting_guess)
-    #     print_overloaded("*"*20, "assigned starting guess to control")
-    #     assert norm(l2_controlfun) > 0
+    if (hyperparameters["starting_guess"] is not None):
+        # raise NotImplementedError("Double check that you are reading the correct file")
+        l2_controlfun.assign(starting_guess)
+        print_overloaded("*"*20, "assigned starting guess to control")
+        assert norm(l2_controlfun) > 0
 
 
     if hyperparameters["preconditioning"] == "none":
@@ -160,6 +161,31 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
 
         mem = resource.getrusage(resource.RUSAGE_SELF)[2]
         print_overloaded("Current memory usage (after assembling l2 loss): %g (MB)" % (mem/1024))
+
+    elif hyperparameters["huber"]:
+        def huberloss(x, y, hyperparameters):
+
+            delta = hyperparameters["huber_delta"]
+
+            residual = x - y
+
+            with stop_annotating():
+                arrname = hyperparameters["outputfolder"] + "/normalized_residual" + str(MPI.rank(MPI.comm_world)) + ".npy"
+                resvec = x.vector()[:] - y.vector()[:] #  - mean_residual) / std_residual
+                np.save(arrname, resvec)
+
+                print_overloaded("Stored residuals")
+            
+            loss = huber(x=residual, delta=delta)
+            
+            return loss
+
+        print_overloaded("Using huber loss")
+        loss = huberloss(x=Img_deformed, y=Img_goal, hyperparameters=hyperparameters)
+        Jd = assemble(loss * dx)
+
+        with stop_annotating():
+            l2loss = assemble(0.5 * (Img_deformed - Img_goal) ** 2 * dx)
 
     else:
         Jd = assemble(0.5 * (Img_deformed - Img_goal) ** 2 * dx)
@@ -293,7 +319,12 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
             if hyperparameters["tukey"]:
                 loss = tukeyloss(x=current_pde_solution, y=Img_goal, hyperparameters=hyperparameters)
                 Jd = assemble(0.5 * loss * dx)
+            elif hyperparameters["huber"]:
+                loss = huberloss(x=current_pde_solution, y=Img_goal, hyperparameters=hyperparameters)
+                Jd = assemble(0.5 * loss * dx)
     
+
+
             else:
                 Jd = l2loss
 
@@ -376,5 +407,8 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
 
     velocityField = preconditioning(scaledControl)
     velocityField.rename("velocity", "")
+
+
+    # print("Returnning stuff")
 
     return current_pde_solution, velocityField, final_l2_control

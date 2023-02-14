@@ -40,7 +40,7 @@ parser.add_argument("--logfile", type=str, default=None)
 parser.add_argument("--output_dir", type=str, default=None)
 parser.add_argument("--slurmid", type=str, required=True)
 parser.add_argument("--solver", default="krylov", choices=["lu", "krylov", "cg"])
-parser.add_argument("--timestepping", default="RungeKutta", choices=["RungeKutta", "CrankNicolson", "explicitEuler"])
+parser.add_argument("--timestepping", default="explicitEuler", choices=["RungeKutta", "CrankNicolson", "explicitEuler"])
 parser.add_argument("--smoothen", default=True, action="store_true", help="Obsolete flag. Use proper scalar product")
 parser.add_argument("--nosmoothen", default=False, action="store_true", help="Sets smoothen=False")
 parser.add_argument("--alpha", type=float, default=1e-4)
@@ -59,9 +59,11 @@ parser.add_argument("--reassign", default=False, action="store_true")
 parser.add_argument("--projector", default=False, action="store_true")
 parser.add_argument("--tukey", default=False, action="store_true", help="Use tukey loss function")
 parser.add_argument("--tukey_c", type=int, default=1)
+parser.add_argument("--huber", default=False, action="store_true", help="Use Huber loss function")
+parser.add_argument("--huber_delta", type=int, default=1)
 parser.add_argument("--normalization_scale", type=float, default=1, help="divide both images with this number")
 parser.add_argument("--readname", type=str, default="-1")
-# parser.add_argument("--starting_guess", type=str, default=None)
+parser.add_argument("--starting_guess", type=str, default=None)
 parser.add_argument("--starting_state", type=str, default=None)
 # parser.add_argument("--normalization", type=str, default="max")
 # parser.add_argument("--multigrid", default=False, action="store_true", help="Use starting guess & another transform")
@@ -186,6 +188,20 @@ print("Memory (TB)", (mem/(1e6*1024)), "current_iteration", "-9", "process", str
 vCG = VectorFunctionSpace(domainmesh, hyperparameters["velocity_functionspace"], hyperparameters["velocity_functiondegree"])
 
 
+if hyperparameters["starting_guess"] is not None:
+
+    assert "CurrentV.hdf" not in hyperparameters["starting_guess"]
+    assert "Velocity" not in hyperparameters["starting_guess"]
+
+    starting_guess = Function(vCG)
+
+    hdf = HDF5File(domainmesh.mpi_comm(), hyperparameters["starting_guess"], "r")
+    hdf.read(starting_guess, hyperparameters["readname"])
+    hdf.close()
+
+else:
+    starting_guess = None
+
 if hyperparameters["starting_state"] is not None:
 
     # assert hyperparameters["starting_state"] is not None
@@ -280,8 +296,25 @@ print("Memory (TB)", (mem/(1e6*1024)), "current_iteration", "-7", "process", str
 #####################################################################
 # Optimization
 
-FinalImg, FinalVelocity, FinalControl = find_velocity(starting_image=Img, Img_goal=Img_goal, vCG=vCG, M_lumped_inv=M_lumped_inv, 
-    hyperparameters=hyperparameters, files=files) , #starting_guess=controlfun)
+return_values = find_velocity(starting_image=Img, Img_goal=Img_goal, vCG=vCG, M_lumped_inv=M_lumped_inv, 
+    hyperparameters=hyperparameters, files=files, starting_guess=starting_guess)
+
+print(return_values, len(return_values))
+if not len(return_values) == 3:
+
+    return_values = return_values[0]
+    # print("return_values:", type(return_values))
+    # print("return_values:", len(return_values))
+    # print("return_values:", type(return_values[0]))
+    # print("return_values:", len(return_values[0]))
+    print("Len of return values is NOT 3")
+
+else:
+    
+    print("Len of return values is 3")
+
+
+FinalImg, FinalVelocity, FinalControl  = return_values[0], return_values[1], return_values[2]
 
 tcomp = (time.time()-t0) / 3600
 print_overloaded("Done with optimization, took", format(tcomp, ".1f"), "hours")
