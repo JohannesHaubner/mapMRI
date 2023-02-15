@@ -138,3 +138,5 @@ COARSECROPDIR=${TARGETDIR}/coarsecropped
 mkdir -vp ${COARSECROPDIR}
 
 python ${CODEDIR}/scripts/preprocessing/mask_mri.py --images ${files} --targetfolder ${COARSECROPDIR} --crop --coarsen
+
+python ${CODEDIR}/scripts/imageinfo.py --imagedir ${CROPDIR}
