@@ -40,7 +40,7 @@ parser.add_argument("--logfile", type=str, default=None)
 parser.add_argument("--output_dir", type=str, default=None)
 parser.add_argument("--slurmid", type=str, required=True)
 parser.add_argument("--solver", default="krylov", choices=["lu", "krylov", "cg"])
-parser.add_argument("--timestepping", default="explicitEuler", choices=["RungeKutta", "CrankNicolson", "explicitEuler"])
+parser.add_argument("--timestepping", default="RungeKutta", choices=["RungeKutta", "CrankNicolson", "explicitEuler"])
 parser.add_argument("--smoothen", default=True, action="store_true", help="Obsolete flag. Use proper scalar product")
 parser.add_argument("--nosmoothen", default=False, action="store_true", help="Sets smoothen=False")
 parser.add_argument("--alpha", type=float, default=1e-4)
@@ -62,6 +62,7 @@ parser.add_argument("--tukey_c", type=int, default=1)
 parser.add_argument("--huber", default=False, action="store_true", help="Use Huber loss function")
 parser.add_argument("--huber_delta", type=int, default=1)
 parser.add_argument("--normalization_scale", type=float, default=1, help="divide both images with this number")
+parser.add_argument("--equalmean", default=False, action="store_true", help="Scale both images to the same mean.")
 parser.add_argument("--readname", type=str, default="-1")
 parser.add_argument("--starting_guess", type=str, default=None)
 parser.add_argument("--starting_state", type=str, default=None)
@@ -168,7 +169,12 @@ if not os.path.isdir(hyperparameters["outputfolder"]):
 state_functionspace=hyperparameters["state_functionspace"]
 state_functiondegree=hyperparameters["state_functiondegree"] 
 
-iscale = np.mean(nibabel.load(hyperparameters["target"]).get_fdata()) / np.mean(nibabel.load(hyperparameters["input"]).get_fdata())
+
+if hyperparameters["equalmean"]:
+    iscale = np.mean(nibabel.load(hyperparameters["target"]).get_fdata()) / np.mean(nibabel.load(hyperparameters["input"]).get_fdata())
+else:
+    iscale = 1
+
 hyperparameters["iscale"] = iscale
 
 

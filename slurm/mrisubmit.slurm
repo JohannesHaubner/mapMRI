@@ -1,16 +1,18 @@
 #!/bin/bash
 #SBATCH --job-name=mriregister
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=32
+#SBATCH --ntasks=256
 #SBATCH --nodes=2
-#SBATCH --ntasks-per-node=16
+#SBATCH --ntasks-per-node=128
 #################################################################
-## SBATCH --partition=milanq
-#SBATCH --partition=fpgaq
+#SBATCH --partition=milanq
+## has 256 cpus per node
+## SBATCH --partition=fpgaq
 ## SBATCH --partition=defq
+## has 128 cpus per node
 ## SBATCH --partition=habanaq
 #################################################################
-#SBATCH --time 1-00:00:0
+#SBATCH --time 3-00:00:0
 ##SBATCH --time 6-24 ##--time=99:00:00
 #SBATCH -o /home/bastian/D1/registration/mrislurm/%j.out
 #SBATCH --export=ALL
@@ -45,52 +47,28 @@ LOGOUTFILE=/home/bastian/D1/registration/mrislurm/${SLURM_JOB_ID}_log_python_sru
 # echo "Running dijitso clean"
 # dijitso clean
 
-NP=32
+NP=64
 
 echo "NP=" ${NP}
 
 # ITERS=$1
 # ALPHA=$2
-ITERS=10
-ALPHA=1e0
-LBFGS=50
+ITERS=50
+ALPHA=1e2
+LBFGS=16
 
 echo "ITERS=" ${ITERS}
 echo "ALPHA=" ${ALPHA}
 
 OUTFOLDERNAME=None
 
-# OUTFOLDERNAME=NP${NP}
+OUTPUTDIR=/home/bastian/D1/registration/normalized-outputs/${SLURM_JOB_ID}/
+IMG1=/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/cropped_abbytoernie_nyul.mgz
+IMG2=/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/cropped_ernie_brain_nyul.mgz
 
-
-# OUTPUTDIR=/home/bastian/D1/registration/affine_croppedmriregistration_outputs/${SLURM_JOB_ID}/
-# IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/affine_registered/cropped_abbytoernie_affine.mgz
-# IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/affine_registered/cropped_ernie_brain.mgz
-
-# OUTPUTDIR=/home/bastian/D1/registration/cropped-outputs/${SLURM_JOB_ID}/
-# IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/cropped/cropped_abbytoernie.mgz
-# IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/cropped/cropped_ernie_brain.mgz
-
-# OUTPUTDIR=/home/bastian/D1/registration/coarsecropped-outputs/${SLURM_JOB_ID}/
-OUTPUTDIR=/home/bastian/D1/registration/hubertest_coarse/${SLURM_JOB_ID}/
-IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/coarsenedabbytoernie.mgz
-IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/coarsenedernie_brain.mgz
-
-
-
-
-# dijitso show
-# dijitso config
-
-# mkdir -pv ${OUTPUTDIR}
-
-# DIJITSODIR=${OUTPUTDIR}.cache/dijitso
-# mkdir -pv ${DIJITSODIR}
-# export DIJITSO_CACHE_DIR=${DIJITSODIR}
-
-# echo "Setting new dijitso cache dir"
-# dijitso show
-# dijitso config
+# OUTPUTDIR=/home/bastian/D1/registration/hubertest_coarse/${SLURM_JOB_ID}/
+# IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/coarsenedabbytoernie.mgz
+# IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/coarsenedernie_brain.mgz
 
 
 echo "OUTPUTDIR=" $OUTPUTDIR
@@ -101,7 +79,7 @@ echo "IMG2=" ${IMG2}
 
 srun -n ${NP} python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
---slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+--huber --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
  
 # --huber
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=quicktest
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=32
+#SBATCH --ntasks=16
 #SBATCH --nodes=1
 #################################################################
 ## SBATCH --partition=milanq
@@ -31,10 +31,10 @@ SPATH=${GPATH}scripts/optimization
 LOGOUTFILE=/home/bastian/D1/registration/cubeslurm/${SLURM_JOB_ID}_log_python_srun.txt
 
 
-NP=32
+NP=16
 
 ITERS=2
-ALPHA=1e-6
+ALPHA=1e-7
 LBFGS=1
 
 echo "ITERS=" ${ITERS}
@@ -58,7 +58,7 @@ GUESSPATH=/home/bastian/D1/registration/cuberegistration/E32A0.0001LBFGS30nosmoo
 
 srun -n ${NP} python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --logfile ${LOGOUTFILE} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} --normalization_scale 1 \
---timestepping explicitEuler --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+--slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 
 
 # --starting_state ${GUESSPATH}/State_checkpoint.xdmf \
@@ -69,5 +69,5 @@ srun -n ${NP} python3 -u ${SPATH}/Optimize3d.py --outfolder ${OUTFOLDERNAME} --l
 # --tukey \
 
 scp ${LOGOUTFILE} ${OUTPUTDIR}/
-scp /home/bastian/D1/registration/cubeslurm/${SLURM_JOB_ID}/.out ${OUTPUTDIR}/
+scp /home/bastian/D1/registration/cubeslurm/${SLURM_JOB_ID}.out ${OUTPUTDIR}/
 echo "success"

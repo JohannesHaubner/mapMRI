@@ -165,18 +165,24 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservati
 
         print_overloaded("Iteration ", i + 1, "/", MaxIter, "in Transport()")
 
-        if timestepping == "RungeKutta" or timestepping == "RungeKuttaBug":
+        if timestepping == "RungeKutta":
 
             
-            solve(inner(dImg, v)*dx == Form(Img_deformed), dI)
-            # A = assemble(lhs(tempA))
-            # b = assemble()
+            # solve(inner(dImg, v)*dx == Form(Img_deformed), dI) # does not work:, "gmres", preconditioner)
+            
+            form = inner(dImg, v)*dx - Form(Img_deformed)            
+            Atmp = assemble(lhs(form))
+            btmp = assemble(rhs(form))
+
+            tmpsolver = KrylovSolver(method="cg", preconditioner=preconditioner)
+            tmpsolver.set_operators(Atmp, Atmp)
+
+            tmpsolver.solve(dI.vector(), btmp)
+
             # solve(A, x, b)
 
-            # BZ: potentially factor dt / 2 missing in front of dI ?
+
             factor = DeltaT / 2.
-            # if timestepping == "RungeKuttaBug":
-            #     factor = 1
 
             da = Form(Img_deformed + factor * dI)
             
