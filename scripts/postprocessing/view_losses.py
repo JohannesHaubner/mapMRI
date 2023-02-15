@@ -386,6 +386,10 @@ for foldername in foldernames:
             label += "(tukey, c=" + str(hyperparameters["tukey_c"]) + ")"
             linestlyle = "--"
 
+        elif hyperparameters["huber"]:
+            label += "(huber, c=" + str(hyperparameters["huber_delta"]) + ")"
+            marker = "x"
+
         loss[:, 1:] /= domain_size
 
         # Iter{}Jd={}L2loss={}Reg={}"

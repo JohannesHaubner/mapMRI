@@ -6,7 +6,7 @@ import pathlib
 import argparse
 import json
 from scipy import ndimage
-from dgregister.helpers import crop_rectangular, pad_with, cut_to_box, get_bounding_box_limits
+from dgregister.helpers import get_larget_box, pad_with, cut_to_box, get_bounding_box_limits
 
 
 if __name__ == "__main__":
@@ -19,7 +19,7 @@ if __name__ == "__main__":
     parser.add_argument("--crop", action="store_true", default=False)
 
     parser.add_argument("--coarsen", action="store_true", default=False)
-    parser.add_argument("--npad", default=4, type=int)
+    parser.add_argument("--npad", default=2, type=int)
     parser.add_argument("--zoom", default=0.5, type=float)
 
 
@@ -48,12 +48,12 @@ if __name__ == "__main__":
         largest_box = np.load(parserargs["box"])
     else:
 
-        largest_box = crop_rectangular(parserargs["images"])
+        largest_box = get_larget_box(parserargs["images"])
         np.save(targetfolder / "box.npy", largest_box)
 
     generic_affine = np.eye(4)
 
-    
+    box_bounds = get_bounding_box_limits(largest_box)
 
     with open(targetfolder / "files.json", 'w') as outfile:
         json.dump(parserargs, outfile, sort_keys=True, indent=4)
@@ -62,22 +62,34 @@ if __name__ == "__main__":
 
     for imgfile in parserargs["images"]:
 
-        image = nibabel.load(imgfile).get_fdata()
+        image = nibabel.load(imgfile)
+
+        # afffile = str(targetfolder / ("affine_" + pathlib.Path(imgfile).name))
+        
+        # np.save(afffile, image.affine)
+
+        image = image.get_fdata()
 
         if parserargs["crop"]:
-            image = cut_to_box(image, largest_box)
+            
+
+            # largest_box = get_bounding_box_limits(x=np.where(image>0, True, False))
+            #  cut_to_box(image, box_bounds, inverse=False, cropped_image=None)
+            image = cut_to_box(image, box_bounds=box_bounds)
+            
+
             outfile = str(targetfolder / ("cropped_" + pathlib.Path(imgfile).name))
 
         if parserargs["coarsen"]:
 
-            padded_img = np.pad(image, npad, pad_with)
-
-            image = ndimage.zoom(padded_img, parserargs["zoom"])
+            image = ndimage.zoom(image, parserargs["zoom"])
 
             print("Cropping images")
 
             outfile = str(targetfolder / ("coarsened" + pathlib.Path(imgfile).name))
 
+        if npad > 0:
+            image = np.pad(image, npad, pad_with)
 
         direc = pathlib.Path(imgfile).parent
 
@@ -85,11 +97,10 @@ if __name__ == "__main__":
         
         print("saving to", outfile)
 
-        freeview_command += outfile + " "
-
-        
+        freeview_command += outfile + " "        
 
         nibabel.save(nibabel.Nifti1Image(image, affine=generic_affine), outfile)
+    
     print("Final shape of images", image.shape)
 
     print()

@@ -33,7 +33,7 @@ def get_bounding_box_limits(x):
     return bbox
 
 
-def crop_rectangular(imagefiles):
+def get_larget_box(imagefiles):
 
     largest_box = np.zeros((256, 256, 256))
 

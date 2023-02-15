@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import os
 import nibabel
 import itertools
-from dgregister.helpers import crop_rectangular, get_bounding_box_limits, cut_to_box, pad_with
+from dgregister.helpers import get_larget_box, get_bounding_box_limits, cut_to_box, pad_with
 from tqdm import tqdm
 import json
 if "bastian" in os.getcwd():
@@ -48,7 +48,7 @@ imagefiles = [nibabel.load(x).get_fdata() for x in imagenames]
 # az3.imshow(np.take(im1, idx, ax)+np.take(im2, idx, ax))
 # plt.show()
 
-boundary = get_bounding_box_limits(crop_rectangular(imagefiles))
+boundary = get_bounding_box_limits(get_larget_box(imagefiles))
 
 xlim = [boundary[0].start, boundary[0].stop]
 ylim = [boundary[1].start, boundary[1].stop]
@@ -90,7 +90,7 @@ bi2 = scipy.ndimage.affine_transform(input=imagefiles[1].astype(bool), matrix=af
 bi1 = np.round(scipy.ndimage.median_filter(input=bi1, size=2), decimals=0)
 bi2 = np.round(scipy.ndimage.median_filter(input=bi2, size=2), decimals=0)
 
-boundary = get_bounding_box_limits(crop_rectangular([bi1, bi2]))
+boundary = get_bounding_box_limits(get_larget_box([bi1, bi2]))
 
 xlim = [boundary[0].start, boundary[0].stop]
 ylim = [boundary[1].start, boundary[1].stop]
@@ -192,7 +192,7 @@ for (alpha, beta, gamma) in itertools.product(a,b,c):
 
 
     try:
-        boundary = get_bounding_box_limits(crop_rectangular([im1, im2]))
+        boundary = get_bounding_box_limits(get_larget_box([im1, im2]))
     except ValueError:
         print(alpha, beta, gamma, "yields value error")
         # idx, ax = 100, 0
