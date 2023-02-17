@@ -10,7 +10,7 @@ import resource
 
 PETScOptions.set("mat_mumps_icntl_4", 3)   # verbosity
 
-set_log_level(LogLevel.CRITICAL)
+# set_log_level(LogLevel.CRITICAL)
 
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
@@ -18,6 +18,8 @@ def print_overloaded(*args):
     else:
         pass
 
+
+# raise ValueError
 
 comm = MPI.comm_world
 nprocs = comm.Get_size()
@@ -51,6 +53,7 @@ parser.add_argument("--state_functiondegree", type=int, default=1)
 parser.add_argument("--not_store_solver", default=False, action="store_true", help="Do not store solve in preconditioning")
 parser.add_argument("--preconditioning", default="preconditioning", type=str, choices=["none", "preconditioning"])
 parser.add_argument("--memdebug", default=False, action="store_true")
+parser.add_argument("--mpiwait", default=False, action="store_true", help="use MPI barrier in callback for debuggin")
 parser.add_argument("--maxcor", default=10, type=int)
 parser.add_argument("--padding", default=None, type=int)
 

@@ -12,7 +12,7 @@ from dgregister.helpers import store_during_callback
 
 
 
-set_log_level(LogLevel.CRITICAL)
+# set_log_level(LogLevel.CRITICAL)
 counter = 0
 
 def csvwrite(name, values, header, mode=None, debug=True): 

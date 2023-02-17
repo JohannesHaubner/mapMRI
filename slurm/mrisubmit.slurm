@@ -6,8 +6,9 @@
 #SBATCH --ntasks-per-node=128
 #################################################################
 #SBATCH --partition=milanq
-## has 256 cpus per node
-## SBATCH --partition=fpgaq
+## milanq has 256 cpus per node
+#SBATCH --partition=fpgaq
+# fpgaq has 96 cpus per onde
 ## SBATCH --partition=defq
 ## has 128 cpus per node
 ## SBATCH --partition=habanaq

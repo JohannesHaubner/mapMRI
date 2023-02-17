@@ -14,7 +14,7 @@ import resource
 from dgregister.helpers import store_during_callback
 
 
-set_log_level(LogLevel.CRITICAL)
+# set_log_level(LogLevel.CRITICAL)
 
 # class Projector():
 #     def __init__(self, V):
@@ -362,6 +362,12 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
             store_during_callback(current_iteration, hyperparameters, files, Jd, l2loss,
                                         domainmesh, current_pde_solution, control=current_l2_control)
 
+
+
+        if hyperparameters["mpiwait"]:
+            print("Reached MPI barrier")
+            MPI.barrier(MPI.comm_world)
+            print("Continuing from MPI barrier")
 
     print_overloaded("Using maxcor =", hyperparameters["maxcor"], "in LBFGS-B")
 

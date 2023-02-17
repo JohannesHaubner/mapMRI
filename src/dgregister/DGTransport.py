@@ -29,7 +29,7 @@ print_overloaded("Setting parameters parameters['ghost_mode'] = 'shared_facet'")
 parameters['ghost_mode'] = 'shared_facet'
 
 
-
+q_degree = 6
 
 
 def DGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservation=False, StoreHistory=False, FNameOut="",
@@ -97,9 +97,9 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservati
     def Form(f):
         #a = inner(v, div(outer(f, Wind)))*dx
     
-        a = -inner(grad(v), outer(f, Wind))*dx
-        a += inner(jump(v), jump(Flux(f, Wind, n)))*dS
-        a += inner(v, FluxB(f, Wind, n))*ds
+        a = -inner(grad(v), outer(f, Wind)) * dx
+        a += inner(jump(v), jump(Flux(f, Wind, n))) * dS(metadata={'quadrature_degree': q_degree})
+        a += inner(v, FluxB(f, Wind, n)) * ds(metadata={'quadrature_degree': q_degree})
     
         if MassConservation == False:
             a -= inner(v, div(Wind)*f)*dx
@@ -120,6 +120,12 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservati
         # in this case we assemble the RHS during the loop
         dImg = TrialFunction(Img_deformed.function_space())
         dI = Function(Img_deformed.function_space())
+
+        form = inner(dImg, v)*dx 
+        Atmp = assemble(form)
+        tmpsolver = KrylovSolver(method="cg", preconditioner=preconditioner)
+        tmpsolver.set_operators(Atmp, Atmp)
+
 
     elif timestepping == "CrankNicolson":
         a = a + 0.5*(Form(Img_deformed) + Form(Img_next))
@@ -159,6 +165,7 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservati
         FOut.write(Img_deformed, CurTime)
 
     b = None
+    btmp = None
 
     for i in range(MaxIter):
         #solve(a==0, Img_next)
@@ -170,12 +177,16 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservati
             
             # solve(inner(dImg, v)*dx == Form(Img_deformed), dI) # does not work:, "gmres", preconditioner)
             
-            form = inner(dImg, v)*dx - Form(Img_deformed)            
-            Atmp = assemble(lhs(form))
-            btmp = assemble(rhs(form))
+            rhstmp = Form(Img_deformed)            
+            
+            if btmp is None:
+                
+                btmp = assemble(rhstmp)
+            else:
+                btmp = assemble(rhstmp, tensor=btmp)
 
-            tmpsolver = KrylovSolver(method="cg", preconditioner=preconditioner)
-            tmpsolver.set_operators(Atmp, Atmp)
+            btmp.apply("")
+
 
             tmpsolver.solve(dI.vector(), btmp)
 
