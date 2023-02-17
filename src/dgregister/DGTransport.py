@@ -2,20 +2,12 @@
 from fenics import *
 from fenics_adjoint import *
 
-import dgregister.config as config
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
         # set_log_level(PROGRESS)
         print(*args)
     else:
         pass
-
-# if "optimize" in config.hyperparameters.keys() and (not config.hyperparameters["optimize"]):
-#     print_overloaded("Not importing dolfin-adjoint")
-# else:
-#     print_overloaded("Importing dolfin-adjoint")
-#     from dolfin_adjoint import *
-
 
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
@@ -32,11 +24,8 @@ parameters['ghost_mode'] = 'shared_facet'
 q_degree = 6
 
 
-def DGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservation=False, StoreHistory=False, FNameOut="",
-                solver=None, timestepping=None, reassign=False):
+def DGTransport(Img, Wind, MaxIter, DeltaT, timestepping, solver, preconditioner="amg", MassConservation=False):
     
-    # assert timestepping in ["CrankNicolson", "explicitEuler"]
-
     print_overloaded("......................................")
     print_overloaded("Settings in Transport()")
     print_overloaded("--- solver =", solver)
@@ -48,11 +37,6 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservati
     
     Space = Img.function_space()
     v = TestFunction(Space)
-    if StoreHistory:
-        FOut = XDMFFile(FNameOut)
-        FOut.parameters["flush_output"] = True
-        FOut.parameters["functions_share_mesh"] = True
-        FOut.parameters["rewrite_function_mesh"] = False
 
     mesh = Space.mesh()
     #compute CFL number
@@ -94,9 +78,7 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservati
             return f*Max0smoothed(inner(Wind, n))
 
 
-    def Form(f):
-        #a = inner(v, div(outer(f, Wind)))*dx
-    
+    def Form(f):   
         a = -inner(grad(v), outer(f, Wind)) * dx
         a += inner(jump(v), jump(Flux(f, Wind, n))) * dS(metadata={'quadrature_degree': q_degree})
         a += inner(v, FluxB(f, Wind, n)) * ds(metadata={'quadrature_degree': q_degree})
@@ -106,8 +88,6 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservati
         return a
 
     Img_next = TrialFunction(Img.function_space())
-    #Img_next = Function(Img.function_space())
-    #Img_next.rename("img", "")
     Img_deformed = Function(Img.function_space())
     Img_deformed.assign(Img)
     Img_deformed.rename("Img", "")
@@ -116,6 +96,7 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservati
     
     if timestepping == "explicitEuler":
         a = a + Form(Img_deformed)
+    
     elif timestepping == "RungeKutta":
         # in this case we assemble the RHS during the loop
         dImg = TrialFunction(Img_deformed.function_space())
@@ -126,22 +107,15 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservati
         tmpsolver = KrylovSolver(method="cg", preconditioner=preconditioner)
         tmpsolver.set_operators(Atmp, Atmp)
 
-
     elif timestepping == "CrankNicolson":
         a = a + 0.5*(Form(Img_deformed) + Form(Img_next))
+    
     else:
         raise NotImplementedError
 
-        #a = Constant(1.0/DeltaT)*(inner(v, f_next)*dx - inner(v, Img)*dx) - Form(f_next)
-        #a = Constant(1.0/DeltaT)*(inner(v, f_next)*dx - inner(v, Img)*dx) - Form(Img)
-
-    # if reassign:
-    #     A = assemble(lhs(a), tensor=A)
-    # else:
     A = assemble(lhs(a))
 
     if solver == "krylov":
-        
         solver = KrylovSolver(A, "gmres", preconditioner)
         solver.set_operators(A, A)
         print_overloaded("Assembled A, using Krylov solver")
@@ -150,32 +124,23 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservati
         solver = LUSolver()
         solver.set_operator(A)
         print_overloaded("Assembled A, using LU solver")
+
     elif solver == "cg":
         solver = KrylovSolver(method="cg", preconditioner=preconditioner)
         solver.set_operators(A, A)
-
         print_overloaded("Assembled A, using CG solver")
 
-        # solver = PETScLUSolver(A, "mumps")
     else:
         raise NotImplementedError()
-    
-    CurTime = 0.0
-    if StoreHistory:
-        FOut.write(Img_deformed, CurTime)
 
     b = None
     btmp = None
 
     for i in range(MaxIter):
-        #solve(a==0, Img_next)
 
         print_overloaded("Iteration ", i + 1, "/", MaxIter, "in Transport()")
 
         if timestepping == "RungeKutta":
-
-            
-            # solve(inner(dImg, v)*dx == Form(Img_deformed), dI) # does not work:, "gmres", preconditioner)
             
             rhstmp = Form(Img_deformed)            
             
@@ -187,11 +152,7 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservati
 
             btmp.apply("")
 
-
             tmpsolver.solve(dI.vector(), btmp)
-
-            # solve(A, x, b)
-
 
             factor = DeltaT / 2.
 
@@ -201,29 +162,16 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservati
         else:
             system_rhs = rhs(a)
 
-        if reassign:
-            if b is None:
-                b = assemble(system_rhs)
-            else:
-                b = assemble(system_rhs, tensor=b)
-            solver.solve(Img.vector(), b)
-
-        else:
+        if b is None:
             b = assemble(system_rhs)
-            b.apply("")
-        
-            #solver.solve(Img_deformed.vector(), b)
-            solver.solve(Img.vector(), b)
+        else:
+            b = assemble(system_rhs, tensor=b)
+        solver.solve(Img.vector(), b)
 
-        # # solve(self.A, ct.vector(), tmp)
         Img_deformed.assign(Img)
 
-        
-        CurTime = i*DeltaT
-        if StoreHistory:
-            FOut.write(Img_deformed, CurTime)
-
     print_overloaded("i == MaxIter, Transport() finished")
+
     return Img_deformed
 
 

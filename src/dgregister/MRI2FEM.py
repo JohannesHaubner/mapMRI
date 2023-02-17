@@ -1,8 +1,6 @@
 from fenics import *
 from fenics_adjoint import *
 
-# import dgregister.config as config
-
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
         # set_log_level(PROGRESS)
@@ -10,18 +8,9 @@ def print_overloaded(*args):
     else:
         pass
 
-# # if ocd:
-# if "optimize" in config.hyperparameters.keys() and (not config.hyperparameters["optimize"]):
-#     print_overloaded("Not importing dolfin-adjoint")
-# else:
-#     print_overloaded("Importing dolfin-adjoint")
-#     from dolfin_adjoint import *
-
 import nibabel
 import numpy as np
-# from nibabel.affines import apply_affine
-# import pathlib
-# from mpi4py import MPI
+
 
 comm = MPI.comm_world
 nprocs = comm.Get_size()
@@ -97,10 +86,7 @@ class Projector():
 
 
 def read_image(filename, name, mesh=None, printout=True, threshold=True, projector=None,
-                state_functionspace="DG", state_functiondegree=1, 
-                normalization_scale=1, 
-                iscale=1, hyperparameters=None,
-                filter=False):
+                state_functionspace="DG", state_functiondegree=1, hyperparameters=None):
     
     if printout:
         print_overloaded("Loading", filename)
@@ -116,24 +102,6 @@ def read_image(filename, name, mesh=None, printout=True, threshold=True, project
 
         data = np.expand_dims(data, -1)
 
-
-    if "padding" in hyperparameters.keys() and hyperparameters["padding"] is  not None:
-
-
-        from dgregister.helpers import pad_with
-        assert "coarse" in filename
-
-        print_overloaded("before padding:", data.shape, data.size)
-
-        data = np.pad(data, hyperparameters["padding"], pad_with)
-
-        print_overloaded("padded data with ", hyperparameters["padding"])
-        print_overloaded("after padding:", data.shape, data.size)
-
-    if filter:
-        from scipy import ndimage
-        print_overloaded("Applying median filter to image")
-        data = ndimage.median_filter(data, size=2)
 
     if hyperparameters is not None:
         hyperparameters[name + ".shape"] = list(data.shape)
@@ -175,17 +143,6 @@ def read_image(filename, name, mesh=None, printout=True, threshold=True, project
     if nz != 1:
         k = ijk[:, 2]
 
-    # if normalize:
-    #     print_overloaded("Normalizing data")
-    #     print_overloaded("data.max()", data.max())
-
-    #     if "normalization" in hyperparameters.keys():
-    #         if hyperparameters["normalization"] == "max":
-    #             data /= data.max()
-    #         if hyperparameters["normalization"] == "mean":
-    #             data /= np.mean(data[data > 1])
-    #     # else:
-    #     #     data /= data.max()
 
     if threshold and np.min(data) < 0:
         
@@ -201,22 +158,6 @@ def read_image(filename, name, mesh=None, printout=True, threshold=True, project
         
         data = np.where(data < 0, 0, data)
 
-    
-
-    data /= normalization_scale
-
-    if name == "input":
-        data *= np.sqrt(iscale)
-
-    elif name == "target":
-        data /= np.sqrt(iscale)
-
-    else:
-        raise ValueError
-
-    # Img.vector()[:] *= sqrt(iscale)
-    # Img_goal.vector()[:] /= sqrt(iscale)
-
     print_overloaded(name, "mean intensity", np.mean(data))
     print_overloaded(name, "median intensity", np.median(data))
     print_overloaded(name, "min intensity", np.min(data))
@@ -226,11 +167,6 @@ def read_image(filename, name, mesh=None, printout=True, threshold=True, project
         u_data.vector()[:] = data[i, j, k]
     else:
         u_data.vector()[:] = data[i, j]
-
-    # space = FunctionSpace(mesh, state_functionspace, state_functiondegree)
-    # projector = None    
-    # u_data = project(u_data, space)
-    # print_overloaded("Projected")
 
 
     if projector is None:

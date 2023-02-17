@@ -215,7 +215,7 @@ def make_mapping(cubemesh, velocities, state_space, state_degree, parserargs, oc
         print_overloaded("Transporting, ", coordinate, "coordinate")
 
         if ocd:
-            from dgregister import find_velocity_ocd
+            from dgregister import find_velocity
             velocity = velocities[0]
             V1 = FunctionSpace(cubemesh, "CG", 1)
             
@@ -224,7 +224,7 @@ def make_mapping(cubemesh, velocities, state_space, state_degree, parserargs, oc
 
             xin = interpolate(Expression(coordinate, degree=1), V1) # cubeimg.function_space())
             print_overloaded("Running OCD forward pass")
-            xout, _, _ = find_velocity_ocd.find_velocity(Img=xin, Img_goal=unity2, hyperparameters=hyperparameters, files=[], phi_eval=-velocity, projection=False)
+            xout, _, _ = find_velocity.find_velocity(Img=xin, Img_goal=unity2, hyperparameters=hyperparameters, files=[], phi_eval=-velocity, projection=False)
 
         else:
 

@@ -1,173 +1,57 @@
 from dolfin import *
 from dolfin_adjoint import *
 
-import numpy as np
-
-from dgregister.config import hyperparameters
-assert len(hyperparameters) > 1
-
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
-        # set_log_level(PROGRESS)
         print(*args, flush=True)
     else:
         pass
 
 
-
-# def preconditioning(func):
-
-#     smoothen = hyperparameters["smoothen"]
-
-#     print("smoothen=", smoothen)
-
-
-#     if not smoothen:
-#         c = func.copy()
-#         C = c.function_space()
-#         dim = c.geometric_dimension()
-#         BC=DirichletBC(C, Constant((0.0,)*dim), "on_boundary")
-#         BC.apply(c.vector())
-#     else:
-#         C = func.function_space()
-#         dim = func.geometric_dimension()
-#         BC = DirichletBC(C, Constant((0.0,)*dim), "on_boundary")
-#         c = TrialFunction(C)
-#         psi = TestFunction(C)
-#         a = inner(grad(c), grad(psi)) * dx
-#         L = inner(func, psi) * dx
-#         c = Function(C)
-#         solve(a == L, c, BC)
-#     return c
-
-
-
-
-
-
 class Preconditioning():
 
     def __init__(self) -> None:
-        # self.smoothen = hyperparameters["smoothen"]
-        # self.hyperparameters = hyperparameters
-
         self.tmp = None
         self.A = None
-        pass
+        
 
     def __call__(self, func):
 
-        if not hyperparameters["smoothen"]:
+        C = func.function_space()
+        dim = func.geometric_dimension()
+        BC = DirichletBC(C, Constant((0.0,)*dim), "on_boundary")
+        c = TrialFunction(C)
+        psi = TestFunction(C)
+        
 
-            # print_overloaded("applying BC to func in Preconditioning()")
-            cc = func.copy()
+        if not hasattr(self, "solver"):
 
-            # breakpoint()
+            a = inner(grad(c), grad(psi)) * dx
 
-            # print_overloaded("Debugging: cc ", cc.vector()[:].min(), cc.vector()[:].max(), cc.vector()[:].mean())
-            C = cc.function_space()
-            dim = cc.geometric_dimension()
-            BC=DirichletBC(C, Constant((0.0,)*dim), "on_boundary")
-            BC.apply(cc.vector())
+            if self.A is None:
 
-            # print_overloaded("Debugging: cc ", cc.vector()[:].min(), cc.vector()[:].max(), cc.vector()[:].mean())
-
-        else:
-            C = func.function_space()
-            dim = func.geometric_dimension()
-            BC = DirichletBC(C, Constant((0.0,)*dim), "on_boundary")
-            c = TrialFunction(C)
-            psi = TestFunction(C)
-            
-
-            if "not_store_solver" in hyperparameters.keys() and hyperparameters["not_store_solver"]:
-                print_overloaded("not storing solver and copying stuff, i.e., working with cc = func.copy()")
-
-                cc = func.copy()
-                A = assemble(inner(grad(c), grad(psi)) * dx)
-
-                L = inner(cc, psi) * dx
-                tmp = assemble(L)
-                BC.apply(tmp)
-                BC.apply(A)
-
-
-                cc = Function(C)
-                solve(A, cc.vector(), tmp)
-
-                print_overloaded("Called solve")
+                self.A = assemble(a)
 
             else:
+                self.A = assemble(a, tensor=self.A)
 
-                if not hasattr(self, "solver"):
+            BC.apply(self.A)
 
-                    a = inner(grad(c), grad(psi)) * dx
+            self.solver = PETScKrylovSolver("gmres", "amg")
+            self.solver.set_operators(self.A, self.A)
+            print_overloaded("Created Krylov solver in Preconditioning()")
 
-                    if hyperparameters["reassign"]:
-                        if self.A is None:
+        L = inner(func, psi) * dx
 
-                            self.A = assemble(a)
+        if self.tmp is None:
+            self.tmp = assemble(L)
+        else:
+            self.tmp = assemble(L, tensor=self.tmp)
+        
+        BC.apply(self.tmp)
 
-                        else:
-                            self.A = assemble(a, tensor=self.A)
-                    else:
-                    
-                        
-                        # a = inner(grad(c), grad(psi)) * dx
-                        self.A = assemble(a)
-                        print_overloaded("Assembled A in Preconditioning()")
-                    
-
-                L = inner(func, psi) * dx
-                if hyperparameters["reassign"]:
-                    if self.tmp is None:
-                        self.tmp = assemble(L)
-                    else:
-                        self.tmp = assemble(L, tensor=self.tmp)
-                    
-                    BC.apply(self.tmp)
-                    BC.apply(self.A)
-
-                
-                else:
-                    tmp = assemble(L)
-                
-                    BC.apply(tmp)
-                    BC.apply(self.A)
-                # solve(a == L, c, BC)
-
-                if not hasattr(self, "solver"):
-
-                    if hyperparameters["solver"] == "lu":
-                        
-                        self.solver = LUSolver()
-                        self.solver.set_operator(self.A)
-
-                        print_overloaded("Created LU solver in Preconditioning()")
-                    
-                    elif hyperparameters["solver"] == "cg":
-                        self.solver = KrylovSolver(method="cg", preconditioner=hyperparameters["preconditioner"])
-                        self.solver.set_operators(self.A, self.A)
-
-                        print_overloaded("Assembled A, using CG solver")
-
-                    elif hyperparameters["solver"] == "krylov":
-                        # self.solver = PETScKrylovSolver(method="gmres", preconditioner=self.hyperparameters["preconditioner"])
-                        self.solver = PETScKrylovSolver("gmres", hyperparameters["preconditioner"])
-                        self.solver.set_operators(self.A, self.A)
-
-                        print_overloaded("Created Krylov solver in Preconditioning()")
-
-
-                # BC.apply(self.A)
-                # x = args[0]
-                # b = args[1]
-
-                cc = Function(C)
-                if hyperparameters["reassign"]:
-                    self.solver.solve(cc.vector(), self.tmp)
-                else:
-                    self.solver.solve(cc.vector(), tmp)
+        cc = Function(C)
+        self.solver.solve(cc.vector(), self.tmp)
 
         return cc
 
