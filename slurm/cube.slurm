@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=cube
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=4
+#SBATCH --ntasks=8
 ## SBATCH --exclusive
 ## SBATCH --nodes=1
 ## SBATCH --ntasks-per-node=32
@@ -54,13 +54,13 @@ IMG1=${DATAPATH}input.mgz
 IMG2=${DATAPATH}newtarget.mgz
 
 
-NP=4
+NP=8
 
 echo "NP=" ${NP}
 
-ITERS=50
+ITERS=5
 ALPHA=1e0
-LBFGS=50
+LBFGS=20
 
 echo "ITERS=" ${ITERS}
 echo "ALPHA=" ${ALPHA}
@@ -74,6 +74,7 @@ srun -n ${NP} singularity exec docker://ghcr.io/johanneshaubner/shapeopt:latest 
 python3 -u ${SPATH}/Optimize3d.py \
 --logfile ${LOGOUTFILE2} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
---timestepping RungeKutta --huber --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+--timestepping RungeKutta --huber --slurmid ${SLURM_JOB_ID} \
+--memdebug > ${LOGOUTFILE}
 
 echo "success"

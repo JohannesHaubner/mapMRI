@@ -13,8 +13,8 @@ def read(filename):
 
     for idx, line in enumerate(Lines):
 
-        if "NTASKS" in line:
-            ntasks = parse("NTASKS={}", line)[0]
+        if "NP" in line:
+            ntasks = parse("NP= {}", line)[0]
         if "NCOR" in line:
             maxcor = parse("NCOR={}", line)[0]
         if "meshn" in line:

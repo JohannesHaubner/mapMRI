@@ -6,7 +6,6 @@ import time
 import argparse
 import numpy as np
 import nibabel
-import resource
 
 PETScOptions.set("mat_mumps_icntl_4", 3)   # verbosity
 
@@ -32,6 +31,7 @@ parser.add_argument("--output_dir", type=str, default=None)
 parser.add_argument("--slurmid", type=str, required=True)
 parser.add_argument("--input", type=str)
 parser.add_argument("--target", type=str)
+parser.add_argument("--memdebug", default=False, action="store_true", help="Taylor test")
 # Starting guesses
 parser.add_argument("--readname", type=str, default="-1")
 parser.add_argument("--starting_guess", type=str, default=None)

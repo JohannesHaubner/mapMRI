@@ -170,8 +170,9 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
         global current_iteration
         current_iteration += 1
         
-        mem = resource.getrusage(resource.RUSAGE_SELF)[2]
-        print("Memory (TB)", (mem/(1e6*1024)), "current_iteration", current_iteration, "process", str(MPI.rank(MPI.comm_world)))
+        if hyperparameters["memdebug"]:
+            mem = resource.getrusage(resource.RUSAGE_SELF)[2]
+            print("Memory (TB)", (mem/(1e6*1024)), "current_iteration", current_iteration, "process", str(MPI.rank(MPI.comm_world)))
 
 
         with stop_annotating():
@@ -208,8 +209,17 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
 
     t0 = time.time()
 
+    if hyperparameters["memdebug"]:
+        tol = 1e-32
+    else:
+        tol = 1e-8
+
     minimize(Jhat,  method = 'L-BFGS-B', options = {"iprint": 0, "disp": None, "maxiter": hyperparameters["lbfgs_max_iterations"],
-                "maxcor": hyperparameters["maxcor"]}, tol=1e-8, callback = cb)
+                "maxcor": hyperparameters["maxcor"]}, tol=tol, callback = cb)
+
+
+    if hyperparameters["memdebug"]:
+        exit()
 
     dt0 = time.time() - t0
 
@@ -219,10 +229,6 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
     if MPI.rank(MPI.comm_world) == 0:
         with open(hyperparameters["outputfolder"] + '/hyperparameters_after_min.json', 'w') as outfile:
             json.dump(hyperparameters, outfile, sort_keys=True, indent=4)
-
-
-    if hyperparameters["memdebug"]:
-        exit()
 
     current_pde_solution = state.tape_value()
     current_pde_solution.rename("finalstate", "")
