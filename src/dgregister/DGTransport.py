@@ -24,11 +24,10 @@ parameters['ghost_mode'] = 'shared_facet'
 q_degree = 6
 
 
-def DGTransport(Img, Wind, MaxIter, DeltaT, timestepping, solver, preconditioner="amg", MassConservation=False):
+def DGTransport(Img, Wind, MaxIter, DeltaT, timestepping, solver="krylov", preconditioner="amg", MassConservation=False):
     
     print_overloaded("......................................")
     print_overloaded("Settings in Transport()")
-    print_overloaded("--- solver =", solver)
     print_overloaded("--- timestepping =", timestepping)
     print_overloaded("......................................")
 

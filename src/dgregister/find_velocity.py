@@ -27,7 +27,7 @@ parameters['ghost_mode'] = 'shared_facet'
 
 current_iteration = 0
 
-def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess=None): #, starting_guess):
+def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess=None):
 
     vol = assemble(1*dx(starting_image.function_space().mesh()))
 
@@ -53,9 +53,8 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
 
     print_overloaded("Running Transport() with dt = ", hyperparameters["DeltaT"])
 
-    Img_deformed = DGTransport(starting_image, velocity, preconditioner=hyperparameters["preconditioner"],
-                            MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
-                            solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"], reassign=hyperparameters["reassign"])
+    Img_deformed = DGTransport(starting_image, velocity, MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
+                            MassConservation=hyperparameters["MassConservation"])
 
     alpha = Constant(hyperparameters["alpha"]) # regularization
     state = Control(Img_deformed)  # The Control type enables easy access to tape values after replays.
@@ -152,7 +151,7 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
     files["stateFile"].write(Img_deformed, str(0))
     files["controlFile"].write(l2_controlfun, str(0))
 
-    if hyperparameters["debug"]:
+    if hyperparameters["taylortest"]:
 
         print_overloaded("Running convergence test")
         h = Function(vCG)

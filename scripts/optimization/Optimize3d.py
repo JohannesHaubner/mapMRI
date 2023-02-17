@@ -46,6 +46,7 @@ parser.add_argument("--nosmoothen", default=False, action="store_true", help="Se
 parser.add_argument("--alpha", type=float, default=1e-4)
 parser.add_argument("--lbfgs_max_iterations", type=float, default=400)
 parser.add_argument("--maxcor", default=10, type=int)
+parser.add_argument("--taylortest", default=False, action="store_true", help="Taylor test")
 
 # Losses
 parser.add_argument("--tukey", default=False, action="store_true", help="Use tukey loss function")
@@ -57,6 +58,7 @@ hyperparameters = vars(parser.parse_args())
 
 if not hyperparameters["output_dir"].endswith("/"):
     hyperparameters["output_dir"] += "/"
+
 
 suffix = ""
 
@@ -92,7 +94,6 @@ if hyperparameters["nosmoothen"]:
 else:
     hyperparameters["smoothen"] = True
 
-hyperparameters["preconditioner"] = "amg"
 hyperparameters["outputfolder"] = hyperparameters["output_dir"] + hyperparameters["outfoldername"]
 hyperparameters["lbfgs_max_iterations"] = int(hyperparameters["lbfgs_max_iterations"])
 hyperparameters["MassConservation"] = False
@@ -207,6 +208,7 @@ files["l2lossfile"] = hyperparameters["outputfolder"] + '/l2loss.txt'
 #####################################################################
 # Optimization
 
+# find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess=None)
 return_values = find_velocity(starting_image=Img, Img_goal=Img_goal, vCG=vCG, M_lumped_inv=M_lumped_inv, 
     hyperparameters=hyperparameters, files=files, starting_guess=starting_guess)
 
