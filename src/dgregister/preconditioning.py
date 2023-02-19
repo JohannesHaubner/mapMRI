@@ -32,6 +32,3 @@ def preconditioning(func):
     solve(A, cc.vector(), tmp)
 
     return cc
-
-
-preconditioning

@@ -36,7 +36,7 @@ class PreconditioningBlock(Block):
         BC = DirichletBC(C, Constant((0.0,) * dim), "on_boundary")
         c = TrialFunction(C)
         psi = TestFunction(C)
-        
+            
         a = inner(grad(c), grad(psi)) * dx
 
         A = assemble(a)

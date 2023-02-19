@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=mrireg
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=128
+#SBATCH --ntasks=14
 ## SBATCH --exclusive
 #SBATCH --nodes=1
 ## SBATCH --ntasks-per-node=32
@@ -21,21 +21,33 @@
 #SBATCH --export=ALL
 #SBATCH --mail-user=bastian@simula.no
 
+eval "$(conda shell.bash hook)"
+conda activate mri_inverse
+LOGOUTFILE2=/home/bastian/D1/registration/mrislurm/${SLURM_JOB_ID}_log_python_srun.txt
+
 
 set -o errexit # Exit the script on any error
 set -o nounset # Treat any unset variables as an error
 
 echo "starting to run"
 
-module purge
-module load singularity-ce
-module load mpich-3.3.2
+# module purge
+# module load singularity-ce
+# module load mpich-3.3.2
 
-export SINGULARITYENV_CXX=/usr/bin/c++
-export SINGULARITY_DOCKER_USERNAME=johanneshaubner
-export SINGULARITY_DOCKER_PASSWORD=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
+# export SINGULARITYENV_CXX=/usr/bin/c++
+# export SINGULARITY_DOCKER_USERNAME=johanneshaubner
+# export SINGULARITY_DOCKER_PASSWORD=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
+# export SINGULARITY_BIND="/global/D1/homes/bastian:/home/bastian/d1"
+# OUTPUTDIR=/home/bastian/d1/registration/normalized-outputs/${SLURM_JOB_ID}/
+# IMG1=/home/bastian/d1/registration/mri2fem-dataset/normalized/cropped/cropped_abbytoernie_nyul.mgz
+# IMG2=/home/bastian/d1/registration/mri2fem-dataset/normalized/cropped/cropped_ernie_brain_nyul.mgz
 
-export SINGULARITY_BIND="/global/D1/homes/bastian:/home/bastian/d1"
+# # OUTPUTDIR=/home/bastian/d1/registration/normalized-outputs/${SLURM_JOB_ID}/
+# # IMG1=/home/bastian/d1/registration/mri2fem-dataset/normalized/cropped/cropped_abbytoernie_nyul.mgz
+# # IMG2=/home/bastian/d1/registration/mri2fem-dataset/normalized/cropped/cropped_ernie_brain_nyul.mgz
+# LOGOUTFILE2=/home/bastian/d1/registration/mrislurm/${SLURM_JOB_ID}_log_python_srun.txt
+
 
 
 #######################################################
@@ -46,39 +58,34 @@ export SINGULARITY_BIND="/global/D1/homes/bastian:/home/bastian/d1"
 
 GPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/
 SPATH=${GPATH}scripts/optimization
-LOGOUTFILE2=/home/bastian/d1/registration/mrislurm/${SLURM_JOB_ID}_log_python_srun.txt
 LOGOUTFILE=/home/bastian/D1/registration/mrislurm/${SLURM_JOB_ID}_log_python_srun.txt
 
+OUTPUTDIR=/home/bastian/D1/registration/coarse-outputs/${SLURM_JOB_ID}/
+IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/coarsenedabbytoernie.mgz
+IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/coarsenedernie_brain.mgz
 
-NP=128
+
+NP=14
 
 echo "NP=" ${NP}
 
 # ITERS=$1
 # ALPHA=$2
-ITERS=50
-ALPHA=1e0
-LBFGS=50
+ITERS=2
+ALPHA=1e-2
+LBFGS=20
 
 echo "ITERS=" ${ITERS}
 echo "ALPHA=" ${ALPHA}
 
 
-OUTPUTDIR=/home/bastian/d1/registration/normalized-outputs/${SLURM_JOB_ID}/
-IMG1=/home/bastian/d1/registration/mri2fem-dataset/normalized/cropped/cropped_abbytoernie_nyul.mgz
-IMG2=/home/bastian/d1/registration/mri2fem-dataset/normalized/cropped/cropped_ernie_brain_nyul.mgz
-
-# OUTPUTDIR=/home/bastian/d1/registration/normalized-outputs/${SLURM_JOB_ID}/
-# IMG1=/home/bastian/d1/registration/mri2fem-dataset/normalized/cropped/cropped_abbytoernie_nyul.mgz
-# IMG2=/home/bastian/d1/registration/mri2fem-dataset/normalized/cropped/cropped_ernie_brain_nyul.mgz
 
 
 echo "OUTPUTDIR=" $OUTPUTDIR
 echo "IMG1=" ${IMG1}
 echo "IMG2=" ${IMG2}
 
-srun -n ${NP} singularity exec docker://ghcr.io/johanneshaubner/shapeopt:latest \
-python3 -u ${SPATH}/Optimize3d.py \
+srun -n ${NP} python3 -u ${SPATH}/Optimize3d.py \
 --logfile ${LOGOUTFILE2} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
 --timestepping RungeKutta --huber --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
