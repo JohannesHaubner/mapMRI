@@ -100,11 +100,9 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, timestepping, solver="krylov", preco
         # in this case we assemble the RHS during the loop
         dImg = TrialFunction(Img_deformed.function_space())
         dI = Function(Img_deformed.function_space())
-
         form = inner(dImg, v)*dx 
         Atmp = assemble(form)
-        tmpsolver = KrylovSolver(method="cg", preconditioner=preconditioner)
-        tmpsolver.set_operators(Atmp, Atmp)
+
 
     elif timestepping == "CrankNicolson":
         a = a + 0.5*(Form(Img_deformed) + Form(Img_next))
@@ -114,27 +112,6 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, timestepping, solver="krylov", preco
 
     A = assemble(lhs(a))
 
-    if solver == "krylov":
-        solver = KrylovSolver(A, "gmres", preconditioner)
-        solver.set_operators(A, A)
-        print_overloaded("Assembled A, using Krylov solver")
-    
-    elif solver == "lu":
-        solver = LUSolver()
-        solver.set_operator(A)
-        print_overloaded("Assembled A, using LU solver")
-
-    elif solver == "cg":
-        solver = KrylovSolver(method="cg", preconditioner=preconditioner)
-        solver.set_operators(A, A)
-        print_overloaded("Assembled A, using CG solver")
-
-    else:
-        raise NotImplementedError()
-
-    b = None
-    btmp = None
-
     for i in range(MaxIter):
 
         print_overloaded("Iteration ", i + 1, "/", MaxIter, "in Transport()")
@@ -143,15 +120,11 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, timestepping, solver="krylov", preco
             
             rhstmp = Form(Img_deformed)            
             
-            if btmp is None:
-                
-                btmp = assemble(rhstmp)
-            else:
-                btmp = assemble(rhstmp, tensor=btmp)
+            btmp = assemble(rhstmp)
 
             btmp.apply("")
 
-            tmpsolver.solve(dI.vector(), btmp)
+            solve(Atmp, dI.vector(), btmp)
 
             factor = DeltaT / 2.
 
@@ -161,11 +134,9 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, timestepping, solver="krylov", preco
         else:
             system_rhs = rhs(a)
 
-        if b is None:
-            b = assemble(system_rhs)
-        else:
-            b = assemble(system_rhs, tensor=b)
-        solver.solve(Img.vector(), b)
+        b = assemble(system_rhs)
+
+        solve(A, Img.vector(), b)
 
         Img_deformed.assign(Img)
 

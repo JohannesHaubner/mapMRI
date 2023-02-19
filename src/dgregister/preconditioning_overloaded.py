@@ -24,7 +24,6 @@ class PreconditioningBlock(Block):
         super(PreconditioningBlock, self).__init__()
         self.kwargs = kwargs
         self.add_dependency(func)
-        self.A = None
 
     def __str__(self):
         return 'PreconditioningBlock'
@@ -38,29 +37,26 @@ class PreconditioningBlock(Block):
         c = TrialFunction(C)
         psi = TestFunction(C)
         
-        if not hasattr(self, "solver"):
+        a = inner(grad(c), grad(psi)) * dx
 
-            a = inner(grad(c), grad(psi)) * dx
+        A = assemble(a)
 
-            if self.A is None:
-                self.A = assemble(a)
-            else:
-                self.A = assemble(a, tensor=self.A)
+        BC.apply(A)
 
-            BC.apply(self.A)
+        print_overloaded("Assembled A in PreconditioningBlock()")
+        
+        # self.solver = PETScKrylovSolver("gmres", "amg")
 
-            print_overloaded("Assembled A in PreconditioningBlock()")
-            
-            self.solver = PETScKrylovSolver("gmres", "amg")
+        # print_overloaded("Created Krylov solver in PreconditioningBlock()")
 
-            print_overloaded("Created Krylov solver in PreconditioningBlock()")
-
-            self.solver.set_operators(self.A, self.A)
+        # self.solver.set_operators(self.A, self.A)
         
         ct = Function(C)
         
         BC.apply(tmp)
-        self.solver.solve(ct.vector(), tmp)
+        # self.solver.solve(ct.vector(), tmp)
+
+        solve(A, ct.vector(), tmp)
 
         ctest = TestFunction(C)
         tmp = assemble(inner(ctest, ct) * dx)

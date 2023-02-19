@@ -7,53 +7,31 @@ def print_overloaded(*args):
     else:
         pass
 
+def preconditioning(func):
 
-class Preconditioning():
+    C = func.function_space()
+    dim = func.geometric_dimension()
+    BC = DirichletBC(C, Constant((0.0,)*dim), "on_boundary")
+    c = TrialFunction(C)
+    psi = TestFunction(C)
+    
+    a = inner(grad(c), grad(psi)) * dx
 
-    def __init__(self) -> None:
-        self.tmp = None
-        self.A = None
-        
+    A = assemble(a)
 
-    def __call__(self, func):
+    BC.apply(A)
 
-        C = func.function_space()
-        dim = func.geometric_dimension()
-        BC = DirichletBC(C, Constant((0.0,)*dim), "on_boundary")
-        c = TrialFunction(C)
-        psi = TestFunction(C)
-        
-
-        if not hasattr(self, "solver"):
-
-            a = inner(grad(c), grad(psi)) * dx
-
-            if self.A is None:
-
-                self.A = assemble(a)
-
-            else:
-                self.A = assemble(a, tensor=self.A)
-
-            BC.apply(self.A)
-
-            self.solver = PETScKrylovSolver("gmres", "amg")
-            self.solver.set_operators(self.A, self.A)
-            print_overloaded("Created Krylov solver in Preconditioning()")
-
-        L = inner(func, psi) * dx
-
-        if self.tmp is None:
-            self.tmp = assemble(L)
-        else:
-            self.tmp = assemble(L, tensor=self.tmp)
-        
-        BC.apply(self.tmp)
-
-        cc = Function(C)
-        self.solver.solve(cc.vector(), self.tmp)
-
-        return cc
+    L = inner(func, psi) * dx
 
 
-preconditioning = Preconditioning()
+    tmp = assemble(L)
+    
+    BC.apply(tmp)
+
+    cc = Function(C)
+    solve(A, cc.vector(), tmp)
+
+    return cc
+
+
+preconditioning
