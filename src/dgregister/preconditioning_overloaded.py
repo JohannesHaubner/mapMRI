@@ -56,7 +56,7 @@ class PreconditioningBlock(Block):
         BC.apply(tmp)
         # self.solver.solve(ct.vector(), tmp)
 
-        solve(A, ct.vector(), tmp)
+        solve(A, ct.vector(), tmp, "gmres", "hypre_amg")
 
         ctest = TestFunction(C)
         tmp = assemble(inner(ctest, ct) * dx)

@@ -124,7 +124,7 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, timestepping, solver="krylov", preco
 
             btmp.apply("")
 
-            solve(Atmp, dI.vector(), btmp)
+            solve(Atmp, dI.vector(), btmp, "gmres", "hypre_amg")
 
             factor = DeltaT / 2.
 
@@ -136,7 +136,7 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, timestepping, solver="krylov", preco
 
         b = assemble(system_rhs)
 
-        solve(A, Img.vector(), b)
+        solve(A, Img.vector(), b, "gmres", "hypre_amg")
 
         Img_deformed.assign(Img)
 

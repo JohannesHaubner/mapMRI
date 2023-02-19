@@ -71,8 +71,8 @@ elif hyperparameters["timestepping"] == "CrankNicolson":
 elif hyperparameters["timestepping"] == "explicitEuler":
     hyperparameters["outfoldername"] = "E"
 
-
-hyperparameters["outfoldername"] += "A" + str(hyperparameters["alpha"])
+hyperparameters["outfoldername"] += format(hyperparameters["max_timesteps"], ".0f")
+hyperparameters["outfoldername"] += "A" + format(hyperparameters["alpha"], ".0e")
 hyperparameters["outfoldername"] += "LBFGS" + str(int(hyperparameters["lbfgs_max_iterations"]))
 
 if hyperparameters["nosmoothen"]:

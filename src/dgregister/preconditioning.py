@@ -29,6 +29,6 @@ def preconditioning(func):
     BC.apply(tmp)
 
     cc = Function(C)
-    solve(A, cc.vector(), tmp)
+    solve(A, cc.vector(), tmp, "gmres", "hypre_amg")
 
     return cc
