@@ -5,6 +5,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from parse import parse
 import argparse
+import nibabel
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--resync", action="store_true", default=False)
@@ -31,12 +32,24 @@ def make_loss_history(hyperparameters, expath, localpath, loss, runname=None):
         assert len(startlogfiles) == 1
 
         file2 = open(starting_guess_dir / startlogfiles[0], 'r')
-        startloss, _ = read_loss_from_log(file2)
+        startloss, _ = read_loss_from_log(file2, hyperparameters=starting_hyperparameters)
+
+        s0 = startloss[0, 1]
+
+
+
 
         x0 = np.zeros_like(startloss) + np.nan
-        loss = np.vstack([x0, loss])
-
+        try:
+            loss = np.vstack([x0, loss])
+        except ValueError:
+            breakpoint()
+            exit()
+            
         loss[:, 0] = list(range(0, loss.shape[0]))
+
+        loss[:, 0] -= 1
+        loss[:, 0] = np.abs(loss[:, 0])
 
         # exclude_keys = ["slurmid", "logfile", 
         #                 "readname", "starting_state", "lbfgs_max_iterations", "", "", 
@@ -66,11 +79,12 @@ def make_loss_history(hyperparameters, expath, localpath, loss, runname=None):
 
         if current_start is None:
             init = True
-            return loss
+            # breakpoint()
+            return loss, s0
 
 
 
-def read_loss_from_log(file1):
+def read_loss_from_log(file1, hyperparameters):
 
     Lines = file1.readlines()
 
@@ -120,10 +134,20 @@ def read_loss_from_log(file1):
             history.append(start_values)
 
 
-    if len(history[0]) == 4:
+    if len(history) > 0 and len(history[0]) == 4:
         history[0].pop(-1)
 
     history = np.array(history)
+
+    if int(hyperparameters["slurmid"]) <= 444774 or int(hyperparameters["slurmid"]) == 444925:
+        # There was a bug with factor 0.5 during loss storage for huber loss
+
+        print("*"*100)
+        print("WARNING: Assuming job" + hyperparameters["slurmid"] + " is affected by the bug with factor 0.5 during storage of data loss!")
+        print("*"*100)
+
+        history[1:,1] *= 2
+        
 
     return history, line_searches
 
@@ -151,7 +175,7 @@ fig1, ax1 = plt.subplots(dpi=dpi, figsize=figsize)
 fig3, ax3 = plt.subplots(dpi=dpi, figsize=figsize)
 
 
-foldernames = [ "hubertest_coarse"
+foldernames = [ "normalized-outputs"
                 # "affine_croppedmriregistration_outputs",
                 ]
 
@@ -214,15 +238,22 @@ if parsersargs["resync"]:
 
             hyperparameters = json.load(open(hyperparameterfile))
 
+
+            command = "rsync -r "
+            command += "ex:" + str(expath / runname / "CurrentState.mgz")
+            command += " "
+            command += str(localpath / runname)
+            subprocess.run(command, shell=True)
+
             if "optimization_time_hours" in hyperparameters.keys():
 
                 print(runname, "Compute time", hyperparameters["optimization_time_hours"])
-
                 command = "rsync -r "
                 command += "ex:" + str(expath / runname / "Finalstate.mgz")
                 command += " "
                 command += str(localpath / runname)
                 subprocess.run(command, shell=True)
+
 
 
 
@@ -257,19 +288,37 @@ for foldername in foldernames:
     for runname in sorted(runnames, key=lambda x: slurmid(x, localpath)):
 
 
+
+
         lossfile = localpath / runname / "loss.txt"
         l2lossfile = localpath / runname / "l2loss.txt"
         hyperparameterfile = localpath / runname / "hyperparameters.json"
         hyperparameters = json.load(open(hyperparameterfile))
-        domain_size = np.product(hyperparameters["input.shape"])
+        # print(hyperparameters)
+        domain_size = np.product(hyperparameters["target.shape"])
+
+        if int(hyperparameters["slurmid"]) < 444624:
+            print("omit")
+            continue
+
+
+        inputfile = hyperparameters["input"].replace("/d1/", "/D1/").replace(str(expath.parent), str(localpath.parent))
+        targetfile = hyperparameters["target"].replace("/d1/", "/D1/").replace(str(expath.parent), str(localpath.parent))
         
 
-        inputfile = hyperparameters["input"].replace(str(expath.parent), str(localpath.parent))
-        targetfile = hyperparameters["target"].replace(str(expath.parent), str(localpath.parent))
+        # # breakpoint()
+        # tt=pathlib.Path(inputfile).parent.parent
         
+        # inputfile = str(tt / "input" / "abby" / "abby_brain.mgz")
+        # targetfile = str(tt / "input" / "ernie" / "ernie_brain.mgz")
+
+
+        assert nibabel.load(inputfile).get_fdata().shape == nibabel.load(targetfile).get_fdata().shape 
+        assert max(nibabel.load(inputfile).get_fdata().shape) < 200
+
         # breakpoint()
-        assert os.path.isfile(inputfile)
-        assert os.path.isfile(targetfile)
+        # assert os.path.isfile(inputfile)
+        # assert os.path.isfile(targetfile)
 
         if (localpath / runname / "Finalstate.mgz").is_file():
             print()
@@ -282,6 +331,22 @@ for foldername in foldernames:
             print(viewcommmand)
             print()
 
+        if (localpath / runname / "CurrentState.mgz").is_file():
+
+            assert nibabel.load(str(localpath / runname / "CurrentState.mgz")).get_fdata().shape == nibabel.load(targetfile).get_fdata().shape
+            assert np.allclose(nibabel.load(str(localpath / runname / "CurrentState.mgz")).affine, nibabel.load(targetfile).affine)
+            assert max(nibabel.load(str(localpath / runname / "CurrentState.mgz")).get_fdata().shape) < 200
+
+            print()
+            print(hyperparameters["slurmid"])
+            print()
+            viewcommmand = "freeview "
+            viewcommmand += inputfile + " "
+            viewcommmand += targetfile + " "
+            viewcommmand += str(localpath / runname / "CurrentState.mgz")
+            print(viewcommmand)
+            print()
+
         assert foldername in hyperparameters["output_dir"]
 
         logfiles = [x for x in os.listdir(localpath / runname) if x.endswith("_log_python_srun.txt")]
@@ -290,9 +355,9 @@ for foldername in foldernames:
 
 
         file1 = open(localpath / runname / logfiles[0], 'r')
-        loss, line_searches = read_loss_from_log(file1)
+        loss, line_searches = read_loss_from_log(file1, hyperparameters=hyperparameters)
 
-        print(runname, line_searches)
+        # print(runname, line_searches)
 
 
         killed = False
@@ -319,13 +384,18 @@ for foldername in foldernames:
 
         if hyperparameters["starting_state"] is not None:
 
-            loss2 = make_loss_history(hyperparameters, expath, localpath, loss, runname=runname)
+            loss2, startloss = make_loss_history(hyperparameters, expath, localpath, loss, runname=runname)
+
+            startloss /= domain_size
 
             if loss2 is None:
                 #breakpoint()
                 pass
             else:
                 loss = loss2
+
+        else:
+            startloss = loss[0, 1] / domain_size
 
 
         if cancelled or killed or valueerror:
@@ -403,10 +473,16 @@ for foldername in foldernames:
 
         c = p[0].get_color()
         
-        fac = loss[0, 1]
-        ax3.plot(loss[:, 0], loss[:, 1] / fac , color=c, linestyle=linestlyle, label=label, marker=marker, markevery=markevery)
+        fac = startloss # loss[0, 1]
+
+        
+        if len(loss[:,0]) > 1:
+            ax3.plot(loss[:, 0], loss[:, 1] / fac , color=c, linestyle=linestlyle, label=label, 
+                    # marker=marker, markevery=markevery
+                )
 
         # ax2.semilogy(loss[:, 0], loss[:, 3], color=c, linestyle=linestlyle, label=label)
+    # plt.show()
 
     # ax2.set_ylabel("Regularization")
     ax1.set_ylabel(r"$L^2$-loss   $\frac{1}{|\Omega|}\int_{\Omega}(\mathrm{State}-\mathrm{Target})^2\, dx$")

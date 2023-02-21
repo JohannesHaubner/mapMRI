@@ -16,7 +16,7 @@ fi
 CODEDIR=/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation
 
 MRI2FEMDATA=${CODEDIR}/registration/mri2fem-dataset
-TARGETDIR=${MRI2FEMDATA}/processed2
+TARGETDIR=${MRI2FEMDATA}/normalized
 normdir=${TARGETDIR}/nyul_normalized
 
 mkdir -vp ${TARGETDIR}
@@ -95,6 +95,9 @@ mkdir -pv $normdir
 rm -f ${normdir}/*
 
 nyul-normalize ${tmpdir}/ -o ${normdir} -vv -m ${maskdir}
+
+
+cp -r ${normdir} ${TARGETDIR}/nyul_normalized_oriented
 
 rm -r ${tmpdir}
 #############
