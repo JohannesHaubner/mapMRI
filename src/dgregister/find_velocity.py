@@ -195,12 +195,14 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
                 Jd = assemble(0.5 * loss * dx)
             elif hyperparameters["huber"]:
                 loss = huberloss(x=current_pde_solution, y=Img_goal, hyperparameters=hyperparameters)
-                Jd = assemble(0.5 * loss * dx)
+                Jd = assemble(loss * dx)
             else:
                 Jd = l2loss
 
             domainmesh = current_pde_solution.function_space().mesh()
 
+            # def store_during_callback(current_iteration, hyperparameters, files, Jd, l2loss,
+            #                domainmesh, current_pde_solution, control):
             store_during_callback(current_iteration, hyperparameters, files, Jd, l2loss,
                                         domainmesh, current_pde_solution, control=current_l2_control)
 
