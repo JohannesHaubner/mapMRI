@@ -128,9 +128,16 @@ if hyperparameters["starting_guess"] is not None:
 
     starting_guess = Function(vCG)
 
-    hdf = HDF5File(domainmesh.mpi_comm(), hyperparameters["starting_guess"], "r")
-    hdf.read(starting_guess, hyperparameters["readname"])
-    hdf.close()
+    if hyperparameters["starting_guess"].endswith("h5"):
+
+        hdf = HDF5File(domainmesh.mpi_comm(), hyperparameters["starting_guess"], "r")
+        hdf.read(starting_guess, hyperparameters["readname"])
+        hdf.close()
+    else:
+        with XDMFFile(hyperparameters["starting_guess"]) as xdmf:
+            xdmf.read_checkpoint(starting_guess, hyperparameters["readname"])
+
+        print_overloaded("Read starting guess")
 
 else:
     starting_guess = None

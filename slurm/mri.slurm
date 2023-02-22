@@ -64,11 +64,15 @@ LOGOUTFILE=/home/bastian/D1/registration/mrislurm/${SLURM_JOB_ID}_log_python_sru
 # IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/coarsenedabbytoernie.mgz
 # IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/coarsenedernie_brain.mgz
 
-OUTPUTDIR=/home/bastian/D1/registration/normalized-outputs/${SLURM_JOB_ID}/
-IMG1=/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/cropped_abbytoernie_nyul.mgz
-IMG2=/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/cropped_ernie_brain_nyul.mgz
+# OUTPUTDIR=/home/bastian/D1/registration/normalized-outputs/${SLURM_JOB_ID}/
+# IMG1=/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/cropped_abbytoernie_nyul.mgz
+# IMG2=/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/cropped_ernie_brain_nyul.mgz
 
-NP=20
+OUTPUTDIR=/home/bastian/D1/registration/ventricle-outputs/${SLURM_JOB_ID}/
+IMG1=/home/bastian/D1/registration/mri2fem-dataset/hydrocephalus/021to068_nyul_ventriclemasked.mgz
+IMG2=/home/bastian/D1/registration/mri2fem-dataset/hydrocephalus/068_brain_nyul_ventriclemasked.mgz
+
+NP=16
 
 echo "NP=" ${NP}
 
@@ -86,17 +90,22 @@ echo "OUTPUTDIR=" $OUTPUTDIR
 echo "IMG1=" ${IMG1}
 echo "IMG2=" ${IMG2}
 
-# srun -n ${NP} --cpu-bind=rank python3 -u ${SPATH}/Optimize3d.py \
-# --logfile ${LOGOUTFILE2} --output_dir ${OUTPUTDIR} \
-# --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
-# --starting_state /home/bastian/D1/registration/normalized-outputs/444774/RKA0.01LBFGS50/State_checkpoint.xdmf --readname CurrentState \
-# --huber_delta 1 --timestepping RungeKutta --huber --memdebug --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
-
 srun -n ${NP} --cpu-bind=rank python3 -u ${SPATH}/Optimize3d.py \
 --logfile ${LOGOUTFILE2} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
 --huber_delta 1 --timestepping RungeKutta --huber --memdebug --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 
+# --starting_state /home/bastian/D1/registration/normalized-outputs/444782/RKA0.01LBFGS50/State_checkpoint.xdmf --readname CurrentState \
+
+
+# --cpu-bind=rank 
+# srun -n ${NP} --cpu-bind=rank  python3 -u ${SPATH}/Optimize3d.py \
+# --logfile ${LOGOUTFILE2} --output_dir ${OUTPUTDIR} \
+# --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
+# --starting_state /home/bastian/D1/registration/normalized-outputs/445273/RKA0.01LBFGS50/State_checkpoint.xdmf --readname CurrentState \
+# --huber_delta 1 --timestepping RungeKutta --huber --memdebug --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+
+# --starting_guess /home/bastian/D1/registration/normalized-outputs/444988/RKA0.01LBFGS50/Control_checkpoint.xdmf --readname CurrentV \
 
 # srun -n ${NP} --cpu-bind=rank python3 -u ${SPATH}/Optimize3d.py \
 # --logfile ${LOGOUTFILE2} --output_dir ${OUTPUTDIR} \

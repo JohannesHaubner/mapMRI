@@ -74,7 +74,7 @@ def get_larget_box(imagefiles):
     return np.where(largest_box >=1, True, False)
 
 
-def cut_to_box(image, box_bounds, inverse=False, cropped_image=None):
+def cut_to_box(image, box_bounds, inverse=False, cropped_image=None, pad=0):
 
     # box_boundary = get_bounding_box_limits(box)
 
@@ -102,18 +102,22 @@ def cut_to_box(image, box_bounds, inverse=False, cropped_image=None):
     
     if inverse:
 
-        raise NotImplementedError
+        assert np.product(image.shape) > np.product(cropped_image.shape)
 
-        idx = np.zeros_like(image)
+        # raise NotImplementedError
+
+        idx = np.zeros_like(image).astype(bool)
         returnimage = np.zeros_like(image).astype(float)
 
 
 
-        idx[image_center[0] - int(size[0] / 2):image_center[0] + int(size[0] / 2),
-                    image_center[1] - int(size[1] / 2):image_center[1] + int(size[1] / 2),
-                    image_center[2] - int(size[2] / 2):image_center[2] + int(size[2] / 2),
-        ] = 1
+        # idx[image_center[0] - int(size[0] / 2):image_center[0] + int(size[0] / 2),
+        #             image_center[1] - int(size[1] / 2):image_center[1] + int(size[1] / 2),
+        #             image_center[2] - int(size[2] / 2):image_center[2] + int(size[2] / 2),
+        # ] = 1
 
+        # breakpoint()
+        idx[(xlim_box[0]-pad):(xlim_box[1]+pad), (ylim_box[0]-pad):(ylim_box[1]+pad), (zlim_box[0]-pad):(zlim_box[1]+pad)] = 1
 
         returnimage[idx] = cropped_image.flatten()
 
