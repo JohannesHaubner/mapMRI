@@ -139,7 +139,7 @@ def read_loss_from_log(file1, hyperparameters):
 
     history = np.array(history)
 
-    if int(hyperparameters["slurmid"]) <= 444774 or int(hyperparameters["slurmid"]) == 444925:
+    if int(hyperparameters["slurmid"]) <= 444774: # or int(hyperparameters["slurmid"]) == 444925:
         # There was a bug with factor 0.5 during loss storage for huber loss
 
         print("*"*100)
@@ -313,8 +313,8 @@ for foldername in foldernames:
         # targetfile = str(tt / "input" / "ernie" / "ernie_brain.mgz")
 
 
-        assert nibabel.load(inputfile).get_fdata().shape == nibabel.load(targetfile).get_fdata().shape 
-        assert max(nibabel.load(inputfile).get_fdata().shape) < 200
+        # assert nibabel.load(inputfile).get_fdata().shape == nibabel.load(targetfile).get_fdata().shape 
+        # assert max(nibabel.load(inputfile).get_fdata().shape) < 200
 
         # breakpoint()
         # assert os.path.isfile(inputfile)
@@ -331,21 +331,21 @@ for foldername in foldernames:
             print(viewcommmand)
             print()
 
-        if (localpath / runname / "CurrentState.mgz").is_file():
+        # if (localpath / runname / "CurrentState.mgz").is_file():
 
-            assert nibabel.load(str(localpath / runname / "CurrentState.mgz")).get_fdata().shape == nibabel.load(targetfile).get_fdata().shape
-            assert np.allclose(nibabel.load(str(localpath / runname / "CurrentState.mgz")).affine, nibabel.load(targetfile).affine)
-            assert max(nibabel.load(str(localpath / runname / "CurrentState.mgz")).get_fdata().shape) < 200
+        #     assert nibabel.load(str(localpath / runname / "CurrentState.mgz")).get_fdata().shape == nibabel.load(targetfile).get_fdata().shape
+        #     assert np.allclose(nibabel.load(str(localpath / runname / "CurrentState.mgz")).affine, nibabel.load(targetfile).affine)
+        #     assert max(nibabel.load(str(localpath / runname / "CurrentState.mgz")).get_fdata().shape) < 200
 
-            print()
-            print(hyperparameters["slurmid"])
-            print()
-            viewcommmand = "freeview "
-            viewcommmand += inputfile + " "
-            viewcommmand += targetfile + " "
-            viewcommmand += str(localpath / runname / "CurrentState.mgz")
-            print(viewcommmand)
-            print()
+        #     print()
+        #     print(hyperparameters["slurmid"])
+        #     print()
+        #     viewcommmand = "freeview "
+        #     viewcommmand += inputfile + " "
+        #     viewcommmand += targetfile + " "
+        #     viewcommmand += str(localpath / runname / "CurrentState.mgz")
+        #     print(viewcommmand)
+        #     print()
 
         assert foldername in hyperparameters["output_dir"]
 
@@ -395,8 +395,11 @@ for foldername in foldernames:
                 loss = loss2
 
         else:
-            startloss = loss[0, 1] / domain_size
-
+            try:
+                startloss = loss[0, 1] / domain_size
+            except:
+                breakpoint()
+                exit()
 
         if cancelled or killed or valueerror:
             # continue

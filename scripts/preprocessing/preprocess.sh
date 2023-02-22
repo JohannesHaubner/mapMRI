@@ -15,14 +15,20 @@ fi
 
 CODEDIR=/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation
 
-MRI2FEMDATA=${CODEDIR}/registration/mri2fem-dataset
+# MRI2FEMDATA=${CODEDIR}/registration/mri2fem-dataset
+# subj1=abby
+# subj2=ernie
+
+MRI2FEMDATA=${CODEDIR}/registration/hydrocephalus
+subj1=021
+subj2=068
+
 TARGETDIR=${MRI2FEMDATA}/normalized
 normdir=${TARGETDIR}/nyul_normalized
 
 mkdir -vp ${TARGETDIR}
 
-subj1=abby
-subj2=ernie
+
 IMAGENAME=brain.mgz
 IMAGE=mri/${IMAGENAME}
 
