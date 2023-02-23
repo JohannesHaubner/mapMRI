@@ -10,6 +10,11 @@ from dgregister.helpers import cut_to_box, get_bounding_box_limits
 
 parser = argparse.ArgumentParser()
 parser.add_argument("path")
+parser.add_argument("--limits", type=int, default=0, choices=[0, 2])
+parser.add_argument("--npad", type=int, choices=[0, 2])
+parser.add_argument("--box", type=str)
+parser.add_argument("--originaltarget", type=str)
+
 parserargs = vars(parser.parse_args())
 
 os.chdir(parserargs["path"])
@@ -22,46 +27,6 @@ assert os.path.isfile(h["input"])
 [nx, ny, nz] = h["target.shape"]
 
 
-
-inputimage = nibabel.load(h["input"])
-
-path_to_inputdata = pathlib.Path(h["input"]).parent
-
-
-files = json.load(open(path_to_inputdata / "files.json"))
-
-a = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/"
-b = "/home/bastian/D1/registration/"
-# 0 is abbytoernie, 1 is ernie
-# targetimage = files["images"][0].replace(a, b)
-# ernieimage = files["images"][1].replace(a, b)
-
-# breakpoint()
-
-tt=pathlib.Path(files["images"][0].replace(a, b)).parent.parent
-originalimage = nibabel.load(str(tt / "input" / "ernie" / "ernie_brain.mgz"))
-
-
-# assert os.path.isfile(targetimage)
-# originalimage = nibabel.load(targetimage)
-# print("targetimage=", targetimage,)
-
-
-if "coarsecropped" in str(path_to_inputdata):
-    raise NotImplementedError
-
-box = np.load(path_to_inputdata / "box.npy").astype(bool)
-
-
-
-
-# nii = nibabel.Nifti1Image(filled_image, originalimage.affine)
-
-# nibabel.save(nii, "/home/bastian/D1/registration/test/remapped.mgz")
-# print(h["input"])
-# print(targetimage, "(targetimage)")
-# breakpoint()
-# exit()
 
 if not os.path.isfile("CurrentState.npy"):
     mesh = BoxMesh(MPI.comm_world, Point(0.0, 0.0, 0.0), Point(nx, ny, nz), nx, ny, nz)
@@ -79,19 +44,80 @@ if not os.path.isfile("CurrentState.npy"):
 else:
     retimage =  np.load("CurrentState.npy")
 
+
+if parserargs["originaltarget"] is None:
+    inputimage = nibabel.load(h["input"])
+
+    path_to_inputdata = pathlib.Path(h["input"]).parent
+    files = json.load(open(path_to_inputdata / "files.json"))
+
+    a = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/"
+    b = "/home/bastian/D1/registration/"
+    # 0 is abbytoernie, 1 is ernie
+    # targetimage = files["images"][0].replace(a, b)
+    # ernieimage = files["images"][1].replace(a, b)
+
+    # breakpoint()
+
+    tt=pathlib.Path(files["images"][0].replace(a, b)).parent.parent
+    original_target_image = nibabel.load(str(tt / "input" / "ernie" / "ernie_brain.mgz"))
+    box = np.load(path_to_inputdata / "box.npy").astype(bool)
+
+    parserargs["npad"] = files["npad"]
+
+    if "coarsecropped" in str(path_to_inputdata):
+        raise NotImplementedError
+
+
+
+else:
+    assert "021" not in parserargs["originaltarget"]
+    original_target_image = nibabel.load(parserargs["originaltarget"])
+    box = np.load(parserargs["box"]).astype(bool)
+
+# assert os.path.isfile(targetimage)
+# originalimage = nibabel.load(targetimage)
+# print("targetimage=", targetimage,)
+
+
+
+
+
+
+# nii = nibabel.Nifti1Image(filled_image, originalimage.affine)
+
+# nibabel.save(nii, "/home/bastian/D1/registration/test/remapped.mgz")
+# print(h["input"])
+# print(targetimage, "(targetimage)")
+# breakpoint()
+# exit()
+
+
 # TODO FIXME
+
 box_bounds = get_bounding_box_limits(box)
-filled_image = cut_to_box(image=originalimage.get_fdata(), box_bounds=box_bounds, inverse=True, cropped_image=retimage, pad=files["npad"])# inputimage.get_fdata())
+
+if parserargs["limits"] == 2:
+    assert "ventricle" in parserargs["path"]
+
+limits2 = []
+for l in box_bounds:
+    limits2.append(slice(l.start - parserargs["limits"], l.stop + parserargs["limits"], None))
+
+box_bounds = limits2
+
+
+filled_image = cut_to_box(image=original_target_image.get_fdata(), box_bounds=box_bounds, inverse=True, cropped_image=retimage, pad=parserargs["npad"])# inputimage.get_fdata())
 
 # if not np.allclose(filled_image, originalimage.get_fdata(), rtol=1e-1, atol=1e-1):
 #     print("WARING: IMAGES MAYBE NOT THE SAME?")
 
 # breakpoint()
 
-nii = nibabel.Nifti1Image(filled_image, originalimage.affine)
+nii = nibabel.Nifti1Image(filled_image, original_target_image.affine)
 nibabel.save(nii, "CurrentState.mgz")
 
-nii = nibabel.Nifti1Image(np.abs(filled_image-originalimage.get_fdata()/np.max(originalimage.get_fdata())), originalimage.affine)
+nii = nibabel.Nifti1Image(np.abs(filled_image-original_target_image.get_fdata()/np.max(original_target_image.get_fdata())), original_target_image.affine)
 nibabel.save(nii, "AbsDiff.mgz")
 
 

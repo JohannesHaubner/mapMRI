@@ -118,6 +118,42 @@ if not os.path.isdir(hyperparameters["outputfolder"]):
 (domainmesh, Img, input_max, projector) = read_image(filename=hyperparameters["input"], name="input", mesh=None, 
             state_functionspace=hyperparameters["state_functionspace"], state_functiondegree=hyperparameters["state_functiondegree"])
 
+# d_SD = None
+
+# # if "ventricle" in hyperparameters["input"]:
+
+# #     shape = nibabel.load(hyperparameters["input"]).shape
+
+# #     class Outflow(SubDomain):
+# #         def inside(self, x, on_boundary):
+            
+# #             np = 2
+# #             xin = between(x[0], (np, shape[0] - np))
+# #             yin = between(x[1], (np, shape[1] - np))
+# #             zin = between(x[2], (np, shape[2] - np))
+
+# #             return xin and yin and zin
+
+
+# #     outflow = Outflow()
+# #     sub_domains = MeshFunction("size_t", domainmesh, domainmesh.topology().dim())
+
+# #     sub_domains.set_all(0)
+
+# #     outflow.mark(sub_domains, 1)
+
+# #     ds_SD = Measure('ds')(domain=domainmesh, subdomain_data=sub_domains)
+# #     dS_SD = Measure('dS')(domain=domainmesh, subdomain_data=sub_domains)
+# #     dx_SD = Measure('dx')(domain=domainmesh, subdomain_data=sub_domains)
+
+# #     d_SD = dx_SD(1), ds_SD(1), dS_SD(1)
+
+# # else:
+# #     d_SD = None
+
+
+# print("d_SD", d_SD)
+
 vCG = VectorFunctionSpace(domainmesh, hyperparameters["velocity_functionspace"], hyperparameters["velocity_functiondegree"])
 
 
