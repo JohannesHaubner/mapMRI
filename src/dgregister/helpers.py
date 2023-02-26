@@ -6,6 +6,7 @@ import nibabel
 import json
 import pathlib
 from parse import parse
+import matplotlib.pyplot as plt
 
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
@@ -13,6 +14,42 @@ def print_overloaded(*args):
         print(*args)
     else:
         pass
+
+
+    
+
+def view(images, axis, idx, colorbar=False):
+
+    line = "freeview "
+
+    for img in images:
+
+        
+
+        plt.figure()
+
+        plt.title(img)        
+
+        if not isinstance(img, np.ndarray):
+            line += img + " "
+            print(img)
+            print(img.affine)
+            print()
+            img = nibabel.load(img)
+            img = img.get_fdata()
+
+        if not (np.allclose(img.shape[axis], 256)):
+            raise NotImplementedError
+            idx2 = int(img.shape[axis] * idx / 255)
+            print(idx, "-->", idx2)
+        else:
+            idx2 = idx
+
+        plt.imshow(np.take(img, idx2, axis), cmap="Greys_r", vmax=100)
+        # 
+    print(line)
+    plt.show()
+
 
 def read_vox2vox_from_lta(lta):
     File = open(lta)
@@ -149,8 +186,6 @@ def cut_to_box(image, box_bounds, inverse=False, cropped_image=None, pad=0):
         idx = np.zeros_like(image).astype(bool)
         returnimage = np.zeros_like(image).astype(float)
 
-
-
         # idx[image_center[0] - int(size[0] / 2):image_center[0] + int(size[0] / 2),
         #             image_center[1] - int(size[1] / 2):image_center[1] + int(size[1] / 2),
         #             image_center[2] - int(size[2] / 2):image_center[2] + int(size[2] / 2),
@@ -165,6 +200,8 @@ def cut_to_box(image, box_bounds, inverse=False, cropped_image=None, pad=0):
     
     else:
 
+        assert pad == 0
+        assert cropped_image is None
 
         returnimage = np.zeros(tuple(size))
 

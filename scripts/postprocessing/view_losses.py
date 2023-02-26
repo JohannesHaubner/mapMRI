@@ -10,6 +10,8 @@ import nibabel
 parser = argparse.ArgumentParser()
 parser.add_argument("--resync", action="store_true", default=False)
 parser.add_argument("--only", type=int, default=None)
+parser.add_argument("--omit", type=int, default=None)
+
 parsersargs = vars(parser.parse_args())
 
 
@@ -299,6 +301,10 @@ for foldername in foldernames:
 
         inputfile = hyperparameters["input"].replace("/d1/", "/D1/").replace(str(expath.parent), str(localpath.parent))
         targetfile = hyperparameters["target"].replace("/d1/", "/D1/").replace(str(expath.parent), str(localpath.parent))
+
+        if str(parsersargs["omit"]) in runname:
+            
+            continue
 
         if (localpath / runname / "Finalstate.mgz").is_file():
             print()

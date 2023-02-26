@@ -3,7 +3,6 @@ import os
 import pathlib
 
 if "home/bastian" not in os.getcwd():
-
     from tqdm import tqdm
 
 import nibabel
@@ -13,33 +12,23 @@ from fenics import *
 
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
-        # set_log_level(PROGRESS)
         print(*args)
     else:
         pass
 
 from dolfin_adjoint import *
-
 from nibabel.affines import apply_affine
-
 from dgregister.helpers import get_bounding_box_limits, cut_to_box # get_largest_box, pad_with, cut_to_box, 
-# 
 
 
-# from IPython import embed
 
-def crop_to_original(original_image_path: str, cropped_image: numpy.ndarray, box: str, space: int, pad: int):
-
-    box = np.load(box)
-
-    orig_image = nibabel.load(original_image_path)
-
+def crop_to_original(orig_image: numpy.ndarray, cropped_image: numpy.ndarray, box: numpy.ndarray, space: int, pad: int):
 
     box_bounds = get_bounding_box_limits(box)
 
-    if space == 2:
-        assert "abby" not in original_image_path
-        assert "ernie" not in original_image_path
+    # if space == 2:
+    #     assert "abby" not in original_image_path
+    #     assert "ernie" not in original_image_path
 
     limits2 = []
     for l in box_bounds:
@@ -50,7 +39,6 @@ def crop_to_original(original_image_path: str, cropped_image: numpy.ndarray, box
     fillarray = np.zeros_like(orig_image.get_fdata())
 
     filled_image = cut_to_box(image=fillarray, box_bounds=box_bounds, inverse=True, cropped_image=cropped_image, pad=pad)
-
 
     return filled_image
 
