@@ -159,21 +159,46 @@ vCG = VectorFunctionSpace(domainmesh, hyperparameters["velocity_functionspace"],
 
 if hyperparameters["starting_guess"] is not None:
 
+    assert hyperparameters["starting_state"] is None
     assert "CurrentV.hdf" not in hyperparameters["starting_guess"]
     assert "Velocity" not in hyperparameters["starting_guess"]
 
     starting_guess = Function(vCG)
 
-    if hyperparameters["starting_guess"].endswith("h5"):
-
-        hdf = HDF5File(domainmesh.mpi_comm(), hyperparameters["starting_guess"], "r")
-        hdf.read(starting_guess, hyperparameters["readname"])
-        hdf.close()
-    else:
+    try:
         with XDMFFile(hyperparameters["starting_guess"]) as xdmf:
-            xdmf.read_checkpoint(starting_guess, hyperparameters["readname"])
+            xdmf.read_checkpoint(starting_guess, "CurrentV")
+        
+    except:
+        hdf = HDF5File(domainmesh.mpi_comm(), hyperparameters["starting_guess"].replace("Control_checkpoint.xdmf", "CurrentControl.hdf"), "r")
+        hdf.read(starting_guess, "function")
+        hdf.close()
 
-        print_overloaded("Read starting guess")
+    hfile = hyperparameters["starting_guess"].replace("Control_checkpoint.xdmf", "hyperparameters.json")
+    # hyperparameters["starting_state"] = hyperparameters["starting_guess"].replace("Control_checkpoint.xdmf", "State_checkpoint.xdmf")
+    # hyperparameters["readname"] = "CurrentState"
+
+    assert os.path.isfile(hfile)
+
+
+    old_hypers = json.load(open(hfile))
+
+    if old_hypers["starting_state"] is not None:
+
+        hyperparameters["starting_state"] = old_hypers["starting_state"]
+
+        print_overloaded("Will read starting state")
+        print_overloaded(old_hypers["starting_state"])
+        print(" from previous velocity in order to restart L-BFGS-B")
+
+        assert os.path.isfile(old_hypers["starting_state"])
+
+
+    # State_checkpoint.xdmf --readname CurrentState
+
+    print_overloaded("Read starting guess")
+
+    print_overloaded("norm", norm(starting_guess))
 
 else:
     starting_guess = None
@@ -214,14 +239,7 @@ else:
 
 files = {}
 
-controlFile = HDF5File(domainmesh.mpi_comm(), hyperparameters["outputfolder"] + "/Control.hdf", "w")
-controlFile.write(domainmesh, "mesh")
 
-stateFile = HDF5File(MPI.comm_world, hyperparameters["outputfolder"] + "/State.hdf", "w")
-stateFile.write(domainmesh, "mesh")
-
-velocityFile = HDF5File(MPI.comm_world, hyperparameters["outputfolder"] + "/VelocityField.hdf", "w")
-velocityFile.write(domainmesh, "mesh")
 
 with XDMFFile(hyperparameters["outputfolder"] + "/Target.xdmf") as xdmf:
     xdmf.write_checkpoint(Img_goal, "Img_goal", 0.)
@@ -230,9 +248,7 @@ with XDMFFile(hyperparameters["outputfolder"] + "/Input.xdmf") as xdmf:
     xdmf.write_checkpoint(Img, "Img", 0.)
 
 
-files["velocityFile"] = velocityFile
-files["stateFile"] = stateFile
-files["controlFile"] = controlFile
+
 
 Img.rename("input", "")
 Img_goal.rename("target", "")
@@ -296,6 +312,18 @@ with XDMFFile(hyperparameters["outputfolder"] + "/Finalstate.xdmf") as xdmf:
 
 with XDMFFile(hyperparameters["outputfolder"] + "/Finalvelocity.xdmf") as xdmf:
     xdmf.write_checkpoint(FinalVelocity, "FinalV", 0.)
+
+controlFile = HDF5File(domainmesh.mpi_comm(), hyperparameters["outputfolder"] + "/Control.hdf", "w")
+controlFile.write(domainmesh, "mesh")
+
+stateFile = HDF5File(MPI.comm_world, hyperparameters["outputfolder"] + "/State.hdf", "w")
+stateFile.write(domainmesh, "mesh")
+
+velocityFile = HDF5File(MPI.comm_world, hyperparameters["outputfolder"] + "/VelocityField.hdf", "w")
+velocityFile.write(domainmesh, "mesh")
+files["velocityFile"] = velocityFile
+files["stateFile"] = stateFile
+files["controlFile"] = controlFile
 
 files["velocityFile"].write(FinalVelocity, "-1")
 files["controlFile"].write(FinalControl, "-1")

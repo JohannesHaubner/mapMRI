@@ -5,11 +5,11 @@ import pathlib
 if "home/bastian" not in os.getcwd():
 
     from tqdm import tqdm
+
 import nibabel
 import numpy
 import numpy as np
 from fenics import *
-import dgregister.config as config
 
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
@@ -17,23 +17,42 @@ def print_overloaded(*args):
         print(*args)
     else:
         pass
-# if ocd:
-if "optimize" in config.hyperparameters.keys() and (not config.hyperparameters["optimize"]):
-    print_overloaded("Not importing dolfin-adjoint")
-else:
-    print_overloaded("Importing dolfin-adjoint")
-    from dolfin_adjoint import *
+
+from dolfin_adjoint import *
 
 from nibabel.affines import apply_affine
 
-from dgregister.helpers import get_bounding_box_limits, get_lumped_mass_matrices # get_largest_box, pad_with, cut_to_box, 
+from dgregister.helpers import get_bounding_box_limits, cut_to_box # get_largest_box, pad_with, cut_to_box, 
 # 
 
 
 # from IPython import embed
 
+def crop_to_original(original_image_path: str, cropped_image: numpy.ndarray, box: str, space: int, pad: int):
+
+    box = np.load(box)
+
+    orig_image = nibabel.load(original_image_path)
 
 
+    box_bounds = get_bounding_box_limits(box)
+
+    if space == 2:
+        assert "abby" not in original_image_path
+        assert "ernie" not in original_image_path
+
+    limits2 = []
+    for l in box_bounds:
+        limits2.append(slice(l.start -space, l.stop + space, None))
+
+    box_bounds = limits2
+
+    fillarray = np.zeros_like(orig_image.get_fdata())
+
+    filled_image = cut_to_box(image=fillarray, box_bounds=box_bounds, inverse=True, cropped_image=cropped_image, pad=pad)
+
+
+    return filled_image
 
 
 def store2mgz(imgfile1, imgfile2, ijk1, outfolder):

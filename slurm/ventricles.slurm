@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=mrireg
+#SBATCH --job-name=ventreg
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks=128
 ## SBATCH --exclusive
@@ -59,51 +59,40 @@ GPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/
 SPATH=${GPATH}scripts/optimization
 LOGOUTFILE=/home/bastian/D1/registration/mrislurm/${SLURM_JOB_ID}_log_python_srun.txt
 
-# # CROPPED -- OUTPUTDIR=/home/bastian/D1/registration/coarse-outputs/${SLURM_JOB_ID}/
-# # CROPPED -- IMG1=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/coarsenedabbytoernie.mgz
-# # CROPPED -- IMG2=/home/bastian/D1/registration/mri2fem-dataset/processed/coarsecropped/coarsenedernie_brain.mgz
-
-OUTPUTDIR=/home/bastian/D1/registration/normalized-outputs/${SLURM_JOB_ID}/
-IMG1=/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/cropped_abbytoernie_nyul.mgz
-IMG2=/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/cropped_ernie_brain_nyul.mgz
-LBFGS=10
 
 
-NP=16
+OUTPUTDIR=/home/bastian/D1/registration/ventricle-outputs/${SLURM_JOB_ID}/
+IMG1=/home/bastian/D1/registration/mri2fem-dataset/hydrocephalus/021to068_nyul_ventriclemasked.mgz
+IMG2=/home/bastian/D1/registration/mri2fem-dataset/hydrocephalus/068_brain_nyul_ventriclemasked.mgz
+LBFGS=50
+
+NP=32
+
+echo "NP=" ${NP}
+
 ITERS=50
 ALPHA=1e-2
 
-echo "NP=" ${NP}
 echo "ITERS=" ${ITERS}
 echo "ALPHA=" ${ALPHA}
+
 echo "OUTPUTDIR=" $OUTPUTDIR
 echo "IMG1=" ${IMG1}
 echo "IMG2=" ${IMG2}
 
+# cp -vr /global/D1/homes/bastian/registration/test/445806 /global/D1/homes/bastian/registration/normalized-outputs/
 
 srun -n ${NP} --cpu-bind=rank python3 -u ${SPATH}/Optimize3d.py \
 --logfile ${LOGOUTFILE2} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
---starting_state /global/D1/homes/bastian/registration/normalized-outputs/445957/RKA0.01LBFGS10/State_checkpoint.xdmf --readname CurrentState \
+--starting_state /global/D1/homes/bastian/registration/ventricle-outputs/446034/RKA0.01LBFGS50/State_checkpoint.xdmf --readname CurrentState \
 --huber_delta 1 --timestepping RungeKutta --huber --memdebug --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 
-# --starting_guess /home/bastian/D1/registration/normalized-outputs/445326/RKA0.01LBFGS50/Control_checkpoint.xdmf --readname CurrentV \
-# --starting_state /global/D1/homes/bastian/registration/normalized-outputs/445806/RKA0.01LBFGS10/State_checkpoint.xdmf --readname CurrentState \
+# 446034
+# --starting_state /global/D1/homes/bastian/registration/ventricle-outputs/446034/RKA0.01LBFGS50/State_checkpoint.xdmf --readname CurrentState \
 
-# cp -vr /global/D1/homes/bastian/registration/test/445806 /global/D1/homes/bastian/registration/normalized-outputs/
-
-
-# --starting_guess /home/bastian/D1/registration/normalized-outputs/445326/RKA0.01LBFGS50/Control_checkpoint.xdmf --readname CurrentV \
-
-# --starting_state /home/bastian/D1/registration/normalized-outputs/445457/RKA0.01LBFGS50/State_checkpoint.xdmf --readname CurrentState \
-
-# --starting_guess /home/bastian/D1/registration/normalized-outputs/445326/RKA0.01LBFGS50/Control_checkpoint.xdmf --readname CurrentV \
-
-# --starting_state /home/bastian/D1/registration/normalized-outputs/445326/RKA0.01LBFGS50/State_checkpoint.xdmf --readname CurrentState \
-# --starting_state /home/bastian/D1/registration/normalized-outputs/445326/RKA0.01LBFGS50/State_checkpoint.xdmf --readname CurrentState \
-
-# --starting_guess /home/bastian/D1/registration/normalized-outputs/445326/RKA0.01LBFGS50/Control_checkpoint.xdmf --readname CurrentV \
-# --starting_state /home/bastian/D1/registration/normalized-outputs/445326/RKA0.01LBFGS50/State_checkpoint.xdmf --readname CurrentState \
-
+# /global/D1/homes/bastian/registration/ventricle-outputs/445829/RKA0.01LBFGS50/
+# --starting_state /home/bastian/D1/registration/ventricle-outputs/445351/RKA0.01LBFGS50/State_checkpoint.xdmf --readname CurrentState \
+# --starting_guess /home/bastian/D1/registration/ventricle-outputs/445351/RKA0.01LBFGS50/Control_checkpoint.xdmf --readname CurrentV \
 
 echo "success"

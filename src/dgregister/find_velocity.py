@@ -148,8 +148,8 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
     Jhat = ReducedFunctional(J, cont)
 
 
-    files["stateFile"].write(Img_deformed, str(0))
-    files["controlFile"].write(l2_controlfun, str(0))
+    # files["stateFile"].write(Img_deformed, str(0))
+    # files["controlFile"].write(l2_controlfun, str(0))
 
     if hyperparameters["taylortest"]:
 
@@ -185,7 +185,10 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
 
 
             if (current_pde_solution.vector()[:].max() > hyperparameters["max_voxel_intensity"] * 5):
-                raise ValueError("State became > hyperparameters['max_voxel_intensity'] * 5 at some vertex, something is probably wrong")
+                print_overloaded("*"*80)
+                print_overloaded("State became > hyperparameters['max_voxel_intensity'] * 5 at some vertex, something is probably wrong")
+                print_overloaded("*"*80)
+
 
             l2loss = (current_pde_solution - Img_goal) ** 2
             l2loss = assemble(0.5 * l2loss * dx)
