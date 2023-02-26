@@ -8,6 +8,7 @@ import os
 import matplotlib.pyplot as plt
 from nibabel.affines import apply_affine
 from dgregister.helpers import get_larget_box, get_bounding_box_limits, cut_to_box, pad_with
+from dgregister.helpers import read_vox2vox_from_lta
 
 meshpath = "/home/basti/Dropbox (UiO)/068meshes/brain_cp/brain_mesh_refined.h5"
 
@@ -61,33 +62,7 @@ sigma     = 10000.0000
 src volume info
 """
 
-File = open(lta)
-
-lines = File.readlines()
-
-regmatrix_v2v = []
-
-for line in lines:
-    # print(line)
-
-    res = parse("{} {} {} {}", line.replace("\n", ""))
-
-    try:
-        a, b, c, d = float(res[0]), float(res[1]), float(res[2]), float(res[3])
-        print(a,b,c,d)
-        print("*"*80)
-
-        regmatrix_v2v.append([a,b,c,d])
-    except:
-        pass
-
-
-File.close()
-
-# embed()
-
-
-regmatrix_v2v = np.array(regmatrix_v2v)
+regmatrix_v2v = read_vox2vox_from_lta(lta)
 
 
 # f = h5py.File(meshpath, 'r')

@@ -5,6 +5,7 @@ import numpy as np
 import nibabel
 import json
 import pathlib
+from parse import parse
 
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
@@ -12,6 +13,45 @@ def print_overloaded(*args):
         print(*args)
     else:
         pass
+
+def read_vox2vox_from_lta(lta):
+    File = open(lta)
+
+    lines = File.readlines()
+
+    regmatrix_v2v = []
+
+    v2v = False
+    print("Reading matrix from", lta)
+    print("*"*80)
+    for line in lines:
+        # print(line)
+
+        if "LINEAR_VOX_TO_VOX" in line:
+            v2v = True
+
+        res = parse("{} {} {} {}", line.replace("\n", ""))
+
+        try:
+            a, b, c, d = float(res[0]), float(res[1]), float(res[2]), float(res[3])
+            print(a,b,c,d)
+            
+
+            regmatrix_v2v.append([a,b,c,d])
+        except:
+            pass
+    
+    print("*"*80)
+    assert v2v
+
+    File.close()
+
+    # embed()
+
+
+    regmatrix_v2v = np.array(regmatrix_v2v)
+
+    return regmatrix_v2v
 
 
 def get_bounding_box_limits(x):
