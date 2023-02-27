@@ -27,7 +27,7 @@ parameters['ghost_mode'] = 'shared_facet'
 
 current_iteration = 0
 
-def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess=None):
+def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess=None, storage_info=None):
 
     vol = assemble(1*dx(starting_image.function_space().mesh()))
 
@@ -54,7 +54,13 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
     print_overloaded("Running Transport() with dt = ", hyperparameters["DeltaT"])
 
     Img_deformed = DGTransport(starting_image, velocity, MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
-                            MassConservation=hyperparameters["MassConservation"])
+                            MassConservation=hyperparameters["MassConservation"], storage_info=storage_info)
+
+    if storage_info is not None:
+        print_overloaded("*" * 100)
+        print_overloaded("Stored state at all timesteps, exiting script")
+        print_overloaded("*" * 100)
+        exit()
 
     alpha = Constant(hyperparameters["alpha"]) # regularization
     state = Control(Img_deformed)  # The Control type enables easy access to tape values after replays.

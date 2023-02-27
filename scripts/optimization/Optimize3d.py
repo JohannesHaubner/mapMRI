@@ -6,6 +6,8 @@ import time
 import argparse
 import numpy as np
 import nibabel
+import pathlib
+
 
 PETScOptions.set("mat_mumps_icntl_4", 3)   # verbosity
 
@@ -22,6 +24,9 @@ parameters['ghost_mode'] = 'shared_facet'
 
 from dgregister.helpers import get_lumped_mass_matrices
 from dgregister.MRI2FEM import read_image, fem2mri
+from dgregister.find_velocity import find_velocity
+from dgregister.MRI2FEM import fem2mri
+from dgregister.helpers import crop_to_original
 
 parser = argparse.ArgumentParser()
 
@@ -40,9 +45,9 @@ parser.add_argument("--starting_state", type=str, default=None)
 # Forward pass 
 parser.add_argument("--timestepping", default="RungeKutta", choices=["RungeKutta", "CrankNicolson", "explicitEuler"])
 parser.add_argument("--max_timesteps", type=float, default=None)
+parser.add_argument("--storeto", type=str, help="Folder with results.Store npy and mgz files to folder during forward pass")
 
 # Optimization
-parser.add_argument("--nosmoothen", default=False, action="store_true", help="Sets smoothen=False")
 parser.add_argument("--alpha", type=float, default=1e-4)
 parser.add_argument("--lbfgs_max_iterations", type=float, default=400)
 parser.add_argument("--maxcor", default=10, type=int)
@@ -59,9 +64,6 @@ hyperparameters = vars(parser.parse_args())
 if not hyperparameters["output_dir"].endswith("/"):
     hyperparameters["output_dir"] += "/"
 
-
-suffix = ""
-
 hyperparameters["outfoldername"] = ""
 
 if hyperparameters["timestepping"] == "RungeKutta":
@@ -71,13 +73,9 @@ elif hyperparameters["timestepping"] == "CrankNicolson":
 elif hyperparameters["timestepping"] == "explicitEuler":
     hyperparameters["outfoldername"] = "E"
 
-
+hyperparameters["outfoldername"] += format(hyperparameters["max_timesteps"], ".0f")
 hyperparameters["outfoldername"] += "A" + str(hyperparameters["alpha"])
 hyperparameters["outfoldername"] += "LBFGS" + str(int(hyperparameters["lbfgs_max_iterations"]))
-
-if hyperparameters["nosmoothen"]:
-    hyperparameters["outfoldername"] += "NOSMOOTHEN"
-
 
 print_overloaded("Generated outfoldername", hyperparameters["outfoldername"])
 
@@ -85,14 +83,7 @@ if hyperparameters["starting_state"] is not None:
     assert os.path.isfile(hyperparameters["starting_state"])
 
 hyperparameters["normalize"] = False
-
-if hyperparameters["nosmoothen"]:
-    print_overloaded(".................................................................................................................................")
-    print_overloaded("--nosmoothen is set, will not use transform and preconditioning!")
-    print_overloaded(".................................................................................................................................")
-    hyperparameters["smoothen"] = False
-else:
-    hyperparameters["smoothen"] = True
+hyperparameters["smoothen"] = True
 
 hyperparameters["outputfolder"] = hyperparameters["output_dir"] + hyperparameters["outfoldername"]
 hyperparameters["lbfgs_max_iterations"] = int(hyperparameters["lbfgs_max_iterations"])
@@ -103,10 +94,6 @@ hyperparameters["state_functionspace"] = "DG"
 hyperparameters["state_functiondegree"] = 1
 
     
-from dgregister.find_velocity import find_velocity
-
-print_overloaded("Setting config.hyperparameters")
-
 for key, item in hyperparameters.items():
     print_overloaded(key, ":", item)
 
@@ -114,48 +101,97 @@ if not os.path.isdir(hyperparameters["outputfolder"]):
     os.makedirs(hyperparameters["outputfolder"], exist_ok=True)
 
 
-
-(domainmesh, Img, input_max, projector) = read_image(filename=hyperparameters["input"], name="input", mesh=None, 
+(domainmesh, Img, input_max, projector) = read_image(filename=hyperparameters["input"], name="input", mesh=None, hyperparameters=hyperparameters,
             state_functionspace=hyperparameters["state_functionspace"], state_functiondegree=hyperparameters["state_functiondegree"])
 
-# d_SD = None
-
-# # if "ventricle" in hyperparameters["input"]:
-
-# #     shape = nibabel.load(hyperparameters["input"]).shape
-
-# #     class Outflow(SubDomain):
-# #         def inside(self, x, on_boundary):
-            
-# #             np = 2
-# #             xin = between(x[0], (np, shape[0] - np))
-# #             yin = between(x[1], (np, shape[1] - np))
-# #             zin = between(x[2], (np, shape[2] - np))
-
-# #             return xin and yin and zin
 
 
-# #     outflow = Outflow()
-# #     sub_domains = MeshFunction("size_t", domainmesh, domainmesh.topology().dim())
-
-# #     sub_domains.set_all(0)
-
-# #     outflow.mark(sub_domains, 1)
-
-# #     ds_SD = Measure('ds')(domain=domainmesh, subdomain_data=sub_domains)
-# #     dS_SD = Measure('dS')(domain=domainmesh, subdomain_data=sub_domains)
-# #     dx_SD = Measure('dx')(domain=domainmesh, subdomain_data=sub_domains)
-
-# #     d_SD = dx_SD(1), ds_SD(1), dS_SD(1)
-
-# # else:
-# #     d_SD = None
 
 
-# print("d_SD", d_SD)
+if hyperparameters["storeto"] is not None:
+
+    if MPI.rank(MPI.comm_world) > 0:
+        raise NotImplementedError
+
+    original_hyperparameters = json.load(open(pathlib.Path(hyperparameters["storeto"]) / "hyperparameters.json"))
+
+    assert hyperparameters["max_timesteps"] == original_hyperparameters["max_timesteps"]
+
+    # old path: "/home/bastian/D1/registration/mri2fem-dataset/hydrocephalus/068_brain_nyul_ventriclemasked.mgz"
+    # new path: /home/bastian/D1/registration/hydrocephalus/ventricles/021to068_nyul_ventriclemasked.mgz
+
+    if not os.path.isfile(original_hyperparameters["input"]):
+
+        assert hyperparameters["input"] == original_hyperparameters["input"].replace("mri2fem-dataset/hydrocephalus", "hydrocephalus/ventricles")
+        assert hyperparameters["target"] == original_hyperparameters["target"].replace("mri2fem-dataset/hydrocephalus", "hydrocephalus/ventricles")
+
+    assert hyperparameters["timestepping"] == original_hyperparameters["timestepping"]
+
+    if hyperparameters["starting_guess"] is not None or hyperparameters["starting_state"] is not None:
+        raise NotImplementedError
+    
+    MPI.barrier(MPI.comm_world)
+
+    hyperparameters["starting_guess"] = str(pathlib.Path(hyperparameters["storeto"]) / "Control_checkpoint.xdmf")
+    assert os.path.isfile(hyperparameters["starting_guess"])
+    hyperparameters["readname"] = "CurrentV"
+    # Control_checkpoint.xdmf --readname CurrentV \
+
+    if "ventricle" in hyperparameters["input"] or "hydrocephalus" in hyperparameters["path"]:
+
+        box = np.load("/home/bastian/D1/registration/hydrocephalus/freesurfer/021/testouts/box_all.npy")
+        space = 2
+        pad = 2
+
+        aff3 = nibabel.load("/home/bastian/D1/registration/hydrocephalus/normalized/registered/021to068.mgz").affine
+
+    
+    storage_info = {"shape": hyperparameters["input.shape"], 
+                   "store_states_to": hyperparameters["storeto"], 
+                   "pad": pad, "space": space, 
+                   "box": box, "aff": aff3
+                   }
+    
+    # box, aff = np.ndarray
+
+    store_states_to = pathlib.Path(hyperparameters["storeto"]) / "states"
+
+    storage_info["store_states_to"] = str(store_states_to)
+
+    os.makedirs(store_states_to, exist_ok=True)
+
+    MPI.barrier(MPI.comm_world)
+
+    assert os.path.isdir(store_states_to)
+
+else:
+    storage_info = None
+
+
+
+if hyperparameters["storeto"] is not None:
+
+    retimage = fem2mri(function=Img, shape=storage_info["shape"])
+
+    MPI.barrier(MPI.comm_world)
+
+    print(storage_info)
+
+    storepath = store_states_to / ("state" + format(0, ".0f") + ".npy")
+
+    np.save(storepath, retimage)
+
+    filled_image = crop_to_original(orig_image=np.zeros((256, 256, 256)), 
+                                    cropped_image=retimage, box=storage_info["box"], 
+                                    space=storage_info["space"], pad=storage_info["pad"])
+
+    nii = nibabel.Nifti1Image(filled_image, storage_info["aff"])
+    nibabel.save(nii, str(storepath).replace(".npy", ".mgz"))
+
+    print_overloaded("-- stored", str(storepath))
+
 
 vCG = VectorFunctionSpace(domainmesh, hyperparameters["velocity_functionspace"], hyperparameters["velocity_functiondegree"])
-
 
 if hyperparameters["starting_guess"] is not None:
 
@@ -175,11 +211,8 @@ if hyperparameters["starting_guess"] is not None:
         hdf.close()
 
     hfile = hyperparameters["starting_guess"].replace("Control_checkpoint.xdmf", "hyperparameters.json")
-    # hyperparameters["starting_state"] = hyperparameters["starting_guess"].replace("Control_checkpoint.xdmf", "State_checkpoint.xdmf")
-    # hyperparameters["readname"] = "CurrentState"
 
     assert os.path.isfile(hfile)
-
 
     old_hypers = json.load(open(hfile))
 
@@ -192,9 +225,6 @@ if hyperparameters["starting_guess"] is not None:
         print(" from previous velocity in order to restart L-BFGS-B")
 
         assert os.path.isfile(old_hypers["starting_state"])
-
-
-    # State_checkpoint.xdmf --readname CurrentState
 
     print_overloaded("Read starting guess")
 
@@ -216,6 +246,24 @@ else:
 
 (mesh_goal, Img_goal, target_max, _) = read_image(hyperparameters["target"], name="target", mesh=domainmesh, projector=projector,
         hyperparameters=hyperparameters, state_functionspace=hyperparameters["state_functionspace"], state_functiondegree=hyperparameters["state_functiondegree"])
+
+
+if hyperparameters["storeto"] is not None:
+
+    retimage = fem2mri(function=Img_goal, shape=storage_info["shape"])
+
+    storepath = store_states_to / ("state" + format(10000, ".0f") + ".npy")
+
+    np.save(storepath, retimage)
+
+    filled_image = crop_to_original(orig_image=np.zeros((256, 256, 256)), 
+                                    cropped_image=retimage, box=storage_info["box"], 
+                                    space=storage_info["space"], pad=storage_info["pad"])
+
+    nii = nibabel.Nifti1Image(filled_image, storage_info["aff"])
+    nibabel.save(nii, str(storepath).replace(".npy", ".mgz"))
+
+    print_overloaded("-- stored", str(storepath))
 
 hyperparameters["max_voxel_intensity"] = max(input_max, target_max)
 
@@ -239,16 +287,11 @@ else:
 
 files = {}
 
-
-
 with XDMFFile(hyperparameters["outputfolder"] + "/Target.xdmf") as xdmf:
     xdmf.write_checkpoint(Img_goal, "Img_goal", 0.)
 
 with XDMFFile(hyperparameters["outputfolder"] + "/Input.xdmf") as xdmf:
     xdmf.write_checkpoint(Img, "Img", 0.)
-
-
-
 
 Img.rename("input", "")
 Img_goal.rename("target", "")
@@ -269,7 +312,7 @@ files["l2lossfile"] = hyperparameters["outputfolder"] + '/l2loss.txt'
 
 # find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess=None)
 return_values = find_velocity(starting_image=Img, Img_goal=Img_goal, vCG=vCG, M_lumped_inv=M_lumped_inv, 
-    hyperparameters=hyperparameters, files=files, starting_guess=starting_guess)
+    hyperparameters=hyperparameters, files=files, starting_guess=starting_guess, storage_info=storage_info)
 
 # TODO FIXME
 # Something weird was happening here. 

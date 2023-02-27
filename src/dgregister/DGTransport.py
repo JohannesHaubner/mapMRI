@@ -1,6 +1,12 @@
 #solver for transporting images
 from fenics import *
 from fenics_adjoint import *
+import numpy as np
+from dgregister.MRI2FEM import fem2mri
+import os, pathlib
+from dgregister.helpers import crop_to_original
+import nibabel
+
 
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
@@ -24,11 +30,14 @@ parameters['ghost_mode'] = 'shared_facet'
 q_degree = 6
 
 
-def DGTransport(Img, Wind, MaxIter, DeltaT, timestepping, solver="krylov", preconditioner="amg", MassConservation=False):
+def DGTransport(Img, Wind, MaxIter, DeltaT, timestepping, solver="krylov", preconditioner="amg", MassConservation=False, 
+                storage_info=None):
     
+    # storage_info ={"shape": None, "store_states_to": None}
     print_overloaded("......................................")
     print_overloaded("Settings in Transport()")
     print_overloaded("--- timestepping =", timestepping)
+    print_overloaded("--- store_states_to =", storage_info)
     print_overloaded("......................................")
 
     print_overloaded("parameters['ghost_mode']", parameters['ghost_mode'])
@@ -169,6 +178,30 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, timestepping, solver="krylov", preco
 
         Img_deformed.assign(Img)
 
+        if storage_info is not None:
+            
+            # storage_info ={"shape": None, "store_states_to": None, "pad": None, "space": None, "box": None, "aff": None}
+            # box, aff = np.ndarray
+
+            store_states_to = pathlib.Path(storage_info["store_states_to"])
+
+            assert os.path.isdir(store_states_to)
+
+            retimage = fem2mri(function=Img_deformed, shape=storage_info["shape"])
+
+            storepath = store_states_to / ("state" + format(i + 1, ".0f") + ".npy")
+
+            np.save(storepath, retimage)
+
+            filled_image = crop_to_original(orig_image=np.zeros((256, 256, 256)), 
+                                            cropped_image=retimage, box=storage_info["box"], 
+                                            space=storage_info["space"], pad=storage_info["pad"])
+
+            nii = nibabel.Nifti1Image(filled_image, storage_info["aff"])
+            nibabel.save(nii, str(storepath).replace(".npy", ".mgz"))
+
+            print_overloaded("-- stored", str(storepath))
+
     print_overloaded("i == MaxIter, Transport() finished")
 
     return Img_deformed
@@ -177,72 +210,6 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, timestepping, solver="krylov", preco
 
 
 
-
-
-
-
-def CGTransport(Img, Wind, MaxIter, DeltaT, 
-                preconditioner="amg",
-                MassConservation=False,
-                solver=None, timestepping=None):
-
-    print_overloaded("Calling CGTransport")
-
-    if not timestepping == "explicitEuler":
-        raise NotImplementedError
-    
-    Space = Img.function_space()
-    v = TestFunction(Space)
-    Img_next = TrialFunction(Img.function_space())
-    Img_deformed = Function(Img.function_space())
-    Img_deformed.assign(Img)
-
-    def Form(f):
-        #a = inner(v, div(outer(f, Wind)))*dx
-    
-        a = -inner(grad(v), outer(f, Wind))*dx
-        # a += inner(jump(v), jump(Flux(f, Wind, n)))*dS
-        # a += inner(v, FluxB(f, Wind, n))*ds
-    
-        if MassConservation == False:
-            a -= inner(v, div(Wind)*f)*dx
-        return a
-
-    a = Constant(1.0/DeltaT)*(inner(v,Img_next)*dx - inner(v, Img_deformed)*dx)
-    
-    if timestepping == "explicitEuler":
-        a = a + Form(Img_deformed)
-    else:
-        raise NotImplementedError
-
-    A = assemble(lhs(a))
-
-    if solver == "krylov":
-        
-        solver = KrylovSolver(A, "gmres", preconditioner)
-        solver.set_operators(A, A)
-        print_overloaded("Assembled A, using Krylov solver")
-
-    for i in range(MaxIter):
-        #solve(a==0, Img_next)
-
-        print_overloaded("Iteration ", i + 1, "/", MaxIter, "in Transport()")
-
-        system_rhs = rhs(a)
-
-        b = assemble(system_rhs)
-        b.apply("")
-        
-        #solver.solve(Img_deformed.vector(), b)
-        solver.solve(Img.vector(), b)
-        Img_deformed.assign(Img)
-
-        assert norm(Img_deformed) > 0
-
-    
-
-    print_overloaded("i == MaxIter, Transport() finished")
-    return Img_deformed
 
 
 

@@ -1,18 +1,18 @@
 #!/bin/bash
 #SBATCH --job-name=ventreg
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=128
+#SBATCH --ntasks=256
 ## SBATCH --exclusive
 #SBATCH --nodes=1
 ## SBATCH --ntasks-per-node=32
 #################################################################
-## SBATCH --partition=milanq
+#SBATCH --partition=milanq
 ## milanq has 256 cpus per node
 #
 ## SBATCH --partition=fpgaq
 ## fpgaq has 96 cpus per onde
 #
-#SBATCH --partition=defq
+## SBATCH --partition=defq
 ## has 128 cpus per node
 ## SBATCH --partition=habanaq
 #################################################################
@@ -62,15 +62,15 @@ LOGOUTFILE=/home/bastian/D1/registration/mrislurm/${SLURM_JOB_ID}_log_python_sru
 
 
 OUTPUTDIR=/home/bastian/D1/registration/ventricle-outputs/${SLURM_JOB_ID}/
-IMG1=/home/bastian/D1/registration/mri2fem-dataset/hydrocephalus/021to068_nyul_ventriclemasked.mgz
-IMG2=/home/bastian/D1/registration/mri2fem-dataset/hydrocephalus/068_brain_nyul_ventriclemasked.mgz
-LBFGS=50
+IMG1=/home/bastian/D1/registration/hydrocephalus/ventricles/021to068_nyul_ventriclemasked.mgz
+IMG2=/home/bastian/D1/registration/hydrocephalus/ventricles/068_brain_nyul_ventriclemasked.mgz
+LBFGS=100
 
-NP=32
+NP=64
 
 echo "NP=" ${NP}
 
-ITERS=50
+ITERS=100
 ALPHA=1e-2
 
 echo "ITERS=" ${ITERS}
@@ -85,7 +85,7 @@ echo "IMG2=" ${IMG2}
 srun -n ${NP} --cpu-bind=rank python3 -u ${SPATH}/Optimize3d.py \
 --logfile ${LOGOUTFILE2} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
---starting_state /global/D1/homes/bastian/registration/ventricle-outputs/446034/RKA0.01LBFGS50/State_checkpoint.xdmf --readname CurrentState \
+--starting_state /global/D1/homes/bastian/registration/ventricle-outputs/446036/RKA0.01LBFGS50/State_checkpoint.xdmf --readname CurrentState \
 --huber_delta 1 --timestepping RungeKutta --huber --memdebug --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 
 # 446034

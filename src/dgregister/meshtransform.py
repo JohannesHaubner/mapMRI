@@ -22,45 +22,6 @@ from dgregister.helpers import get_bounding_box_limits, cut_to_box # get_largest
 
 
 
-def crop_to_original(orig_image: numpy.ndarray, cropped_image: numpy.ndarray, box: numpy.ndarray, space: int, pad: int):
-
-    box_bounds = get_bounding_box_limits(box)
-
-    # if space == 2:
-    #     assert "abby" not in original_image_path
-    #     assert "ernie" not in original_image_path
-
-    limits2 = []
-    for l in box_bounds:
-        limits2.append(slice(l.start -space, l.stop + space, None))
-
-    box_bounds = limits2
-
-    fillarray = np.zeros_like(orig_image.get_fdata())
-
-    filled_image = cut_to_box(image=fillarray, box_bounds=box_bounds, inverse=True, cropped_image=cropped_image, pad=pad)
-
-    return filled_image
-
-
-def store2mgz(imgfile1, imgfile2, ijk1, outfolder):
-    assert os.path.isdir(outfolder)
-
-    data = np.zeros((256, 256, 256))
-
-    for idx, img in enumerate([imgfile1, imgfile2]):
-        image1 = nibabel.load(img)
-                 
-        i1, j1, k1 = numpy.rint(ijk1).astype("int")
-
-        data[i1, j1, k1] = 1.
-
-        assert data.sum() > 100
-
-        nii = nibabel.Nifti1Image(data, image1.affine)
-        nibabel.save(nii, outfolder + pathlib.Path(imgfile1).name.replace(".mgz", "affine" + str(idx) + "_meshindices.mgz"))
-
-
 def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,  
     coarsening_factor: int, npad: int, box: np.ndarray=None, 
     inverse_affine:bool = False, registration_affine: np.ndarray = None,
