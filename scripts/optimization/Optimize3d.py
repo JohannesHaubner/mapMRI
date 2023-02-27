@@ -137,13 +137,22 @@ if hyperparameters["storeto"] is not None:
     hyperparameters["readname"] = "CurrentV"
     # Control_checkpoint.xdmf --readname CurrentV \
 
-    if "ventricle" in hyperparameters["input"] or "hydrocephalus" in hyperparameters["path"]:
+    if "ventricle" in hyperparameters["input"] or "hydrocephalus" in hyperparameters["input"]:
 
         box = np.load("/home/bastian/D1/registration/hydrocephalus/freesurfer/021/testouts/box_all.npy")
         space = 2
         pad = 2
 
         aff3 = nibabel.load("/home/bastian/D1/registration/hydrocephalus/normalized/registered/021to068.mgz").affine
+
+    else:
+        assert "abby" in hyperparameters["input"]
+        assert "ernie" in hyperparameters["target"]
+        box = np.load("/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/box.npy")
+        space = 0
+        pad = 2
+
+        aff3 = nibabel.load("/home/bastian/D1/registration/mri2fem-dataset/normalized/registered/abbytoernie.mgz").affine
 
     
     storage_info = {"shape": hyperparameters["input.shape"], 

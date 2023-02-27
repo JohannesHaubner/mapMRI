@@ -84,6 +84,7 @@ echo "IMG2=" ${IMG2}
 srun -n ${NP} --cpu-bind=rank python3 -u ${SPATH}/Optimize3d.py \
 --logfile ${LOGOUTFILE2} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
+-starting_state /global/D1/homes/bastian/registration/normalized-outputs/446152/RKA0.01LBFGS100/State_checkpoint.xdmf --readname CurrentState \
 --huber_delta 1 --timestepping RungeKutta --huber --memdebug --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 
 # --starting_state /global/D1/homes/bastian/registration/normalized-outputs/446148/RKA0.01LBFGS10/State_checkpoint.xdmf --readname CurrentState \

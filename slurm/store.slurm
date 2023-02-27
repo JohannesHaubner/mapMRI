@@ -40,10 +40,10 @@ IMG1=/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/cropped_ab
 IMG2=/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/cropped_ernie_brain_nyul.mgz
 LBFGS=100
 
-OUTPUTDIR=/home/bastian/D1/registration/ventricle-states/${SLURM_JOB_ID}/
-IMG1=/home/bastian/D1/registration/hydrocephalus/ventricles/021to068_nyul_ventriclemasked.mgz
-IMG2=/home/bastian/D1/registration/hydrocephalus/ventricles/068_brain_nyul_ventriclemasked.mgz
-LBFGS=100
+# OUTPUTDIR=/home/bastian/D1/registration/ventricle-states/${SLURM_JOB_ID}/
+# IMG1=/home/bastian/D1/registration/hydrocephalus/ventricles/021to068_nyul_ventriclemasked.mgz
+# IMG2=/home/bastian/D1/registration/hydrocephalus/ventricles/068_brain_nyul_ventriclemasked.mgz
+# LBFGS=100
 
 
 NP=1
@@ -61,8 +61,12 @@ echo "IMG2=" ${IMG2}
 srun -n ${NP} --cpu-bind=rank python3 -u ${SPATH}/Optimize3d.py \
 --logfile ${LOGOUTFILE2} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
---storeto "/home/bastian/D1/registration/ventricle-outputs/446036/RKA0.01LBFGS50" \
+--storeto "/home/bastian/D1/registration/normalized-outputs/446152/RKA0.01LBFGS100/" \
 --huber_delta 1 --timestepping RungeKutta --huber --memdebug --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 
+# "/home/bastian/D1/registration/ventricle-outputs/446036/RKA0.01LBFGS50" \
+# "/home/bastian/D1/registration/ventricle-outputs/446058/RKA0.01LBFGS50""
+
+# normalized-outputs/446150/RKA0.01LBFGS10/
 
 echo "success"

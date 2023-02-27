@@ -44,15 +44,9 @@ if not os.path.isfile("CurrentState.npy"):
 else:
     retimage =  np.load("CurrentState.npy")
 
-
-# TODO 
-# Hard-code correct input files for now.
-# Do better in the future.
-cropped_image, box, space, pad = None, None, None, None
-
 if "ventricle" in parserargs["path"] or "hydrocephalus" in parserargs["path"]:
 
-    cropped_image = retimage
+    
     box = np.load("/home/bastian/D1/registration/hydrocephalus/freesurfer/021/testouts/box_all.npy")
     space = 2
     pad = 2
@@ -60,6 +54,14 @@ if "ventricle" in parserargs["path"] or "hydrocephalus" in parserargs["path"]:
     # aff1 = nibabel.load("/home/bastian/D1/registration/hydrocephalus/freesurfer/021/mri/brain.mgz").affine
     # aff2 = nibabel.load("/home/bastian/D1/registration/hydrocephalus/freesurfer/068/mri/brain.mgz").affine
     aff3 = nibabel.load("/home/bastian/D1/registration/hydrocephalus/normalized/registered/021to068.mgz").affine
+elif "normalized-outputs" in parserargs["path"]:
+    box = np.load("/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/box.npy")
+    space = 0
+    pad = 2
+
+    aff3 = nibabel.load("/home/bastian/D1/registration/mri2fem-dataset/normalized/registered/abbytoernie.mgz").affine
+
+cropped_image = retimage
 
 print(np.round(aff3, decimals=0))
 # exit()

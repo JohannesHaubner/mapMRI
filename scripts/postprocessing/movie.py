@@ -5,14 +5,10 @@ import os
 import nibabel
 from dgregister.helpers import get_bounding_box_limits
 
-fig, ax = plt.subplots()
 
-
-# ims is a list of lists, each row is a list of artists to draw in the
-# current frame; here we are just animating one artist, the image, in
-# each frame
 
 path = "/home/bastian/D1/registration/ventricle-outputs/446036/RKA0.01LBFGS50/states/"
+path = "/home/bastian/D1/registration/ventricle-outputs/446058/RKA0.01LBFGS50/states/"
 box = "/home/bastian/D1/registration/hydrocephalus/freesurfer/021/testouts/box_all.npy"
 
 if "bastian" not in os.getcwd():
@@ -46,15 +42,11 @@ for idx, axis in zip([125, 125, 125],[0, 1, 2]):
         images.append(np.take(x, idx, axis))
         
     ims = []
-
+    fig, ax = plt.subplots()
     for i, img in enumerate(images):
 
         im = ax.imshow(img, cmap="Greys_r", vmin=0, vmax=100, animated=True)
         
-        
-        fig, ax = plt.subplots()
-        im = ax.imshow(img, cmap="Greys_r", vmin=0, vmax=100, )
-
         if i == 0:
             ax.imshow(img, cmap="Greys_r", vmin=0, vmax=100)
 
@@ -75,9 +67,9 @@ for idx, axis in zip([125, 125, 125],[0, 1, 2]):
     #
     ani.save(moviepath + "idx" + str(axis) + "sl" + str(idx) + ".mp4")
 
-    print("Done with animation")
-    print("Exit !")
-    exit()
+    print("Done with animation for direction ", axis)
+    # print("Exit !")
+    # exit()
 
     #
     # or
