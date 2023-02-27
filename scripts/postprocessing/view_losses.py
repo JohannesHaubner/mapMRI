@@ -11,6 +11,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--resync", action="store_true", default=False)
 parser.add_argument("--only", type=int, default=None)
 parser.add_argument("--omit", type=int, default=None)
+parser.add_argument("-v", "--vent", action="store_true", default=False)
+parser.add_argument("-f", "--full", action="store_true", default=False)
 
 parsersargs = vars(parser.parse_args())
 
@@ -176,9 +178,13 @@ quality = MeshQuality.radius_ratio_min_max(deformed_mesh)
 meshes={}
 meshes["input"] = {"min inner/outer radius" : quality[0], "Delta J = ": None}
 
-foldernames = [ # "normalized-outputs",
-                "ventricle-outputs"
-                ]
+
+if parsersargs["vent"]:
+    foldernames = ["ventricle-outputs"]
+elif parsersargs["full"]:
+    foldernames = ["normalized-outputs"]
+else:
+    foldernames = [ "normalized-outputs","ventricle-outputs"]
 
 if parsersargs["resync"]:
 
@@ -241,7 +247,7 @@ if parsersargs["resync"]:
             hyperparameters = json.load(open(hyperparameterfile))
 
             command = "rsync -r "
-            command += "ex:" + str(expath / runname / "CurrentState.mgz")
+            command += "ex:" + str(expath / runname / "CurrentState*.mgz")
             command += " "
             command += str(localpath / runname)
             subprocess.run(command, shell=True)
@@ -366,6 +372,10 @@ for foldername in foldernames:
                     cancelled = True
                     break
 
+        if hyperparameters["starting_guess"] is not None:
+            print("Omitting restarts")
+            continue
+
         if (hyperparameters["starting_state"] is not None) or (hyperparameters["starting_guess"] is not None):
 
             loss2, startloss = make_loss_history(hyperparameters, expath,expath2, localpath, loss, runname=runname)
@@ -458,5 +468,5 @@ for foldername in foldernames:
         plt.tight_layout()
 
 
-
+    plt.tight_layout()
     plt.show()

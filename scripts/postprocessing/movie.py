@@ -13,8 +13,16 @@ fig, ax = plt.subplots()
 # each frame
 
 path = "/home/bastian/D1/registration/ventricle-outputs/446036/RKA0.01LBFGS50/states/"
+box = "/home/bastian/D1/registration/hydrocephalus/freesurfer/021/testouts/box_all.npy"
 
-box = np.load("/home/bastian/D1/registration/hydrocephalus/freesurfer/021/testouts/box_all.npy")
+if "bastian" not in os.getcwd():
+    b = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/ventricle-outputs/"
+
+    path = path.replace("/home/bastian/D1", "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation")
+    box = box.replace("/home/bastian/D1", "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation")
+
+
+box = np.load(box)
 
 # moviepath = path.replace("states/", "movies/")
 moviepath = path
@@ -29,10 +37,9 @@ for idx, axis in zip([125, 125, 125],[0, 1, 2]):
 
     limits = get_bounding_box_limits(np.take(box, idx, axis))
 
-    xlim = [limits[0].start, limits[0].stop]
-    ylim = [limits[1].start, limits[1].stop]
+    print(limits)
 
-    for i, img in enumerate(files):
+    for i, img in enumerate(files[:]):
         print(i, img)
         x = nibabel.load(img).get_fdata()
 
@@ -40,19 +47,22 @@ for idx, axis in zip([125, 125, 125],[0, 1, 2]):
         
     ims = []
 
-    # for l in range(50):
-    #     images.append(images[0] * (50 - l))
-
     for i, img in enumerate(images):
 
         im = ax.imshow(img, cmap="Greys_r", vmin=0, vmax=100, animated=True)
         
+        
+        fig, ax = plt.subplots()
+        im = ax.imshow(img, cmap="Greys_r", vmin=0, vmax=100, )
+
         if i == 0:
             ax.imshow(img, cmap="Greys_r", vmin=0, vmax=100)
 
         ax.set_xticks([])
-        ax.set_xlim(xlim)
-        ax.set_ylim(ylim)
+        
+        ax.set_xlim(limits[1].start, limits[1].stop)
+        ax.set_ylim(limits[0].stop, limits[0].start)
+
         ax.set_yticks([])
         ax.tick_params(axis='both', length=0, width=0)
         ims.append([im])
