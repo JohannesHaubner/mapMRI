@@ -26,7 +26,7 @@ from dgregister.helpers import get_lumped_mass_matrices
 from dgregister.MRI2FEM import read_image, fem2mri
 from dgregister.find_velocity import find_velocity
 from dgregister.MRI2FEM import fem2mri
-from dgregister.helpers import crop_to_original
+from dgregister.helpers import crop_to_original, Data
 
 parser = argparse.ArgumentParser()
 
@@ -107,7 +107,6 @@ if not os.path.isdir(hyperparameters["outputfolder"]):
 
 
 
-
 if hyperparameters["storeto"] is not None:
 
     if MPI.rank(MPI.comm_world) > 0:
@@ -137,28 +136,17 @@ if hyperparameters["storeto"] is not None:
     hyperparameters["readname"] = "CurrentV"
     # Control_checkpoint.xdmf --readname CurrentV \
 
-    if "ventricle" in hyperparameters["input"] or "hydrocephalus" in hyperparameters["input"]:
+    data = Data(input=hyperparameters["input"], target=hyperparameters["target"])
 
-        box = np.load("/home/bastian/D1/registration/hydrocephalus/freesurfer/021/testouts/box_all.npy")
-        space = 2
-        pad = 2
+    all_file = File(hyperparameters["storeto"] + "states.pvd")
+    Img.rename("state", "state")
+    all_file << Img
 
-        aff3 = nibabel.load("/home/bastian/D1/registration/hydrocephalus/normalized/registered/021to068.mgz").affine
-
-    else:
-        assert "abby" in hyperparameters["input"]
-        assert "ernie" in hyperparameters["target"]
-        box = np.load("/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/box.npy")
-        space = 0
-        pad = 2
-
-        aff3 = nibabel.load("/home/bastian/D1/registration/mri2fem-dataset/normalized/registered/abbytoernie.mgz").affine
-
-    
     storage_info = {"shape": hyperparameters["input.shape"], 
                    "store_states_to": hyperparameters["storeto"], 
-                   "pad": pad, "space": space, 
-                   "box": box, "aff": aff3
+                   "pad": data.pad, "space": data.space, 
+                   "box": data.box, "aff": data.registration_affine, 
+                   "pvdfile": all_file,
                    }
     
     # box, aff = np.ndarray

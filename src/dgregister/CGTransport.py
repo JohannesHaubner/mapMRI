@@ -25,15 +25,11 @@ parameters['ghost_mode'] = 'shared_facet'
 
 q_degree = 6
 
-def CGTransport(Img, Wind, MaxIter, DeltaT, 
-                preconditioner="amg",
-                MassConservation=False,
+def CGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservation=False,
                 solver=None, timestepping=None):
 
     print_overloaded("Calling CGTransport")
 
-    if not timestepping == "explicitEuler":
-        raise NotImplementedError
     
     Space = Img.function_space()
     v = TestFunction(Space)
@@ -56,9 +52,23 @@ def CGTransport(Img, Wind, MaxIter, DeltaT,
     
     if timestepping == "explicitEuler":
         a = a + Form(Img_deformed)
+    
+    elif timestepping == "RungeKutta":
+        # in this case we assemble the RHS during the loop
+        dImg = TrialFunction(Img_deformed.function_space())
+        dI = Function(Img_deformed.function_space())
+
+        form = inner(dImg, v)*dx 
+        Atmp = assemble(form)
+        tmpsolver = KrylovSolver(method="cg", preconditioner=preconditioner)
+        tmpsolver.set_operators(Atmp, Atmp)
+    elif timestepping == "CrankNicolson":
+        raise NotImplementedError
+        a = a + 0.5*(Form(Img_deformed) + Form(Img_next))
+    
     else:
         raise NotImplementedError
-
+    
     A = assemble(lhs(a))
 
     if solver == "krylov":
@@ -67,21 +77,54 @@ def CGTransport(Img, Wind, MaxIter, DeltaT,
         solver.set_operators(A, A)
         print_overloaded("Assembled A, using Krylov solver")
 
+    b = None
+    btmp = None
+
     for i in range(MaxIter):
-        #solve(a==0, Img_next)
+        # #solve(a==0, Img_next)
 
-        print_overloaded("Iteration ", i + 1, "/", MaxIter, "in Transport()")
+        # print_overloaded("Iteration ", i + 1, "/", MaxIter, "in Transport()")
 
-        system_rhs = rhs(a)
+        # system_rhs = rhs(a)
 
-        b = assemble(system_rhs)
-        b.apply("")
+        # b = assemble(system_rhs)
+        # b.apply("")
         
-        #solver.solve(Img_deformed.vector(), b)
-        solver.solve(Img.vector(), b)
-        Img_deformed.assign(Img)
+        # #solver.solve(Img_deformed.vector(), b)
+        # solver.solve(Img.vector(), b)
+        # Img_deformed.assign(Img)
 
-        assert norm(Img_deformed) > 0
+        # assert norm(Img_deformed) > 0
+
+        if timestepping == "RungeKutta":
+            
+            rhstmp = Form(Img_deformed)            
+            
+            if btmp is None:
+                
+                btmp = assemble(rhstmp)
+            else:
+                btmp = assemble(rhstmp, tensor=btmp)
+
+            btmp.apply("")
+
+            tmpsolver.solve(dI.vector(), btmp)
+
+            factor = DeltaT / 2.
+
+            da = Form(Img_deformed + factor * dI)
+            
+            system_rhs = rhs(a + da)
+        else:
+            system_rhs = rhs(a)
+
+        if b is None:
+            b = assemble(system_rhs)
+        else:
+            b = assemble(system_rhs, tensor=b)
+        solver.solve(Img.vector(), b)
+
+        Img_deformed.assign(Img)
 
     
 

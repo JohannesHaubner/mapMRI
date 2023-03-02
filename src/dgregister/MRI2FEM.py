@@ -168,13 +168,15 @@ def read_image(filename, name, mesh=None, printout=True, threshold=True, project
     else:
         u_data.vector()[:] = data[i, j]
 
+    if state_functiondegree > 0:
 
-    if projector is None:
-        projector = Projector(FunctionSpace(mesh, state_functionspace, state_functiondegree))
-        print_overloaded("Initialized projector")
-    else:
-        print_overloaded("Reusing projector")
-    u_data = projector.project(u_data)
+        if projector is None:
+            projector = Projector(FunctionSpace(mesh, state_functionspace, state_functiondegree))
+            print_overloaded("Initialized projector")
+        else:
+            print_overloaded("Reusing projector")
+        
+        u_data = projector.project(u_data)
 
     return mesh, u_data, np.max(data), projector
 

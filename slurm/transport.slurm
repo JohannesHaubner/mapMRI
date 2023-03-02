@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=transport
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=32
+#SBATCH --ntasks=16
 #################################################################
 ## SBATCH --partition=milanq
 #SBATCH --partition=fpgaq
@@ -42,45 +42,45 @@ LOGOUTFILE=/home/bastian/D1/registration/transportslurm/${SLURM_JOB_ID}_log_pyth
 
 cd $SPATH
 
-# FOLDER=croppedmriregistration_outputs
-# JOBNAME=OCDA10.0LBFGS5
-# VFILE=opts/opt_phi_6.h5
-# READNAME="function"
-
-# FOLDER=mriregistration_outputs
-# JOBNAME=OCDA0.001LBFGS1000
-# VFILE=opts/opt_phi_204.h5
-# READNAME="function"
-
-# FOLDER=mriregistration_outputs
-# JOBNAME=OCDA0.0001LBFGS100RS1e-4
-# VFILE=VelocityField.hdf
-# READNAME="-1"
+# FOLDER=/home/bastian/D1/registration/normalized-outputs/446152/RKA0.01LBFGS100/
+# srun -n 32 python3 -u transform_mesh.py --mapping_only --folders ${FOLDER} > ${LOGOUTFILE}
+# echo "Computed mapping, now running transform with only one core"
 
 
+DPATH=/home/bastian/D1/registration/ventricle-outputs
 
-# FOLDER=mriregistration_outputs
-# JOBNAME=E100A0.001LBFGS100
-# VFILE=Control.hdf
-# READNAME="-1"
+srun -n 16 python3 -u transform_mesh.py --mapping_only \
+--folders \
+${DPATH}/446036/RKA0.01LBFGS50/ \
+${DPATH}/446180/RKA0.01LBFGS100/ \
+${DPATH}/446431/RK100A0.01LBFGS100/ \
+> ${LOGOUTFILE}
 
-JOBNAME=E100A0.01LBFGS100
-FOLDER=/home/bastian/D1/registration/croppedmriregistration_outputs/${JOBNAME}/
-
-VFILE=CurrentV.hdf
-VFILE=VelocityField.hdf
-READNAME="-1"
-AFFINE=/home/bastian/D1/registration/mri2fem-dataset/processed/registered/affine.npy
-DATANAME=cropped
-
-srun -n 32 python3 -u transform_mesh.py --mapping_only --folders ${FOLDER} \
---affine ${AFFINE} --dataname ${DATANAME} \
---postfolder postprocessing_final --velocityfilenames ${VFILE} --readnames ${READNAME} > ${LOGOUTFILE}
 echo "Computed mapping, now running transform with only one core"
 
-srun -n 1 python3 -u transform_mesh.py --folders ${FOLDER} \
---affine ${AFFINE} --dataname ${DATANAME} \
---postfolder postprocessing_final --velocityfilenames ${VFILE} --readnames ${READNAME} >> ${LOGOUTFILE}
-echo "success"
+
+
+
+
+
+
+
+
+
+# ###
+# ## TODO !!!!!!!!!!!!!!!
+# ## TODO !!!!!!!!!!!!!!!
+# ### TODO !!!!!!!!!!!!!!!
+# ## change mesh back to 16 resolution
+# ## TODO !!!!!!!!!!!!!!!
+# ## TODO !!!!!!!!!!!!!!!
+# ### TODO !!!!!!!!!!!!!!!
+# ## TODO !!!!!!!!!!!!!!!
+# ## TODO !!!!!!!!!!!!!!!
+# ### TODO !!!!!!!!!!!!!!!
+
+# srun -n 1 python3 -u transform_mesh.py --folders ${FOLDER} \
+# --meshoutputfolder /home/bastian/D1/registration/transported-meshes/${SLURM_JOB_ID}/ >> ${LOGOUTFILE}
+# echo "success"
 
 

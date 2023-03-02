@@ -2,8 +2,7 @@ import json
 import os
 import pathlib
 
-if "home/bastian" not in os.getcwd():
-    from tqdm import tqdm
+from tqdm import tqdm
 
 import nibabel
 import numpy
@@ -16,237 +15,176 @@ def print_overloaded(*args):
     else:
         pass
 
-from dolfin_adjoint import *
+from fenics_adjoint import *
 from nibabel.affines import apply_affine
 from dgregister.helpers import get_bounding_box_limits, cut_to_box # get_largest_box, pad_with, cut_to_box, 
+from dgregister.preconditioning_overloaded import preconditioning
+from dgregister.transformation_overloaded import transformation
+from dgregister.CGTransport import CGTransport
+import dgregister
+import dgregister.helpers
+
+def downscale(points: np.ndarray, npad: np.ndarray, dxyz: np.ndarray) -> np.ndarray:
+
+    points += npad
+    points -= dxyz
+
+    return points
+
+def upscale(points: np.ndarray, npad: np.ndarray, dxyz: np.ndarray) -> np.ndarray:
+
+    points -= npad
+    points += dxyz
+
+    return points
 
 
 
-def map_mesh(xmlfile1: str, imgfile1: str, imgfile2: str, mapping: Function,  
-    coarsening_factor: int, npad: int, box: np.ndarray=None, 
-    inverse_affine:bool = False, registration_affine: np.ndarray = None,
-    outfolder=None, raise_errors: bool = True):
 
-    assert norm(mapping) != 0
+# def affine_transformation(affine: np.ndarray, xyz: np.ndarray,) -> np.ndarray:
+#     """
+#     """
+
+#     comm = MPI.comm_world
+#     nprocs = comm.Get_size()
+
+#     if nprocs != 1:
+#         raise NotImplementedError
+    
+#     mesh_xyz = np.copy(xyz)
+
+#     mesh_xyz = apply_affine(affine, mesh_xyz)
+
+#     return mesh_xyz
+
+
+def map_mesh(mappings: list, 
+            data: dgregister.helpers.Data, update:bool = False, 
+            raise_errors=True):
+
+    if not len(mappings) == 1:
+        # TODO FIXME
+        # TODO check hat the order of the mappings is reversed.
+        raise NotImplementedError    
 
     comm = MPI.comm_world
     nprocs = comm.Get_size()
 
-    # MPI.comm_world.Get_size()
-
     if nprocs != 1:
         raise NotImplementedError
-
-    if coarsening_factor not in [1, 2]:
-        raise ValueError
-
-    if npad not in [0, 4]:
-        raise ValueError
-
-    if xmlfile1.endswith(".xml"):
-        brainmesh = Mesh(xmlfile1)
-    else:
-        brainmesh = Mesh()
-        hdf = HDF5File(brainmesh.mpi_comm(), xmlfile1, "r")
-        hdf.read(brainmesh, "/mesh", False)
-
-    image1 = nibabel.load(imgfile1)
-    image2 = nibabel.load(imgfile2)
-
-    tkr = True
-
-    if tkr:
-        print_overloaded("Using trk RAS")
-        ras2vox1 = numpy.linalg.inv(image1.header.get_vox2ras_tkr())
-    else:
-        ras2vox1 = numpy.linalg.inv(image1.header.get_vox2ras())
     
-    if tkr:
-        vox2ras2 = image2.header.get_vox2ras_tkr()
-    else:
-        vox2ras2 = image2.header.get_vox2ras()
 
-    xyz1 = brainmesh.coordinates()
+    input_mesh_xyz_ras = data.meshcopy().coordinates()
 
-    ijk1 = apply_affine(ras2vox1, xyz1)# .T
+    input_mesh_xyz_vox = apply_affine(np.linalg.inv(data.vox2ras_input), input_mesh_xyz_ras)
 
-    
-    if registration_affine is not None:
-        aff = registration_affine
-
-
-        if inverse_affine:
-            print_overloaded("Using inverse of affine for testing")
-            aff = np.linalg.inv(aff)
-
-        ijk1 = apply_affine(aff, ijk1)
-
+    assert np.min(input_mesh_xyz_vox) >= 0
+    assert np.max(input_mesh_xyz_vox) <= 256
     # breakpoint()
 
-    if box is not None:
-        bounds = get_bounding_box_limits(box)
-        dxyz = [bounds[x].start for x in range(3)]
-    else:
+    input_mesh_xyz_vox = downscale(input_mesh_xyz_vox, npad=data.pad, dxyz=data.dxyz)
 
-        dxyz = [0, 0, 0]
-
-    def downscale(points):
-
-        points += npad
-        points -= dxyz
-        points /= coarsening_factor
-
-        return points
-
-    def upscale(points):
-
-        points *= coarsening_factor
-        points -= npad
-        points += dxyz
-
-        return points
-
-    assert np.allclose(downscale(upscale(np.array([42, -3.1415, 1e6]))), [42, -3.1415, 1e6])
-
-    transformed_points = np.zeros_like(ijk1) - np.inf
-    
-    ijk1 = downscale(ijk1)    
-
-    print_overloaded("Iterating over all mesh nodes")
-
-    if "home/bastian" not in os.getcwd():
-        progress = tqdm(total=ijk1.shape[0])
-    
-    for idx in range(ijk1.shape[0]):
-        
-        try:
-            transformed_point = mapping(ijk1[idx, :])
-        except RuntimeError:
-            print_overloaded(ijk1[idx, :], "not in BoxMesh")
-            # breakpoint()
-            raise ValueError("Some ijk1[idx, :] is not in BoxMesh, probably something is wrong.")
-            # exit()
-        
-        transformed_points[idx, :] = transformed_point
-        if "home/bastian" not in os.getcwd():
-            progress.update(1)
-
-    def in_mri(x):
-        return (np.max(x) < 256) and (np.min(x) >= 0)
-    
-    if (not in_mri(transformed_points)) and raise_errors:
-        raise ValueError
-
-
-    if (not in_mri(transformed_points)) and (not raise_errors):
-        print_overloaded("Before upscaling")
-        idx = np.sum(transformed_points>255, axis=1).astype(bool)
-        print_overloaded(transformed_points[idx, :])
-        print_overloaded(idx.sum(), "/", idx.size, "points are outside of [0, 256]")
-
-    transformed_points = upscale(transformed_points)
-
-    distance = np.linalg.norm(ijk1-transformed_points, ord=2, axis=-1)
-    
-    print_overloaded("Minimum distance travelled ", np.min(distance))
-    print_overloaded("Maximum distance travelled ", np.max(distance))
-
-    print_overloaded("Compare to mesh size:", brainmesh.hmin(), brainmesh.hmax(), )
-
-    if (not in_mri(transformed_points)) and raise_errors:
-        raise ValueError
-
-    if (not in_mri(transformed_points)) and (not raise_errors):
-        print_overloaded("After upscaling")
-        idx = np.sum(transformed_points>255, axis=1).astype(bool)
-
-        print_overloaded(idx.sum(), "/", idx.size, "points are outside of [0, 256]")
-        print_overloaded(transformed_points[idx, :])
-
+    assert np.min(input_mesh_xyz_vox) >= 0
+    assert np.max(input_mesh_xyz_vox) <= np.max(mappings[0].function_space().mesh().coordinates())
     # breakpoint()
-    # transformed_points = np.array(transformed_points)
 
-    xyz2 = apply_affine(vox2ras2, transformed_points)
+    print("Downscaled brain mesh vox coordinates to cube mesh coordinate system")
 
-    brainmesh.coordinates()[:] = xyz2
+    # TODO FIXME why was this 4 ? Does it make sense?
+    if data.pad not in [0, 2]:
+        # TODO FIXME why was this 4 ? Does it make sense?
+        raise ValueError
 
-    return brainmesh
+    
+    # NOTE
+    # before the registration affine was applied first.
+
+    target_mesh_xyz_vox = input_mesh_xyz_vox
+
+    for idx, mapping in enumerate(mappings):
+
+        # print("Testing, continue")
+        # continue
+
+        assert norm(mapping) != 0
+
+        deformed_mesh_ijk = np.zeros_like(target_mesh_xyz_vox)
+
+        print_overloaded("Iterating over all mesh nodes, mapping", idx + 1, "/", len(mappings))
+
+        if update:
+         progress = tqdm(total=int(target_mesh_xyz_vox.shape[0]))
+
+        for idx in range(target_mesh_xyz_vox.shape[0]):
+            
+            try:
+                transformed_point = mapping(target_mesh_xyz_vox[idx, :])
+            except RuntimeError:
+                print_overloaded(target_mesh_xyz_vox[idx, :], "not in BoxMesh")
+                raise ValueError("Some ijk1[idx, :] is not in BoxMesh, probably something is wrong.")
+            
+            deformed_mesh_ijk[idx, :] = transformed_point
+            
+            if update:
+                progress.update(1)
+
+        target_mesh_xyz_vox = deformed_mesh_ijk
+        # TODO FIXME
+        # coud save the mesh here and do remeshing.
+
+    # Now scale back up
+    # breakpoint()
+
+    target_mesh_xyz_vox = upscale(target_mesh_xyz_vox, npad=data.pad, dxyz=data.dxyz)
+    print("Upscaled from cube mesh coordinate system to image voxel coordinates")
+
+    # Inverse of registration.
+    # TODO
+    # FIXME
+    # TODO
+    # check if inverse needs to be applied here.
+    target_mesh_xyz_vox1 =  np.copy(target_mesh_xyz_vox)
+    target_mesh_xyz_vox1 = apply_affine(data.registration_affine, np.copy(target_mesh_xyz_vox1))
+    target_mesh_xyz_ras1 = apply_affine(data.vox2ras_target,  target_mesh_xyz_vox1)
+    targetmesh1 = data.meshcopy()
+    targetmesh1.coordinates()[:] = target_mesh_xyz_ras1
+
+    target_mesh_xyz_vox2 =  np.copy(target_mesh_xyz_vox)
+    target_mesh_xyz_vox2 = apply_affine(np.linalg.inv(data.registration_affine), np.copy(target_mesh_xyz_vox2))
+    target_mesh_xyz_ras2 = apply_affine(data.vox2ras_target, target_mesh_xyz_vox2)
+    targetmesh2 = data.meshcopy()
+    targetmesh2.coordinates()[:] = target_mesh_xyz_ras2
+
+
+    return targetmesh1, targetmesh2
 
 
 
-def make_mapping(cubemesh, velocities, state_space, state_degree, parserargs, ocd, dgtransport: bool = False):
+def make_mapping(cubemesh, control, M_lumped_inv, hyperparameters,):
 
     mappings = []
 
+    control_L2 = transformation(control, M_lumped_inv)
+    print_overloaded("Preconditioning L2_controlfun, name=", control_L2)
+    velocity = preconditioning(control_L2)
+
+    V1 = FunctionSpace(cubemesh, "CG", 1)
+
     for coordinate in ["x[0]", "x[1]", "x[2]"]:
 
-        print_overloaded("Transporting, ", coordinate, "coordinate")
+        print_overloaded("Transporting, ", coordinate, "coordinate")     
 
-        if ocd:
-            from dgregister import find_velocity
-            velocity = velocities[0]
-            V1 = FunctionSpace(cubemesh, "CG", 1)
-            
-            unity2 = Function(V1) #¤ cubeimg.function_space())
-            unity2.vector()[:] = 0
+        xin = interpolate(Expression(coordinate, degree=1), V1) # cubeimg.function_space())
+        
+        print_overloaded("Interpolated ", coordinate)
 
-            xin = interpolate(Expression(coordinate, degree=1), V1) # cubeimg.function_space())
-            print_overloaded("Running OCD forward pass")
-            xout, _, _ = find_velocity.find_velocity(Img=xin, Img_goal=unity2, hyperparameters=hyperparameters, files=[], phi_eval=-velocity, projection=False)
+        assert norm(velocity) > 0
 
-        else:
-
-            # import dgregister.config as config
-
-            # config.hyperparameters = {**hyperparameters, **config.hyperparameters}
-            
-            cgtransport = not dgtransport
-
-            if cgtransport:
-                from dgregister.DGTransport import CGTransport as Transport
-                print("Using CG transport")
-                V1 = FunctionSpace(cubemesh, "CG", 1)
-            else:
-                from dgregister.DGTransport import DGTransport as Transport
-
-                print("Using DG transport")
-                V1 = FunctionSpace(cubemesh, state_space, state_degree)
-            
-            xin = interpolate(Expression(coordinate, degree=1), V1) # cubeimg.function_space())
-            
-            print_overloaded("Interpolated ", coordinate)
-
-
-            idx = 0
-            for key, (velocity, hyperparameters) in velocities.items():
-
-                if hyperparameters["smoothen"]:
-
-                    assert "VelocityField" in parserargs["velocityfilename"] or "CurrentV" in parserargs["velocityfilename"]
-                    assert "Control.hdf" not in parserargs["velocityfilename"]
-
-
-                assert norm(velocity) > 0
-
-                print_overloaded("Calling Transport()", "cgtransport=", cgtransport, "velocity field", idx + 1 / len(velocities))
-
-                if MPI.rank(MPI.comm_world) == 0:
-                    idx += 1
-
-                xout = Transport(Img=xin, Wind=-velocity, preconditioner=hyperparameters["preconditioner"], 
-                                MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
-                                solver=hyperparameters["solver"], MassConservation=hyperparameters["MassConservation"])
-
-                xin = xout
-
-            if not cgtransport:
-                V1_CG = FunctionSpace(cubemesh, "CG", 1)
-                xout = project(xout, V1_CG)
-            
-                print_overloaded("Projected xout to CG1")
-
-
-        assert norm(xout) != 0
+        xout = CGTransport(Img=xin, Wind=-velocity, 
+                           DeltaT=hyperparameters["DeltaT"], 
+                           preconditioner="amg", 
+                        MaxIter=hyperparameters["max_timesteps"], timestepping=hyperparameters["timestepping"], 
+                        solver="krylov", MassConservation=hyperparameters["MassConservation"])
 
         mappings.append(xout)
 

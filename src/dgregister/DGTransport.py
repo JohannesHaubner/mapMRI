@@ -37,7 +37,7 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, timestepping, solver="krylov", preco
     print_overloaded("......................................")
     print_overloaded("Settings in Transport()")
     print_overloaded("--- timestepping =", timestepping)
-    print_overloaded("--- store_states_to =", storage_info)
+    # print_overloaded("--- store_states_to =", storage_info)
     print_overloaded("......................................")
 
     print_overloaded("parameters['ghost_mode']", parameters['ghost_mode'])
@@ -199,6 +199,9 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, timestepping, solver="krylov", preco
 
             nii = nibabel.Nifti1Image(filled_image, storage_info["aff"])
             nibabel.save(nii, str(storepath).replace(".npy", ".mgz"))
+
+            Img_deformed.rename("state", "state")
+            storage_info["pvdfile"] << Img_deformed
 
             print_overloaded("-- stored", str(storepath))
 

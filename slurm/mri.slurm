@@ -16,7 +16,7 @@
 ## has 128 cpus per node
 ## SBATCH --partition=habanaq
 #################################################################
-#SBATCH --time 3-00:00:0
+#SBATCH --time 4-00:00:0
 #SBATCH -o /global/D1/homes/bastian/registration/mrislurm/%j.out
 #SBATCH --export=ALL
 #SBATCH --mail-user=bastian@simula.no
@@ -66,7 +66,7 @@ LOGOUTFILE=/home/bastian/D1/registration/mrislurm/${SLURM_JOB_ID}_log_python_sru
 OUTPUTDIR=/home/bastian/D1/registration/normalized-outputs/${SLURM_JOB_ID}/
 IMG1=/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/cropped_abbytoernie_nyul.mgz
 IMG2=/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/cropped_ernie_brain_nyul.mgz
-LBFGS=100
+LBFGS=200
 
 
 NP=96
@@ -84,7 +84,7 @@ echo "IMG2=" ${IMG2}
 srun -n ${NP} --cpu-bind=rank python3 -u ${SPATH}/Optimize3d.py \
 --logfile ${LOGOUTFILE2} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
--starting_state /global/D1/homes/bastian/registration/normalized-outputs/446152/RKA0.01LBFGS100/State_checkpoint.xdmf --readname CurrentState \
+--starting_state /global/D1/homes/bastian/registration/normalized-outputs/446152/RKA0.01LBFGS100/State_checkpoint.xdmf --readname CurrentState \
 --huber_delta 1 --timestepping RungeKutta --huber --memdebug --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 
 # --starting_state /global/D1/homes/bastian/registration/normalized-outputs/446148/RKA0.01LBFGS10/State_checkpoint.xdmf --readname CurrentState \

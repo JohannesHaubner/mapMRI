@@ -7,9 +7,15 @@ from dgregister.helpers import get_bounding_box_limits
 
 
 
-path = "/home/bastian/D1/registration/ventricle-outputs/446036/RKA0.01LBFGS50/states/"
-path = "/home/bastian/D1/registration/ventricle-outputs/446058/RKA0.01LBFGS50/states/"
-box = "/home/bastian/D1/registration/hydrocephalus/freesurfer/021/testouts/box_all.npy"
+# path = "/home/bastian/D1/registration/ventricle-outputs/446036/RKA0.01LBFGS50/states/"
+# path = "/home/bastian/D1/registration/ventricle-outputs/446058/RKA0.01LBFGS50/states/"
+# box = "/home/bastian/D1/registration/hydrocephalus/freesurfer/021/testouts/box_all.npy"
+
+
+path = "/home/bastian/D1/registration/normalized-outputs/446152/RKA0.01LBFGS100/states/"
+box = "/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/box.npy"
+
+# /home/bastian/D1/registration/normalized-outputs/446152/RKA0.01LBFGS100/states/
 
 if "bastian" not in os.getcwd():
     b = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/ventricle-outputs/"
@@ -42,23 +48,34 @@ for idx, axis in zip([125, 125, 125],[0, 1, 2]):
         images.append(np.take(x, idx, axis))
         
     ims = []
-    fig, ax = plt.subplots()
-    for i, img in enumerate(images):
+    fig, ax = plt.subplots(ncols=3)
 
-        im = ax.imshow(img, cmap="Greys_r", vmin=0, vmax=100, animated=True)
+    if not isinstance(ax, np.ndarray):
+        ax = [None, ax]
+
+    for i, img in enumerate(images[:-1]):
+
+        im = ax[1].imshow(img, cmap="Greys_r", vmin=0, vmax=100, animated=True)
         
         if i == 0:
-            ax.imshow(img, cmap="Greys_r", vmin=0, vmax=100)
+            ax[1].imshow(img, cmap="Greys_r", vmin=0, vmax=100)
 
-        ax.set_xticks([])
+        ax[2].imshow(images[-1], cmap="Greys_r", vmin=0, vmax=100)
+        ax[2].set_title("Target")
         
-        ax.set_xlim(limits[1].start, limits[1].stop)
-        ax.set_ylim(limits[0].stop, limits[0].start)
+        ax[0].imshow(images[0], cmap="Greys_r", vmin=0, vmax=100)
+        ax[0].set_title("Input")
 
-        ax.set_yticks([])
-        ax.tick_params(axis='both', length=0, width=0)
+        for a in ax:
+            a.set_xticks([])
+            a.set_xlim(limits[1].start, limits[1].stop)
+            a.set_ylim(limits[0].stop, limits[0].start)
+            a.set_yticks([])
+            a.tick_params(axis='both', length=0, width=0)
+
         ims.append([im])
         
+    plt.tight_layout()
 
     ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True,
                                     repeat_delay=1000)

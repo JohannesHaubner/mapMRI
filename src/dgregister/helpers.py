@@ -9,6 +9,61 @@ import pathlib
 from parse import parse
 import matplotlib.pyplot as plt
 
+
+
+
+class Data():
+
+    def __init__(self, input, target) -> None:
+
+        if "ventricle" in input or "hydrocephalus" in input:
+
+            box = np.load("/home/bastian/D1/registration/hydrocephalus/freesurfer/021/testouts/box_all.npy")
+            space = 2
+            pad = 2
+
+            aff3 = nibabel.load("/home/bastian/D1/registration/hydrocephalus/normalized/registered/021to068.mgz").affine
+
+        else:
+            assert "abby" in input
+            assert "ernie" in target
+            box = np.load("/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/box.npy")
+            space = 0
+            pad = 2
+
+            aff3 = nibabel.load("/home/bastian/D1/registration/mri2fem-dataset/normalized/registered/abbytoernie.mgz").affine
+
+            self.registration_lta = "/home/bastian/D1/registration/mri2fem-dataset/" + "normalized/registered/abbytoernie.lta"
+
+            self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/chp4/outs/abby/abby8.xml"
+
+            self.target_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/chp4/outs/ernie/ernie16.xml"
+
+            # self.inputimage = "/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/cropped_abbytoernie_nyul.mgz"
+            # self.targetimage = "/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/cropped_ernie_brain_nyul.mgz"
+
+            self.original_target = "/home/bastian/D1/registration/" + "mri2fem-dataset/normalized/input/ernie/" + "ernie_brain.mgz"
+            self.original_input = "/home/bastian/D1/registration/" + "mri2fem-dataset/normalized/input/abby/" + "abby_brain.mgz"
+
+
+            self.inputmesh = Mesh(self.input_meshfile)
+            self.vox2ras_input = nibabel.load(self.original_input).header.get_vox2ras_tkr()
+            self.vox2ras_target = nibabel.load(self.original_target).header.get_vox2ras_tkr()
+
+            self.registration_affine = read_vox2vox_from_lta(self.registration_lta)
+
+        self.box = box
+        self.space = space
+        self.pad = pad
+        self.affine = aff3
+
+        bounds = get_bounding_box_limits(self.box)
+        self.dxyz = [bounds[x].start for x in range(3)]
+
+    def meshcopy(self) -> Mesh:
+        return Mesh(self.input_meshfile)
+
+
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
         # set_log_level(PROGRESS)

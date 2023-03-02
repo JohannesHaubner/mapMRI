@@ -84,7 +84,7 @@ imgfile2 = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equat
 
 brainmesh2 = map_mesh(xmlfile1, imgfile1, imgfile2, mapping, box=None, 
                     registration_affine=None,
-                    inverse_affine=hyperparameters["inverseRAS"],
+                    invert_registration_affine=hyperparameters["inverseRAS"],
                     outfolder="/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/testdata_3d/",
                     npad=0, raise_errors=True,
                     coarsening_factor=1)
