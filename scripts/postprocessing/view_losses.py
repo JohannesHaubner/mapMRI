@@ -8,7 +8,7 @@ import argparse
 import nibabel
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--resync", action="store_true", default=False)
+parser.add_argument("-r", "--resync", action="store_true", default=False)
 parser.add_argument("--only", type=int, default=None)
 parser.add_argument("--omit", type=int, default=None)
 parser.add_argument("-v", "--vent", action="store_true", default=False)
@@ -333,6 +333,11 @@ for foldername in foldernames:
             print(hyperparameters["slurmid"])
             print()
             viewcommmand = "freeview "
+
+            if "normalized-outputs" in foldername:
+                inputfile = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/normalized/registered/abbytoernie.mgz"
+                targetfile = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/normalized/input/ernie/ernie_brain.mgz"
+
             viewcommmand += inputfile + " "
             viewcommmand += targetfile + " "
             viewcommmand += str(localpath / runname / "CurrentState.mgz")
