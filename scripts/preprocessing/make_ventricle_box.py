@@ -9,12 +9,20 @@ import matplotlib.pyplot as plt
 from nibabel.affines import apply_affine
 from dgregister.helpers import get_larget_box, get_bounding_box_limits, cut_to_box, pad_with
 from dgregister.helpers import read_vox2vox_from_lta
+import meshio
 
 meshpath = "/home/basti/Dropbox (UiO)/068meshes/brain_cp/brain_mesh_refined.h5"
+# boundarymesh.shape (24742, 3)
+
+meshpath = "/home/basti/Dropbox (UiO)/068meshes/brain_cp/brain_mesh.h5"
+# boundarymesh.shape (23819, 3)
+
 
 oimage_path = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/hydrocephalus/freesurfer/021/mri/brain.mgz"
 oimage = nibabel.load(oimage_path)
 
+meshoutput_path = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/hydrocephalus/meshes/"
+os.makedirs(meshoutput_path, exist_ok=True)
 reg_image_path = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/hydrocephalus/normalized/registered/021to068.mgz"
 reg_image = nibabel.load(reg_image_path)
 
@@ -95,7 +103,33 @@ aqxyz= xyz[aqcells.flatten(), :]
 ventriclescells = cells[ventricles, :]
 ventriclesxyz= xyz[ventriclescells.flatten(), :]
 
+# breakpoint()
+
+csfcells = np.vstack([aqcells, ventriclescells])
 csfxyz = np.vstack([aqxyz, ventriclesxyz])
+
+mesh = meshio.Mesh(
+    xyz,
+    [("tetra", csfcells)],
+)
+
+mesh.write(meshoutput_path + "ventricles.xdmf")
+mesh.write(meshoutput_path + "ventricles.xml")
+
+ventricle_mesh = Mesh(meshoutput_path + "ventricles.xml")
+
+boundarymesh = BoundaryMesh(ventricle_mesh, "exterior")
+
+boundarymeshfile = meshoutput_path + "ventricle_boundary.xml"
+mesh_file = File(boundarymeshfile)
+mesh_file << boundarymesh
+
+print("boundarymesh.shape", boundarymesh.coordinates().shape)
+
+os.system("meshio-convert " + boundarymeshfile + " " + boundarymeshfile.replace(".xml", ".xdmf"))
+
+print("paraview ", boundarymeshfile.replace(".xml", ".xdmf"))
+exit()
 
 lower = np.min(csfxyz, axis=0)
 upper = np.max(csfxyz, axis=0)
