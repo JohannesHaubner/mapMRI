@@ -10,7 +10,7 @@ from nibabel.affines import apply_affine
 from dgregister.helpers import get_larget_box, get_bounding_box_limits, cut_to_box, pad_with
 from dgregister.helpers import read_vox2vox_from_lta
 import meshio
-
+from tqdm import tqdm
 meshpath = "/home/basti/Dropbox (UiO)/068meshes/brain_cp/brain_mesh_refined.h5"
 # boundarymesh.shape (24742, 3)
 
@@ -108,13 +108,49 @@ ventriclesxyz= xyz[ventriclescells.flatten(), :]
 csfcells = np.vstack([aqcells, ventriclescells])
 csfxyz = np.vstack([aqxyz, ventriclesxyz])
 
+
+cell_indices = np.unique(csfcells.flatten())
+new_indices = np.array(range(len(cell_indices)))
+
+lookup = {}
+inverse_lookup = {}
+
+xyz2 = np.zeros((cell_indices.size, 3))
+# Full mesh index -> index in [0, N] for cells in CSF
+for i, cellidx in enumerate(cell_indices):
+    lookup[cellidx] = i    
+    xyz2[i, :] = xyz[cellidx, :]
+
+newcells = np.zeros_like(csfcells)
+
+
+
+progress = tqdm(total=csfcells.shape[0])
+
+for cell_idx in range(csfcells.shape[0]):
+
+    for i in range(4):
+        
+        newcells[cell_idx, i] = lookup[csfcells[cell_idx, i]]
+        
+    progress.update(1)
+
+
+csfcells = newcells
+xyz = xyz2
+
 mesh = meshio.Mesh(
     xyz,
     [("tetra", csfcells)],
 )
 
+print(np.max(xyz, axis=0)-np.min(xyz, axis=0))
+
 mesh.write(meshoutput_path + "ventricles.xdmf")
-mesh.write(meshoutput_path + "ventricles.xml")
+
+os.system("meshio-convert " + meshoutput_path + "ventricles.xdmf" + " " + meshoutput_path + "ventricles.xml")
+
+
 
 ventricle_mesh = Mesh(meshoutput_path + "ventricles.xml")
 
