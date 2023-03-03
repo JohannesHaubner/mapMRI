@@ -23,6 +23,12 @@ class Data():
             pad = 2
 
             aff3 = nibabel.load("/home/bastian/D1/registration/hydrocephalus/normalized/registered/021to068.mgz").affine
+            self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/meshes/ventricles/abby/ventricles.xml"
+            # self.input_meshfile = "/home/bastian/D1/registration/hydrocephalus/meshes/ventricle_boundary.xml"
+            # self.input_meshfile = "/home/bastian/D1/registration/hydrocephalus/meshes/ventricles.xml"
+            self.original_target = "/home/bastian/D1/registration/hydrocephalus/" + "normalized/input/068/068_brain.mgz"
+            self.original_input = "/home/bastian/D1/registration/hydrocephalus/" + "normalized/input/021/021_brain.mgz"
+            self.registration_lta = "/home/bastian/D1/registration/hydrocephalus/" + "normalized/registered/021to068.lta" 
 
         else:
             assert "abby" in input
@@ -35,7 +41,7 @@ class Data():
 
             self.registration_lta = "/home/bastian/D1/registration/mri2fem-dataset/" + "normalized/registered/abbytoernie.lta"
 
-            self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/chp4/outs/abby/abby8.xml"
+            self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/chp4/outs/abby/abby16.xml"
 
             self.target_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/chp4/outs/ernie/ernie16.xml"
 
@@ -46,11 +52,13 @@ class Data():
             self.original_input = "/home/bastian/D1/registration/" + "mri2fem-dataset/normalized/input/abby/" + "abby_brain.mgz"
 
 
-            self.inputmesh = Mesh(self.input_meshfile)
-            self.vox2ras_input = nibabel.load(self.original_input).header.get_vox2ras_tkr()
-            self.vox2ras_target = nibabel.load(self.original_target).header.get_vox2ras_tkr()
+            
+        self.vox2ras_input = nibabel.load(self.original_input).header.get_vox2ras_tkr()
+        self.vox2ras_target = nibabel.load(self.original_target).header.get_vox2ras_tkr()
 
-            self.registration_affine = read_vox2vox_from_lta(self.registration_lta)
+        self.registration_affine = read_vox2vox_from_lta(self.registration_lta)
+
+        self.inputmesh = Mesh(self.input_meshfile)
 
         self.box = box
         self.space = space

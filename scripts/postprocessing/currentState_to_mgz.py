@@ -11,6 +11,7 @@ from dgregister.helpers import crop_to_original, Data
 
 parser = argparse.ArgumentParser()
 parser.add_argument("path")
+parser.add_argument("--recompute", action="store_true", default=False)
 # parser.add_argument("--limits", type=int, default=0, choices=[0, 2])
 # parser.add_argument("--npad", type=int, choices=[0, 2])
 # parser.add_argument("--box", type=str)
@@ -28,18 +29,22 @@ h = json.load(open("hyperparameters.json"))
 
 
 
-if not os.path.isfile("CurrentState.npy"):
+if (not os.path.isfile("CurrentState.npy")) or parserargs["recompute"]:
+    print("Initializing mesh")
     mesh = BoxMesh(MPI.comm_world, Point(0.0, 0.0, 0.0), Point(nx, ny, nz), nx, ny, nz)
 
+    print("Initializing FunctionSpace")
     V = FunctionSpace(mesh, "DG", 1)
 
     u = Function(V)
 
     with XDMFFile("State_checkpoint.xdmf") as xdmf:
         xdmf.read_checkpoint(u, "CurrentState")
+    print("Read State_checkpoint, calling fem2mri")
     retimage = fem2mri(function=u, shape=[nx, ny, nz])
 
     np.save("CurrentState.npy", retimage)
+    print("Stored CurrentState.npy")
 
 else:
     retimage =  np.load("CurrentState.npy")

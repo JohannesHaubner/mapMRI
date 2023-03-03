@@ -17,11 +17,14 @@ def print_overloaded(*args):
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--mapping_only", help="only create the coordinate mapping and exit (no mesh transform)", action="store_true", default=False)
-parser.add_argument("--folders", nargs="+", type=str, default="/home/bastian/D1/registration/normalized-outputs/446152/RKA0.01LBFGS100/")
+parser.add_argument("--folders", nargs="+", type=str, default=[])
 parser.add_argument("--recompute_mapping", action="store_true", default=False)
 parser.add_argument("--outputfoldername", type=str, default="meshtransform/")
 parser.add_argument("--meshoutputfolder", type=str, help="Folder where all the transported meshes should be stored.")
 parser.add_argument("--update", action="store_true", default=False, help="Show progress over mesh iteration")
+parser.add_argument("--remesh", action="store_true", default=False, help="Remesh")
+parser.add_argument("--affineonly", action="store_true", default=False, help="Apply only registration affine to mesh ")
+parser.add_argument("--reverse", action="store_true", default=False)
 
 parserargs = vars(parser.parse_args())
 
@@ -40,6 +43,7 @@ if not parserargs["outputfoldername"].endswith("/"):
 
 assert parserargs["outputfoldername"][0] != "/"
 
+
 if parserargs["mapping_only"]:
     print_overloaded("--mapping_only is set, will only create the mapping and exit()")
 
@@ -54,7 +58,8 @@ for idx, folder in enumerate(parserargs["folders"]):
 
     deformation_hyperparameter = json.load(open(folder + "hyperparameters.json"))
     if idx == 0:
-        assert deformation_hyperparameter["starting_state"] is None
+        if not parserargs["mapping_only"]:
+            assert deformation_hyperparameter["starting_state"] is None
         previous_slurmid = deformation_hyperparameter["slurmid"]
     else:
         assert str(previous_slurmid) in deformation_hyperparameter["starting_state"]
@@ -103,8 +108,22 @@ del folder
 
 mappings = []
 
-for idx, folder in enumerate(parserargs["folders"]):
+# NOTE
+# NOTE reversed() to apply the transformations in reverse order
 
+if parserargs["reverse"]:
+    folders=parserargs["folders"]
+else:
+    folders=reversed(parserargs["folders"])
+
+for idx, folder in enumerate(folders):
+# NOTE
+
+    if parserargs["affineonly"]:
+        print("-" * 80)
+        print("--affineonly is set, not creating mappings")
+        print("-" * 80)
+        continue
 
     if os.path.isfile(mapfiles[folder]) and (not parserargs["recompute_mapping"]):
         hdf = HDF5File(cubemesh.mpi_comm(), mapfiles[folder], "r")
@@ -139,28 +158,31 @@ if parserargs["mapping_only"]:
     print_overloaded("--mapping_only is set, created the mapping. exit()")
     exit()
 
-if len(parserargs["folders"]) > 1:
-    raise NotImplementedError
-    # TODO:
-    # In this case we want to reload , possibly remesh, the
-    # deformed mesh from the last transform
-    # We need to check that correspondence is correct.
-
+if parserargs["affineonly"]:
+    mappings = []
     
 data = Data(hyperparameters[folder]["input"], hyperparameters[folder]["target"])
 
-targetmesh1, targetmesh2 = map_mesh(mappings=mappings, data=data, raise_errors=True, update=parserargs["update"])
+os.makedirs(parserargs["meshoutputfolder"])
+
+targetmesh1 = map_mesh(mappings=mappings, data=data, raise_errors=True, 
+                                        remesh=parserargs["remesh"], tmpdir=parserargs["meshoutputfolder"],
+                                        update=parserargs["update"])
 
 print("map_mesh called succesfully, now storing meshes")
 
 meshes = {}
 meshes["transformed_regaff"] = targetmesh1
-meshes["transformed_regaff_inv"] = targetmesh2
+
+# this was wrong:
+# meshes["transformed_regaff_inv"] = targetmesh2
 
 if os.path.isdir(parserargs["meshoutputfolder"]) and "test" in parserargs["meshoutputfolder"]:
     os.system("rm -r -v " + parserargs["meshoutputfolder"])
 
-os.makedirs(parserargs["meshoutputfolder"])
+
+
+
 
 
 for meshname, meshobject in meshes.items():
@@ -179,13 +201,20 @@ for meshname, meshobject in meshes.items():
     hdf.write(meshobject, "mesh")
     hdf.close()
 
-    bmesh = BoundaryMesh(meshobject, "exterior")
-    boundarymeshfile = xmlfile.replace(".xml", "_boundary.xml")
-    File(boundarymeshfile) << bmesh
+    if "boundary" not in data.input_meshfile:
+        bmesh = BoundaryMesh(meshobject, "exterior")
+        boundarymeshfile = xmlfile.replace(".xml", "_boundary.xml")
+        File(boundarymeshfile) << bmesh
 
-    transormed_boundary_xmlmesh = meshio.read(boundarymeshfile)
-    transormed_boundary_xmlmesh.write(boundarymeshfile.replace(".xml", ".xdmf"))
+        transormed_boundary_xmlmesh = meshio.read(boundarymeshfile)
+        transormed_boundary_xmlmesh.write(boundarymeshfile.replace(".xml", ".xdmf"))
 
     print("Stored ", meshname, "in all formats")
+if parserargs["meshoutputfolder"] is not None:
+
+    with open(pathlib.Path(parserargs["meshoutputfolder"]) / "parserargs.json", 'w') as outfile:
+        json.dump(parserargs, outfile, sort_keys=True, indent=4)
+
+    print("Stored parserargs")
 
 print("Stored meshes, script finished.")

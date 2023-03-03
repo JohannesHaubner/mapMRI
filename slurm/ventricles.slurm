@@ -1,18 +1,18 @@
 #!/bin/bash
 #SBATCH --job-name=ventreg
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=256
+#SBATCH --ntasks=128
 ## SBATCH --exclusive
 #SBATCH --nodes=1
 ## SBATCH --ntasks-per-node=32
 #################################################################
-#SBATCH --partition=milanq
+## SBATCH --partition=milanq
 ## milanq has 256 cpus per node
 #
 ## SBATCH --partition=fpgaq
 ## fpgaq has 96 cpus per onde
 #
-## SBATCH --partition=defq
+#SBATCH --partition=defq
 ## has 128 cpus per node
 ## SBATCH --partition=habanaq
 #################################################################
@@ -85,7 +85,7 @@ echo "IMG2=" ${IMG2}
 srun -n ${NP} --cpu-bind=rank python3 -u ${SPATH}/Optimize3d.py \
 --logfile ${LOGOUTFILE2} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
---starting_state /global/D1/homes/bastian/registration/ventricle-outputs/446431/RK100A0.01LBFGS100/State_checkpoint.xdmf --readname CurrentState \
+--starting_state /global/D1/homes/bastian/registration/ventricle-outputs/446719/RK100A0.01LBFGS100/State_checkpoint.xdmf --readname CurrentState \
 --huber_delta 1 --timestepping RungeKutta --huber --memdebug --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 
 # 446034
