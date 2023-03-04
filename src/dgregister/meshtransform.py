@@ -239,10 +239,9 @@ def map_mesh(mappings: list,
             transormed_xmlmesh.write(vizmeshfile.replace(".xml", ".xdmf"))
             
             ####
+        
         target_mesh_xyz_vox = deformed_mesh_ijk
-        # TODO FIXME
-        # coud save the mesh here and do remeshing.
-
+        
     # Now scale back up
     # breakpoint()
 

@@ -46,6 +46,7 @@ parser.add_argument("--starting_state", type=str, default=None)
 parser.add_argument("--timestepping", default="RungeKutta", choices=["RungeKutta", "CrankNicolson", "explicitEuler"])
 parser.add_argument("--max_timesteps", type=float, default=None)
 parser.add_argument("--storeto", type=str, help="Folder with results.Store npy and mgz files to folder during forward pass")
+parser.add_argument("--forward", default=False, action="store_true", help="Only transport an image forward.")
 
 # Optimization
 parser.add_argument("--alpha", type=float, default=1e-4)
@@ -192,7 +193,8 @@ vCG = VectorFunctionSpace(domainmesh, hyperparameters["velocity_functionspace"],
 
 if hyperparameters["starting_guess"] is not None:
 
-    assert hyperparameters["starting_state"] is None
+    if not hyperparameters["forward"]:
+        assert hyperparameters["starting_state"] is None
     assert "CurrentV.hdf" not in hyperparameters["starting_guess"]
     assert "Velocity" not in hyperparameters["starting_guess"]
 
@@ -212,7 +214,11 @@ if hyperparameters["starting_guess"] is not None:
     assert os.path.isfile(hfile)
 
     old_hypers = json.load(open(hfile))
-
+    
+    if hyperparameters["forward"]:
+        assert hyperparameters["max_timesteps"] == old_hypers["max_timesteps"]
+        hyperparameters["lbfgs_max_iterations"] = 0
+        
     if old_hypers["starting_state"] is not None:
 
         hyperparameters["starting_state"] = old_hypers["starting_state"]
@@ -334,9 +340,13 @@ FinalImg, FinalVelocity, FinalControl  = return_values[0], return_values[1], ret
 tcomp = (time.time()-t0) / 3600
 print_overloaded("Done with optimization, took", format(tcomp, ".1f"), "hours")
 
+
 hyperparameters["optimization_time_hours"] = tcomp
-hyperparameters["Jd_final"] = hyperparameters["Jd_current"]
-hyperparameters["Jl2_final"] = hyperparameters["Jl2_current"]
+
+if not hyperparameters["forward"]:
+    hyperparameters["Jd_final"] = hyperparameters["Jd_current"]
+    hyperparameters["Jl2_final"] = hyperparameters["Jl2_current"]
+
 if MPI.rank(MPI.comm_world) == 0:
     with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as outfile:
         json.dump(hyperparameters, outfile, sort_keys=True, indent=4)
@@ -370,23 +380,6 @@ files["controlFile"].write(FinalControl, "-1")
 files["stateFile"].write(FinalImg, "-1")
 
 print_overloaded("Stored final State, Control, Velocity to .hdf files")
-
-try:
-    if min(hyperparameters["input.shape"]) > 1 and len(hyperparameters["input.shape"]) == 3:
-        
-        retimage = fem2mri(function=FinalImg, shape=hyperparameters["input.shape"])
-        if MPI.comm_world.rank == 0:
-            nifti = nibabel.Nifti1Image(retimage, nibabel.load(hyperparameters["input"]).affine)
-
-            nibabel.save(nifti, hyperparameters["outputfolder"] + '/Finalstate.mgz')
-
-            print_overloaded("Stored mgz image of transformed image")
-except:
-    print("Something went wrong when storing final image to mgz")
-    pass
-
-else:
-    pass
 
 if hyperparameters["logfile"] is not None:
     print_overloaded("Trying to copy logfile")

@@ -195,6 +195,7 @@ for meshname, meshobject in meshes.items():
 
     transormed_xmlmesh = meshio.read(xmlfile)
     transormed_xmlmesh.write(xmlfile.replace(".xml", ".xdmf"))
+    
 
     # Store as hdf File for use in further FEniCS simulation
     hdf = HDF5File(meshobject.mpi_comm(), xmlfile.replace(".xml", ".hdf"), "w")
@@ -208,6 +209,9 @@ for meshname, meshobject in meshes.items():
 
         transormed_boundary_xmlmesh = meshio.read(boundarymeshfile)
         transormed_boundary_xmlmesh.write(boundarymeshfile.replace(".xml", ".xdmf"))
+        transormed_boundary_xmlmesh.write(boundarymeshfile.replace(".xml", ".stl"))
+    else:
+        transormed_xmlmesh.write(xmlfile.replace(".xml", ".stl"))
 
     print("Stored ", meshname, "in all formats")
 if parserargs["meshoutputfolder"] is not None:

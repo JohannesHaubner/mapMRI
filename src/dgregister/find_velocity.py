@@ -56,6 +56,14 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
     Img_deformed = DGTransport(starting_image, velocity, MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
                             MassConservation=hyperparameters["MassConservation"], storage_info=storage_info)
 
+    if hyperparameters["forward"]:
+
+        print_overloaded("*" * 100)
+        print_overloaded("--forward is set, run forward simulation. Returning deformed image and not optimizing.")
+        print_overloaded("*" * 100)
+
+        return Img_deformed, velocity, l2_controlfun
+
     if storage_info is not None:
         print_overloaded("*" * 100)
         print_overloaded("Stored state at all timesteps, exiting script")
@@ -252,4 +260,5 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
     velocityField.rename("velocity", "")
 
 
+    
     return current_pde_solution, velocityField, final_l2_control

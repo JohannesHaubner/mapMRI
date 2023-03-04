@@ -42,14 +42,23 @@ LOGOUTFILE=/home/bastian/D1/registration/transportslurm/${SLURM_JOB_ID}_log_pyth
 
 cd $SPATH
 
-FOLDER=/home/bastian/D1/registration/normalized-outputs/446152/RKA0.01LBFGS100/
+# FOLDER=/home/bastian/D1/registration/normalized-outputs/446152/RKA0.01LBFGS100/
 # FOLDER=/home/bastian/D1/registration/normalized-outputs/446600/RK100A0.01LBFGS200/
+FOLDER=/home/bastian/D1/registration/ventricle-outputs/447443/RK100A0.01LBFGS100/
 srun -n 64 python3 -u transform_mesh.py --mapping_only --folders ${FOLDER} --recompute_mapping > ${LOGOUTFILE}
 echo "Computed mapping, now running transform with only one core"
 
-# srun -n 1 python3 -u transform_mesh.py --folders ${FOLDER} \
-# --meshoutputfolder /home/bastian/D1/registration/transported-meshes/${SLURM_JOB_ID}/ >> ${LOGOUTFILE}
+# /home/bastian/D1/registration/normalized-outputs/446600/RK100A0.01LBFGS200/ \
+# srun -n 1 python3 -u transform_mesh.py --folders \
+# /home/bastian/D1/registration/normalized-outputs/446152/RKA0.01LBFGS100/ \
+# /home/bastian/D1/registration/normalized-outputs/446600/RK100A0.01LBFGS200/ \
+# --remesh \
+# --meshoutputfolder /home/bastian/D1/registration/transported-meshes/abby-ventricles-reversed/ >> ${LOGOUTFILE}
 # echo "success"
+# --reverse \
+
+
+
 
 DPATH=/home/bastian/D1/registration/ventricle-outputs
 
@@ -75,7 +84,7 @@ DPATH=/home/bastian/D1/registration/ventricle-outputs
 # ${DPATH}/446719/RK100A0.01LBFGS100/ \
 # --remesh \
 # --reverse \
-# --meshoutputfolder /home/bastian/D1/registration/transported-meshes/ventricle-boundary-remeshing-reversed/ >> ${LOGOUTFILE}
+# --meshoutputfolder /home/bastian/D1/registration/transported-meshes/021-ventricle-mymesh-reversed/ >> ${LOGOUTFILE}
 
 
 
