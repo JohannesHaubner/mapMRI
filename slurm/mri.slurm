@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=mrireg
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=96
+#SBATCH --ntasks=64
 ## SBATCH --exclusive
 ## SBATCH --nodes=3
 ## SBATCH --ntasks-per-node=32
@@ -68,13 +68,13 @@ LOGOUTFILE=/home/bastian/D1/registration/mrislurm/${SLURM_JOB_ID}_log_python_sru
 # IMG2=/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/cropped_ernie_brain_nyul.mgz
 # LBFGS=200
 
-OUTPUTDIR=/home/bastian/D1/registration/normalized-forward/446152/
+OUTPUTDIR=/home/bastian/D1/registration/normalized-forward/446600/
 IMG1=/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped_ventricles/cropped_abbytoernie_ventricles.mgz
 IMG2=/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/cropped_ernie_brain_nyul.mgz
 LBFGS=0
 
 
-NP=96
+NP=64
 ITERS=100
 ALPHA=1e-2
 
@@ -88,7 +88,8 @@ echo "IMG2=" ${IMG2}
 srun -n ${NP} --cpu-bind=rank python3 -u ${SPATH}/Optimize3d.py \
 --logfile ${LOGOUTFILE2} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
---starting_guess /home/bastian/D1/registration/normalized-outputs/446152/RKA0.01LBFGS100/Control_checkpoint.xdmf --readname CurrentV \
+--starting_state /home/bastian/D1/registration/normalized-forward/446152/RK100A0.01LBFGS0/Finalstate.xdmf --statename Finalstate \
+--starting_guess /home/bastian/D1/registration/normalized-outputs/446600/RK100A0.01LBFGS200/Control_checkpoint.xdmf --readname CurrentV \
 --forward \
 --huber_delta 1 --timestepping RungeKutta --huber --memdebug --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 

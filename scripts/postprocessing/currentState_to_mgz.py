@@ -12,13 +12,13 @@ from dgregister.helpers import crop_to_original, Data
 parser = argparse.ArgumentParser()
 parser.add_argument("path")
 parser.add_argument("--recompute", action="store_true", default=False)
-# parser.add_argument("--limits", type=int, default=0, choices=[0, 2])
-# parser.add_argument("--npad", type=int, choices=[0, 2])
-# parser.add_argument("--box", type=str)
-# parser.add_argument("--originaltarget", type=str)
+parser.add_argument("--statename", type=str, default="CurrentState", choices=["CurrentState", "Finalstate"])
+parser.add_argument("--readname", type=str, default="CurrentState", choices=["CurrentState", "Finalstate"])
+parser.add_argument("--xdmffile", type=str, default="State_checkpoint.xdmf", choices=["State_checkpoint.xdmf", "Finalstate.xdmf"])
+
 
 parserargs = vars(parser.parse_args())
-
+statename = parserargs["statename"]
 os.chdir(parserargs["path"])
 
 h = json.load(open("hyperparameters.json"))
@@ -29,7 +29,7 @@ h = json.load(open("hyperparameters.json"))
 
 
 
-if (not os.path.isfile("CurrentState.npy")) or parserargs["recompute"]:
+if (not os.path.isfile(statename + ".npy")) or parserargs["recompute"]:
     print("Initializing mesh")
     mesh = BoxMesh(MPI.comm_world, Point(0.0, 0.0, 0.0), Point(nx, ny, nz), nx, ny, nz)
 
@@ -38,16 +38,17 @@ if (not os.path.isfile("CurrentState.npy")) or parserargs["recompute"]:
 
     u = Function(V)
 
-    with XDMFFile("State_checkpoint.xdmf") as xdmf:
-        xdmf.read_checkpoint(u, "CurrentState")
+    with XDMFFile(parserargs["xdmffile"]) as xdmf:
+        xdmf.read_checkpoint(u, parserargs["readname"])
+
     print("Read State_checkpoint, calling fem2mri")
     retimage = fem2mri(function=u, shape=[nx, ny, nz])
 
-    np.save("CurrentState.npy", retimage)
-    print("Stored CurrentState.npy")
+    np.save(statename+".npy", retimage)
+    print("Stored " + statename + ".npy")
 
 else:
-    retimage =  np.load("CurrentState.npy")
+    retimage =  np.load(statename+ ".npy")
 
 data =  Data(input=h["input"], target=h["target"])
 
@@ -70,4 +71,4 @@ filled_image = crop_to_original(orig_image=np.zeros((256, 256, 256)), cropped_im
 # nibabel.save(nii, "CurrentState2.mgz")
 
 nii = nibabel.Nifti1Image(filled_image, aff3)
-nibabel.save(nii, "CurrentState.mgz")
+nibabel.save(nii, statename+".mgz")

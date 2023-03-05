@@ -41,6 +41,8 @@ parser.add_argument("--memdebug", default=False, action="store_true", help="Tayl
 parser.add_argument("--readname", type=str, default="-1")
 parser.add_argument("--starting_guess", type=str, default=None)
 parser.add_argument("--starting_state", type=str, default=None)
+parser.add_argument("--statename", type=str, default="CurrentState")
+
 
 # Forward pass 
 parser.add_argument("--timestepping", default="RungeKutta", choices=["RungeKutta", "CrankNicolson", "explicitEuler"])
@@ -241,7 +243,7 @@ if hyperparameters["starting_state"] is not None:
     Img = Function(FunctionSpace(domainmesh, "DG", 1))
 
     with XDMFFile(hyperparameters["starting_state"]) as xdmf:
-        xdmf.read_checkpoint(Img, "CurrentState")
+        xdmf.read_checkpoint(Img, hyperparameters["statename"])
 
     print_overloaded("Loaded ", hyperparameters["starting_state"], "as starting guess for state")
 else:
@@ -351,8 +353,6 @@ if MPI.rank(MPI.comm_world) == 0:
     with open(hyperparameters["outputfolder"] + '/hyperparameters.json', 'w') as outfile:
         json.dump(hyperparameters, outfile, sort_keys=True, indent=4)
 
-if hyperparameters["timing"] or hyperparameters["memdebug"]:
-    exit()
 
 #####################################################################
 

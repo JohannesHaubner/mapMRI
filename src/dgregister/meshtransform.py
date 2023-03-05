@@ -110,7 +110,7 @@ def upscale(points: np.ndarray, npad: np.ndarray, dxyz: np.ndarray) -> np.ndarra
 #     return mesh_xyz
 
 
-def map_mesh(mappings: list, 
+def map_mesh(mappings: list, noaffine: bool, 
             data: dgregister.helpers.Data, update:bool = False, 
             remesh: bool=False, tmpdir=None,
             raise_errors=True):
@@ -250,7 +250,13 @@ def map_mesh(mappings: list,
 
 
     target_mesh_xyz_vox1 =  np.copy(target_mesh_xyz_vox)
-    target_mesh_xyz_vox1 = apply_affine(data.registration_affine, np.copy(target_mesh_xyz_vox1))
+
+    if not noaffine:
+        target_mesh_xyz_vox1 = apply_affine(data.registration_affine, np.copy(target_mesh_xyz_vox1))
+    else:
+        print("*"*80)
+        print("Not applying registration affine")
+        print("*"*80)
     target_mesh_xyz_ras1 = apply_affine(data.vox2ras_target,  target_mesh_xyz_vox1)
     if reuse_mesh:
         targetmesh1 = data.meshcopy()
