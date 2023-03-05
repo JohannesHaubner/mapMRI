@@ -9,14 +9,14 @@ import pathlib
 from parse import parse
 import matplotlib.pyplot as plt
 
-
+from nibabel.affines import apply_affine
 
 
 class Data():
 
     def __init__(self, input, target) -> None:
 
-        if "ventricle" in input or "hydrocephalus" in input:
+        if (not "abby" in input) and (not "ernie" in target):  # "ventricle" in input or "hydrocephalus" in input:
 
             box = np.load("/home/bastian/D1/registration/hydrocephalus/freesurfer/021/testouts/box_all.npy")
             space = 2
@@ -24,11 +24,14 @@ class Data():
 
             aff3 = nibabel.load("/home/bastian/D1/registration/hydrocephalus/normalized/registered/021to068.mgz").affine
             # self.input_meshfile = "/home/bastian/D1/registration/hydrocephalus/meshes/ventricle_boundary.xml"
-            self.input_meshfile = "/home/bastian/D1/registration/hydrocephalus/mymeshes/021ventricles_boundary.xml"
+            # self.input_meshfile = "/home/bastian/D1/registration/hydrocephalus/mymeshes/021ventricles_boundary.xml"
             # self.input_meshfile = "/home/bastian/D1/registration/hydrocephalus/meshes/ventricles.xml"
+            self.input_meshfile = "/home/bastian/D1/registration/hydrocephalus/meshes/ventricles_boundaryinvFalse.xml"
+            
             self.original_target = "/home/bastian/D1/registration/hydrocephalus/" + "normalized/input/068/068_brain.mgz"
             self.original_input = "/home/bastian/D1/registration/hydrocephalus/" + "normalized/input/021/021_brain.mgz"
             self.registration_lta = "/home/bastian/D1/registration/hydrocephalus/" + "normalized/registered/021to068.lta" 
+
 
         else:
             assert "abby" in input
@@ -82,7 +85,77 @@ def print_overloaded(*args):
         pass
 
 
+def get_cras_from_nifti(image_nii):
+    """Get the center of the RAS coordinate system.
+
+    Based on: https://neurostars.org/t/freesurfer-cras-offset/5587/2
+    Which links to: https://github.com/nipy/nibabel/blob/d1518aa71a8a80f5e7049a3509dfb49cf6b78005/nibabel/freesurfer/mghformat.py#L630-L643
+    """
+    shape = np.array(image_nii.shape)
+    center = shape / 2
+    center_homogeneous = np.hstack((center, [1]))
+    transform = image_nii.affine
+    return (transform @ center_homogeneous)[:3]
+
+
+def get_surface_ras_to_image_coordinates_transform(image_nii, surface_metadata=None):
+    """Convert from freesurfer surface coordinates to scanner coordinates.
+
+    Freesurfer uses (at least) three different coordinate systems, the RAS system,
+    the surface RAS system (which is a shifted version of the RAS system) and the
+    image coordinates. This function creates a transformation matrix that transforms
+    the surface RAS system into image coordinates. To accomplish this, it uses the
+    cras (center of RAS) property from the surface metadata to translate the surface
+    RAS into the correct RAS coordinates. Then it uses the inverse of the image
+    coordinate to RAS transformation to transform the RAS coordinates into image
+    coordinates.
+
+    The surface metadata is obtained from using the ``nibabel.freesurfer.read_geometry``
+    function like this:
+
+        points, faces, metadata = nib.freesurfer.read_geometry(path, read_metadata=True)
     
+    The image coordinate transform is the affine transform in the nifti file whose image
+    coordinates we want to transform into.
+
+    If the metadata is not supplied, then it is assumed to be created from an image with
+    the same coordinate systems as the given nifti file.
+
+    Example
+    -------
+
+
+    >>> import nibabel as nib
+    ... points, faces, metadata = nib.freesurfer.read_geometry("lh.pial", read_metadata=True)
+    ... img = nib.load("T2W.nii")
+    ... translation_matrix = get_surface_ras_to_image_coordinates_transform(img, metadata)
+    ... translation_matrix = get_surface_ras_to_image_coordinates_transform(img)
+    """
+    translation_matrix = np.eye(4)
+    if surface_metadata is not None:
+        translation_matrix[:3, -1] = surface_metadata['cras']
+    else:
+        translation_matrix[:3, -1] = get_cras_from_nifti(image_nii)
+
+    return np.linalg.inv(image_nii.affine)@translation_matrix
+
+
+def move_mesh(meshfile, ltafile, inverse, vox2ras, vox2ras2, allow_ras2ras):
+    
+    regaff = read_vox2vox_from_lta(ltafile, allow_ras2ras)
+    bm = Mesh(meshfile)
+    
+    if inverse:
+        regaff = numpy.linalg.inv(regaff)
+    
+    regaff = np.matmul((vox2ras2), np.matmul(regaff, np.linalg.inv(vox2ras)))
+
+    xyz = np.copy(bm.coordinates()[:])
+    # bm.coordinates()[:] = apply_affine(vox2ras, apply_affine(regaff, apply_affine(np.linalg.inv(vox2ras), xyz)))
+    bm.coordinates()[:] = apply_affine(regaff, xyz)
+
+    return bm
+
 
 
 def crop_to_original(orig_image: numpy.ndarray, cropped_image: numpy.ndarray, box: numpy.ndarray, space: int, pad: int):
@@ -140,9 +213,10 @@ def view(images, axis, idx, colorbar=False):
         if not isinstance(img, np.ndarray):
             line += img + " "
             print(img)
+            img = nibabel.load(img)
             print(img.affine)
             print()
-            img = nibabel.load(img)
+            
             img = img.get_fdata()
 
         if not (np.allclose(img.shape[axis], 256)):
@@ -158,7 +232,7 @@ def view(images, axis, idx, colorbar=False):
     plt.show()
 
 
-def read_vox2vox_from_lta(lta):
+def read_vox2vox_from_lta(lta, allow_ras2ras=False):
     File = open(lta)
 
     lines = File.readlines()
@@ -186,7 +260,8 @@ def read_vox2vox_from_lta(lta):
             pass
     
     print("*"*80)
-    assert v2v
+    if not allow_ras2ras:
+        assert v2v
 
     File.close()
 
