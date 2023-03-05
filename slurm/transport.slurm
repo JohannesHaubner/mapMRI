@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=transport
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks=64
+#SBATCH --ntasks=1
 #################################################################
 ## SBATCH --partition=milanq
 #SBATCH --partition=fpgaq
@@ -43,19 +43,20 @@ LOGOUTFILE=/home/bastian/D1/registration/transportslurm/${SLURM_JOB_ID}_log_pyth
 cd $SPATH
 
 # FOLDER=/home/bastian/D1/registration/normalized-outputs/446152/RKA0.01LBFGS100/
-FOLDER=/home/bastian/D1/registration/normalized-outputs/446600/RK100A0.01LBFGS200/
+# FOLDER=/home/bastian/D1/registration/normalized-outputs/446600/RK100A0.01LBFGS200/
 # FOLDER=/home/bastian/D1/registration/ventricle-outputs/447443/RK100A0.01LBFGS100/
 # srun -n 64 python3 -u transform_mesh.py --mapping_only --folders ${FOLDER} --recompute_mapping > ${LOGOUTFILE}
 # echo "Computed mapping, now running transform with only one core"
 
-# # # /home/bastian/D1/registration/normalized-outputs/446600/RK100A0.01LBFGS200/ \
-# srun -n 1 python3 -u transform_mesh.py --folders \
-# /home/bastian/D1/registration/normalized-outputs/446152/RKA0.01LBFGS100/ \
-# --remesh \
-# --noaffine \
-# --meshoutputfolder /home/bastian/D1/registration/transported-meshes/abby-ventricles-first-noaffine/ >> ${LOGOUTFILE}
-# echo "success"
-# # --reverse  --noaffine \\
+# # /home/bastian/D1/registration/normalized-outputs/446600/RK100A0.01LBFGS200/ \
+srun -n 1 python3 -u transform_mesh.py --folders \
+/home/bastian/D1/registration/normalized-outputs/446152/RKA0.01LBFGS100/ \
+/home/bastian/D1/registration/normalized-outputs/446600/RK100A0.01LBFGS200/ \
+--noaffine \
+--reverse \
+--meshoutputfolder /home/bastian/D1/registration/transported-meshes/abby-ventricles/both-noaffine-reversed/ >> ${LOGOUTFILE}
+echo "success"
+# --reverse  --noaffine \\
 
 
 

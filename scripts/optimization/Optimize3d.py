@@ -220,16 +220,17 @@ if hyperparameters["starting_guess"] is not None:
     if hyperparameters["forward"]:
         assert hyperparameters["max_timesteps"] == old_hypers["max_timesteps"]
         hyperparameters["lbfgs_max_iterations"] = 0
-        
-    if old_hypers["starting_state"] is not None:
 
-        hyperparameters["starting_state"] = old_hypers["starting_state"]
+    if not hyperparameters["forward"]:        
+        if old_hypers["starting_state"] is not None:
 
-        print_overloaded("Will read starting state")
-        print_overloaded(old_hypers["starting_state"])
-        print(" from previous velocity in order to restart L-BFGS-B")
+            hyperparameters["starting_state"] = old_hypers["starting_state"]
 
-        assert os.path.isfile(old_hypers["starting_state"])
+            print_overloaded("Will read starting state")
+            print_overloaded(old_hypers["starting_state"])
+            print_overloaded(" from previous velocity in order to restart L-BFGS-B")
+
+            assert os.path.isfile(old_hypers["starting_state"])
 
     print_overloaded("Read starting guess")
 
@@ -239,15 +240,14 @@ else:
     starting_guess = None
 
 if hyperparameters["starting_state"] is not None:
-
+    assert os.path.isfile(hyperparameters["starting_state"])
     Img = Function(FunctionSpace(domainmesh, "DG", 1))
-
+    print_overloaded("Trying to read", hyperparameters["statename"], "from", hyperparameters["starting_state"])
     with XDMFFile(hyperparameters["starting_state"]) as xdmf:
         xdmf.read_checkpoint(Img, hyperparameters["statename"])
 
     print_overloaded("Loaded ", hyperparameters["starting_state"], "as starting guess for state")
-else:
-    controlfun = None
+
 
 (mesh_goal, Img_goal, target_max, _) = read_image(hyperparameters["target"], name="target", mesh=domainmesh, projector=projector,
         hyperparameters=hyperparameters, state_functionspace=hyperparameters["state_functionspace"], state_functiondegree=hyperparameters["state_functiondegree"])

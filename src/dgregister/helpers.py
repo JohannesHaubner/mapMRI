@@ -42,26 +42,29 @@ class Data():
 
             aff3 = nibabel.load("/home/bastian/D1/registration/mri2fem-dataset/normalized/registered/abbytoernie.mgz").affine
 
-            self.registration_lta = "/home/bastian/D1/registration/mri2fem-dataset/" + "normalized/registered/abbytoernie.lta"
+            # self.registration_lta = "/home/bastian/D1/registration/mri2fem-dataset/" + "normalized/registered/abbytoernie.lta"
 
+            self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/meshes/ventricles/abby/affreg-ventricle-boundarymesh.xml"
+            self.original_input = "/home/bastian/D1/registration/mri2fem-dataset/normalized/registered/abbytoernie.mgz"
+            ##  Alternative:
+            ## Use the registration affine in meshtransport.
+            ## TODO FIXME make sure the conversion from vox2vox is correct.
+            ## (Be careful: freesurfer-RAS vs freesurfer-surface-RAS coordinates!!!)
             # self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/chp4/outs/abby/abby16.xml"
-            self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/meshes/ventricles/abby/ventricles_boundary.xml"
-
-
-            self.target_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/chp4/outs/ernie/ernie16.xml"
-
-            # self.inputimage = "/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/cropped_abbytoernie_nyul.mgz"
-            # self.targetimage = "/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/cropped_ernie_brain_nyul.mgz"
+            # self.original_input = "/home/bastian/D1/registration/" + "mri2fem-dataset/normalized/input/abby/" + "abby_brain.mgz"
+            ## this should then be needed / accessed:
+            # self.target_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/chp4/outs/ernie/ernie16.xml"
 
             self.original_target = "/home/bastian/D1/registration/" + "mri2fem-dataset/normalized/input/ernie/" + "ernie_brain.mgz"
-            self.original_input = "/home/bastian/D1/registration/" + "mri2fem-dataset/normalized/input/abby/" + "abby_brain.mgz"
 
 
             
         self.vox2ras_input = nibabel.load(self.original_input).header.get_vox2ras_tkr()
         self.vox2ras_target = nibabel.load(self.original_target).header.get_vox2ras_tkr()
 
-        self.registration_affine = read_vox2vox_from_lta(self.registration_lta)
+        if hasattr(self, "registration_lta"):
+
+            self.registration_affine = read_vox2vox_from_lta(self.registration_lta)
 
         self.inputmesh = Mesh(self.input_meshfile)
 

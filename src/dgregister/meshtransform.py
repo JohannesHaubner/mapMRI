@@ -252,12 +252,15 @@ def map_mesh(mappings: list, noaffine: bool,
     target_mesh_xyz_vox1 =  np.copy(target_mesh_xyz_vox)
 
     if not noaffine:
+        print("Applying registration affine")
         target_mesh_xyz_vox1 = apply_affine(data.registration_affine, np.copy(target_mesh_xyz_vox1))
     else:
         print("*"*80)
         print("Not applying registration affine")
         print("*"*80)
+
     target_mesh_xyz_ras1 = apply_affine(data.vox2ras_target,  target_mesh_xyz_vox1)
+    
     if reuse_mesh:
         targetmesh1 = data.meshcopy()
     else:
