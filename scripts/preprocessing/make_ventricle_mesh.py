@@ -6,6 +6,11 @@ import SVMTK as svm
 input="/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/meshes/ventricles/abby/ventricles.stl"
 output="/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/meshes/ventricles/abby/ventricles"
 
+
+outputdir="/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/meshes/registered_ventricles/abby/"
+input=outputdir + "ventricles.stl"
+output= outputdir + "ventricles"
+
 res = 16
 meshfile = output + ".mesh"
 
