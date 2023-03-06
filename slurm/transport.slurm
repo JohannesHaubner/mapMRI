@@ -4,8 +4,8 @@
 #SBATCH --ntasks=1
 #################################################################
 ## SBATCH --partition=milanq
-#SBATCH --partition=fpgaq
-## SBATCH --partition=defq
+## SBATCH --partition=fpgaq
+#SBATCH --partition=defq
 ## SBATCH --partition=slowq
 ## SBATCH --partition=rome16q
 #################################################################
@@ -51,10 +51,8 @@ cd $SPATH
 # # /home/bastian/D1/registration/normalized-outputs/446600/RK100A0.01LBFGS200/ \
 srun -n 1 python3 -u transform_mesh.py --folders \
 /home/bastian/D1/registration/normalized-outputs/446152/RKA0.01LBFGS100/ \
-/home/bastian/D1/registration/normalized-outputs/446600/RK100A0.01LBFGS200/ \
 --noaffine \
---reverse \
---meshoutputfolder /home/bastian/D1/registration/transported-meshes/abby-ventricles/both-noaffine-reversed/ >> ${LOGOUTFILE}
+--meshoutputfolder /home/bastian/D1/registration/transported-meshes/abby-aqueduct/volumemesh-first/ >> ${LOGOUTFILE}
 echo "success"
 # --reverse  --noaffine \\
 
