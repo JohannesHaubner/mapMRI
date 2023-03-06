@@ -3,15 +3,20 @@ import nibabel
 import os
 import SVMTK as svm
 
-input="/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/meshes/ventricles/abby/ventricles.stl"
-output="/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/meshes/ventricles/abby/ventricles"
+# input="/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/meshes/ventricles/abby/ventricles.stl"
+# output="/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/meshes/ventricles/abby/ventricles"
 
 
-outputdir="/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/meshes/registered_ventricles/abby/"
+# outputdir="/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/meshes/registered_ventricles/abby/"
+# input=outputdir + "ventricles.stl"
+# output= outputdir + "ventricles"
+
+
+outputdir="/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/meshes/reg-aqueduct/abby/"
 input=outputdir + "ventricles.stl"
 output= outputdir + "ventricles"
 
-res = 16
+res = 32
 meshfile = output + ".mesh"
 
 if not os.path.isfile(meshfile):

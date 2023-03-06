@@ -232,14 +232,14 @@ if parsersargs["resync"]:
             l2lossfile = localpath / runname / "l2loss.txt"
             hyperparameterfile = localpath / runname / "hyperparameters.json"
 
-            command = "rsync -r "
+            command = "rsync -r -LK "
             command += "ex:" + str(expath / runname / "*.txt")
             command += " "
             command += str(localpath / runname)
 
             subprocess.run(command, shell=True)
 
-            command = "rsync -r "
+            command = "rsync -r -LK "
             command += "ex:" + str(expath / runname / "*.json")
             command += " "
             command += str(localpath / runname)
@@ -247,7 +247,7 @@ if parsersargs["resync"]:
 
             hyperparameters = json.load(open(hyperparameterfile))
 
-            command = "rsync -r "
+            command = "rsync -r -LK "
             command += "ex:" + str(expath / runname / "CurrentState.mgz")
             command += " "
             command += str(localpath / runname)
@@ -256,20 +256,20 @@ if parsersargs["resync"]:
             if "optimization_time_hours" in hyperparameters.keys():
 
                 print(runname, "Compute time", hyperparameters["optimization_time_hours"])
-                command = "rsync -r "
+                command = "rsync -r -LK "
                 command += "ex:" + str(expath / runname / "Finalstate.mgz")
                 command += " "
                 command += str(localpath / runname)
                 subprocess.run(command, shell=True)
 
             if "slurmid" in hyperparameters.keys() and parsersargs["resync"]:
-                command = "rsync -r "
+                command = "rsync -r -L "
                 command += "ex:" + "/home/bastian/D1/registration/mrislurm/" + str(hyperparameters["slurmid"]) + "_log_python_srun.txt"
                 command += " "
                 command += str(localpath / runname)
                 retva = subprocess.run(command, shell=True, capture_output=True)
 
-                command = "rsync -r "
+                command = "rsync -r -L "
                 command += "ex:" + "/home/bastian/D1/registration/mrislurm/" + str(hyperparameters["slurmid"]) + ".out"
                 command += " "
                 command += str(localpath / runname)
@@ -350,7 +350,7 @@ for foldername in foldernames:
         #     print(viewcommmand)
         #     print()
 
-        if not hyperparameters["slurmid"] in ["445806", "445807"]:
+        if not hyperparameters["slurmid"] in ["445806", "445807", "447918"]:
             assert foldername in hyperparameters["output_dir"]
 
         logfiles = [x for x in os.listdir(localpath / runname) if x.endswith("_log_python_srun.txt")]

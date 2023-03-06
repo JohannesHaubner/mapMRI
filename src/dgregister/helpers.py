@@ -202,7 +202,7 @@ def store2mgz(imgfile1, imgfile2, ijk1, outfolder):
 
 
 
-def view(images, axis, idx, colorbar=False):
+def view(images, axis=1, idx=100, colorbar=False):
 
     line = "freeview "
 
