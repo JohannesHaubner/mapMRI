@@ -38,9 +38,13 @@ class PreconditioningBlock(Block):
         c = TrialFunction(C)
         psi = TestFunction(C)
         
-        if not hasattr(self, "solver"):
+        omega = 0
+        epsilon = 1
 
-            a = inner(grad(c), grad(psi)) * dx
+        if not hasattr(self, "solver"):
+            
+            a = omega * inner(c, psi) * dx + epsilon * inner(grad(c), grad(psi)) * dx
+            # a = inner(grad(c), grad(psi)) * dx
 
             if self.A is None:
                 self.A = assemble(a)

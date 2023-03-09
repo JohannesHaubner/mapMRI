@@ -23,10 +23,13 @@ class Preconditioning():
         c = TrialFunction(C)
         psi = TestFunction(C)
         
+        omega = 0
+        epsilon = 1
+
 
         if not hasattr(self, "solver"):
 
-            a = inner(grad(c), grad(psi)) * dx
+            a = omega * inner(c, psi) * dx + epsilon * inner(grad(c), grad(psi)) * dx
 
             if self.A is None:
 
