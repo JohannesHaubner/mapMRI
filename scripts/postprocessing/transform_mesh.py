@@ -24,11 +24,12 @@ parser.add_argument("--meshoutputfolder", type=str, help="Folder where all the t
 parser.add_argument("--update", action="store_true", default=False, help="Show progress over mesh iteration")
 parser.add_argument("--remesh", action="store_true", default=False, help="Remesh")
 parser.add_argument("--affineonly", action="store_true", default=False, help="Apply only registration affine to mesh ")
-parser.add_argument("--reverse", action="store_true", default=False)
+# parser.add_argument("--reverse", action="store_true", default=False)
 parser.add_argument("--noaffine", action="store_true", default=False)
 
 parserargs = vars(parser.parse_args())
 
+parserargs["reverse"] = True
 parserargs["folders"] = sorted(parserargs["folders"])
 
 

@@ -12,7 +12,8 @@
 ## SBATCH --partition=fpgaq
 ## fpgaq has 96 cpus per onde
 #
-#SBATCH --partition=defq
+## SBATCH --partition=defq
+#SBATCH --partition=defq,milanq
 ## has 128 cpus per node
 ## SBATCH --partition=habanaq
 #################################################################
@@ -68,7 +69,7 @@ LOGOUTFILE=/home/bastian/D1/registration/mrislurm/${SLURM_JOB_ID}_log_python_sru
 # IMG2=/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/cropped_ernie_brain_nyul.mgz
 # LBFGS=200
 
-OUTPUTDIR=/home/bastian/D1/registration/normalized-forward/446600/
+OUTPUTDIR=/home/bastian/D1/registration/normalized-outputs/${SLURM_JOB_ID}/
 IMG1=/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped_ventricles/cropped_abbytoernie_ventricles.mgz
 IMG2=/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/cropped_ernie_brain_nyul.mgz
 LBFGS=150
@@ -88,7 +89,7 @@ echo "IMG2=" ${IMG2}
 srun -n ${NP} --cpu-bind=rank python3 -u ${SPATH}/Optimize3d.py \
 --logfile ${LOGOUTFILE2} --output_dir ${OUTPUTDIR} \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
---starting_state /global/D1/homes/bastian/registration/normalized-outputs/446600/RK100A0.01LBFGS200/State_checkpoint.xdmf --readname CurrentState \
+--starting_state /home/bastian/D1/registration/normalized-outputs/447918/RK100A0.01LBFGS150/State_checkpoint.xdmf --readname CurrentState \
 --huber_delta 1 --timestepping RungeKutta --huber --memdebug --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 
 # --starting_state /home/bastian/D1/registration/normalized-forward/446152/RK100A0.01LBFGS0/Finalstate.xdmf --statename Finalstate \

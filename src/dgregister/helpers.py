@@ -43,8 +43,9 @@ class Data():
             aff3 = nibabel.load("/home/bastian/D1/registration/mri2fem-dataset/normalized/registered/abbytoernie.mgz").affine
 
             # self.registration_lta = "/home/bastian/D1/registration/mri2fem-dataset/" + "normalized/registered/abbytoernie.lta"
-
-            self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/meshes/reg-aqueduct/abby/ventricles.xml" # affreg-ventricle-aq-boundarymesh.xml"
+            
+            self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/meshes/manually_registered_brain_mesh/output/abby_registered_brain_mesh.xml"
+            # self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/meshes/reg-aqueduct/abby/ventricles.xml" # affreg-ventricle-aq-boundarymesh.xml"
             # self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/meshes/ventricles/abby/affreg-ventricle-boundarymesh.xml"
             self.original_input = "/home/bastian/D1/registration/mri2fem-dataset/normalized/registered/abbytoernie.mgz"
             ##  Alternative:

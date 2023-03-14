@@ -4,8 +4,8 @@
 #SBATCH --ntasks=1
 #################################################################
 ## SBATCH --partition=milanq
-## SBATCH --partition=fpgaq
-#SBATCH --partition=defq
+#SBATCH --partition=fpgaq
+## SBATCH --partition=defq
 ## SBATCH --partition=slowq
 ## SBATCH --partition=rome16q
 #################################################################
@@ -45,14 +45,18 @@ cd $SPATH
 # FOLDER=/home/bastian/D1/registration/normalized-outputs/446152/RKA0.01LBFGS100/
 # FOLDER=/home/bastian/D1/registration/normalized-outputs/446600/RK100A0.01LBFGS200/
 # FOLDER=/home/bastian/D1/registration/ventricle-outputs/447443/RK100A0.01LBFGS100/
+# FOLDER=/home/bastian/D1/registration/normalized-outputs/449047/RK100A0.01LBFGS150/
+# FOLDER=/home/bastian/D1/registration/normalized-outputs/450276/RK100A0.01LBFGS150/ #alpha=0.5=beta
 # srun -n 64 python3 -u transform_mesh.py --mapping_only --folders ${FOLDER} --recompute_mapping > ${LOGOUTFILE}
 # echo "Computed mapping, now running transform with only one core"
 
 # # /home/bastian/D1/registration/normalized-outputs/446600/RK100A0.01LBFGS200/ \
 srun -n 1 python3 -u transform_mesh.py --folders \
 /home/bastian/D1/registration/normalized-outputs/446152/RKA0.01LBFGS100/ \
+/home/bastian/D1/registration/normalized-outputs/446600/RK100A0.01LBFGS200/ \
+/home/bastian/D1/registration/normalized-outputs/447918/RK100A0.01LBFGS150/ \
 --noaffine \
---meshoutputfolder /home/bastian/D1/registration/transported-meshes/abby-aqueduct/volumemesh-first/ >> ${LOGOUTFILE}
+--meshoutputfolder /home/bastian/D1/registration/transported-meshes/abby-brain/volumemesh-3/ >> ${LOGOUTFILE}
 echo "success"
 # --reverse  --noaffine \\
 

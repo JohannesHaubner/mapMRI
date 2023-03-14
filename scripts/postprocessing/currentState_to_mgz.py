@@ -11,13 +11,16 @@ from dgregister.helpers import crop_to_original, Data
 
 parser = argparse.ArgumentParser()
 parser.add_argument("path")
-parser.add_argument("--recompute", action="store_true", default=False)
+# parser.add_argument("--recompute", action="store_true", default=False)
 parser.add_argument("--statename", type=str, default="CurrentState", choices=["CurrentState", "Finalstate"])
 parser.add_argument("--readname", type=str, default="CurrentState", choices=["CurrentState", "Finalstate"])
 parser.add_argument("--xdmffile", type=str, default="State_checkpoint.xdmf", choices=["State_checkpoint.xdmf", "Finalstate.xdmf"])
 
 
 parserargs = vars(parser.parse_args())
+
+parserargs["recompute"] = True
+
 statename = parserargs["statename"]
 os.chdir(parserargs["path"])
 
@@ -70,5 +73,15 @@ filled_image = crop_to_original(orig_image=np.zeros((256, 256, 256)), cropped_im
 # nii = nibabel.Nifti1Image(filled_image, aff2)
 # nibabel.save(nii, "CurrentState2.mgz")
 
+
 nii = nibabel.Nifti1Image(filled_image, aff3)
 nibabel.save(nii, statename+".mgz")
+
+target_aff = nibabel.load(data.original_target).affine
+nii = nibabel.Nifti1Image(filled_image, target_aff)
+nibabel.save(nii, statename+"_targetaff.mgz")
+
+
+input_aff = nibabel.load(data.original_target.replace("ernie", "abby")).affine
+nii = nibabel.Nifti1Image(filled_image, input_aff)
+nibabel.save(nii, statename+"_inputaff.mgz")

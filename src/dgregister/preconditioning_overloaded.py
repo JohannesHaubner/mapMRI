@@ -40,6 +40,10 @@ class PreconditioningBlock(Block):
         
         omega = 0
         epsilon = 1
+        
+        omega = 0.5
+        epsilon = 0.5
+        print_overloaded("Using non-default omega=", omega, "epsilon=", epsilon, "in preconditioning_overloaded")
 
         if not hasattr(self, "solver"):
             
