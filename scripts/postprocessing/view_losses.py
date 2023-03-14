@@ -350,7 +350,7 @@ for foldername in foldernames:
         #     print(viewcommmand)
         #     print()
 
-        if not hyperparameters["slurmid"] in ["445806", "445807", "447918"]:
+        if not hyperparameters["slurmid"] in ["445806", "445807", "447918", "449047"]:
             assert foldername in hyperparameters["output_dir"]
 
         logfiles = [x for x in os.listdir(localpath / runname) if x.endswith("_log_python_srun.txt")]
@@ -410,6 +410,8 @@ for foldername in foldernames:
             # continue
             pass
 
+        if int(hyperparameters["slurmid"]) == 449047:
+            loss = loss[150:]
 
 
         running = "Jd_final" not in hyperparameters.keys()

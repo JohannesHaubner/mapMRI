@@ -18,13 +18,17 @@ wmparc=true
 # output4="/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/meshes/registered_ventricles/abby/reg_ventricles"
 # wmparc=false
 
-input="/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/meshes/reg-aqueduct/abby/reg-ventricles-w-aq.mgz"
-outputdir=/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/meshes/reg-aqueduct/abby/
+# input="/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/meshes/reg-aqueduct/abby/reg-ventricles-w-aq.mgz"
+# outputdir=/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/meshes/reg-aqueduct/abby/
+# output=${outputdir}ventricles.stl
+# output2="/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/meshes/reg-aqueduct/abby/ventricles_postproc.mgz"
+# wmparc=false
+
+input="/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/freesurfer/ernie/mri/wmparc.mgz"
+outputdir=/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/meshes/aqueduct/ernie/
 output=${outputdir}ventricles.stl
-output2="/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/meshes/reg-aqueduct/abby/ventricles_postproc.mgz"
-wmparc=false
-
-
+output2="/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/meshes/aqueduct/ernie/ventricles_postproc.mgz"
+wmparc=true
 
 # input="/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/freesurfer/abby/mri/wmparc.mgz"
 # outputdir=/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/meshes/aqueduct/abby/

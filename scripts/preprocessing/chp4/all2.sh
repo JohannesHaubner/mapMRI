@@ -69,7 +69,7 @@ ${SCRIPTDIR}/extract-ventricles.sh
 
 # Use scripts from chp3 to remesh and smoothen.
 # Rename stl files rh.pial.stl and rh.white.stl again
-RES=16
+RES=32
 python3 ${SCRIPTDIR}/fullbrain-five-domain.py --resolution ${RES} --name ${IDNAME}
 
 outname=${IDNAME}${RES}
@@ -77,3 +77,12 @@ outname=${IDNAME}${RES}
 meshio-convert ${outname}.mesh ${outname}.xml
 meshio-convert ${outname}.xml ${outname}.xdmf
 # paraview ${outname}.xdmf
+
+
+RES=64
+python3 ${SCRIPTDIR}/fullbrain-five-domain.py --resolution ${RES} --name ${IDNAME}
+
+outname=${IDNAME}${RES}
+
+meshio-convert ${outname}.mesh ${outname}.xml
+meshio-convert ${outname}.xml ${outname}.xdmf
