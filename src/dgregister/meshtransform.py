@@ -1,14 +1,15 @@
 import json
 import os
 import pathlib
-
 from tqdm import tqdm
+
 import numpy.linalg
 import nibabel
 import numpy
 import numpy as np
 from fenics import *
 try:
+    
     import pymesh
 except:
     print("Could not import pymesh")
@@ -132,6 +133,21 @@ def map_mesh(mappings: list, noaffine: bool,
 
     input_mesh_xyz_vox = downscale(input_mesh_xyz_vox, npad=data.pad, dxyz=data.dxyz)
 
+    if remesh:
+
+        tempmesh = data.meshcopy()
+        tempmesh.coordinates()[:] = input_mesh_xyz_vox
+
+        tmpfile = tmpdir + "inputmesh_downscaled.xml"
+
+        File(tmpfile) << tempmesh
+
+        tempmesh = meshio.read(tmpfile)
+        tempmesh.write(tmpfile.replace(".xml", ".stl"))
+        tempmesh.write(tmpfile.replace(".xml", ".xdmf"))
+
+        del tempmesh, tmpfile
+
     assert np.min(input_mesh_xyz_vox) >= 0
     if len(mappings) > 0:
         assert np.max(input_mesh_xyz_vox) <= np.max(mappings[0].function_space().mesh().coordinates())
@@ -162,8 +178,13 @@ def map_mesh(mappings: list, noaffine: bool,
         if update:
          progress = tqdm(total=int(target_mesh_xyz_vox.shape[0]))
 
+        print_at = [int(target_mesh_xyz_vox.shape[0] * (x + 1) / 10) for x in range(10)]
+
         for idx in range(target_mesh_xyz_vox.shape[0]):
             
+            if idx in print_at:
+                print("----", int(100 * idx / target_mesh_xyz_vox.shape[0]), "%")
+
             try:
                 transformed_point = mapping(target_mesh_xyz_vox[idx, :])
             except RuntimeError:
@@ -177,14 +198,19 @@ def map_mesh(mappings: list, noaffine: bool,
 
 
         if remesh:
+
+            import SVMTK as svmtk
+
             if reuse_mesh:
                 tempmesh = data.meshcopy()
             else:
                 tempmesh = Mesh(fixed_surfacemesh_file.replace(".stl", ".xml"))
 
             tempmesh.coordinates()[:] = deformed_mesh_ijk
+            print("Assigned new coordinates to mesh")
 
-            if "boundary" not in data.input_meshfile:
+            if tempmesh.topology().dim() != 2:
+                print("Created Boundarymesh from tempesh tempmesh")
                 surfacemesh = BoundaryMesh(tempmesh, "exterior")
             else:
                 surfacemesh = tempmesh
@@ -192,21 +218,47 @@ def map_mesh(mappings: list, noaffine: bool,
             tmpfile = tmpdir + "boundary_trafo" + str(mapping_idx) + ".xml"
             # Convert xml to stl with meshio:
             File(tmpfile) << surfacemesh
+            print("Stored current mesh to xml")
             assert os.path.isfile(tmpfile)
 
+            stlfile = tmpfile.replace(".xml", ".stl")
+
+
             meshio_mesh = meshio.read(tmpfile)
-            meshio_mesh.write(tmpfile.replace(".xml", ".stl"))
+            meshio_mesh.write(stlfile)
+
 
             print("Stored boundary mesh to stl with meshio")
 
-            # Load, fix and store using pymesh:
-            pymesh_mesh = pymesh.meshio.load_mesh(tmpfile.replace(".xml", ".stl"))
-            print("Loaded mesh to pymesh")
-            fixed_pymesh_surface_mesh = fix_mesh(pymesh_mesh, detail="normal")
-            print("Fixed surface mesh with pymesh")
-            fixed_surfacemesh_file = tmpfile.replace(".xml", "_fixed.stl")
-            pymesh.meshio.save_mesh(fixed_surfacemesh_file, fixed_pymesh_surface_mesh)
-            print("wrote fixed mesh with pymesh")
+            fixed_surfacemesh_file = stlfile.replace(".stl", "_fixed.stl")
+
+            # raise NotImplementedError("Register lh mesh manually first")
+
+            surface = svmtk.Surface(stlfile)
+
+            # Remesh surface
+            surface.isotropic_remeshing(1, 3, False)
+
+            surface.smooth_taubin(5)
+
+            surface.fill_holes()
+
+            # Separate narrow gaps
+            # Default argument is -0.33. 
+            surface.separate_narrow_gaps(-0.33)
+
+
+            surface.save(fixed_surfacemesh_file)
+
+
+            # # Load, fix and store using pymesh:
+            # pymesh_mesh = pymesh.meshio.load_mesh(tmpfile.replace(".xml", ".stl"))
+            # print("Loaded mesh to pymesh")
+            # fixed_pymesh_surface_mesh = fix_mesh(pymesh_mesh, detail="normal")
+            # print("Fixed surface mesh with pymesh")
+            # fixed_surfacemesh_file = tmpfile.replace(".xml", "_fixed.stl")
+            # pymesh.meshio.save_mesh(fixed_surfacemesh_file, fixed_pymesh_surface_mesh)
+            # print("wrote fixed mesh with pymesh")
 
             # Load stl and convert back to xml with  meshio:
             fixed_meshio_mesh = meshio.read(fixed_surfacemesh_file)
@@ -238,6 +290,7 @@ def map_mesh(mappings: list, noaffine: bool,
             File(vizmeshfile) << mesh_for_visual
             transormed_xmlmesh = meshio.read(vizmeshfile)
             transormed_xmlmesh.write(vizmeshfile.replace(".xml", ".xdmf"))
+            transormed_xmlmesh.write(vizmeshfile.replace(".xml", ".stl"))
             
             ####
         

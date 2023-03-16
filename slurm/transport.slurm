@@ -6,12 +6,13 @@
 ## SBATCH --partition=milanq
 ## SBATCH --partition=fpgaq
 #SBATCH --partition=fpgaq
+#,milanq,slowq
 ## SBATCH --partition=defq
 ## SBATCH --partition=slowq
 ## SBATCH --partition=rome16q
 #################################################################
 
-#SBATCH --time 0-8 ##--time=99:00:00
+#SBATCH --time 0-6 ##--time=99:00:00
 #SBATCH -o /home/bastian/D1/registration/transportslurm/%j.out
 #SBATCH --export=ALL
 #SBATCH --mail-user=bastian@simula.no
@@ -21,7 +22,7 @@
 # conda init bash
 
 eval "$(conda shell.bash hook)"
-conda activate mri_inverse
+conda activate svmtk
 
 # module load ipopt-3.13.3
 
@@ -55,8 +56,9 @@ cd $SPATH
 # echo "Computed mapping, now running transform with only one core"
 
 
-OUTPUTFOLDER=cgmeshtransform
+OUTPUTFOLDER=dgmeshtransform
 
+python -c "import SVMTK as svmtk"
 
 # /home/bastian/D1/registration/normalized-outputs/446600/RK100A0.01LBFGS200/ \
 srun -n 1 python3 -u transform_mesh.py --folders \
@@ -65,10 +67,10 @@ srun -n 1 python3 -u transform_mesh.py --folders \
 /home/bastian/D1/registration/normalized-outputs/447918/RK100A0.01LBFGS150/ \
 /home/bastian/D1/registration/normalized-outputs/450276/RK100A0.01LBFGS150/ \
 --noaffine --remesh \
---meshoutputfolder /home/bastian/D1/registration/transported-meshes/abby-brain/${OUTPUTFOLDER}-4-remesh-recompute-cg/ \
+--meshoutputfolder /home/bastian/D1/registration/transported-meshes/abby-lh-COARSE/${OUTPUTFOLDER}-4-recompute/ \
 --outputfoldername ${OUTPUTFOLDER} >> ${LOGOUTFILE}
 echo "success"
-
+#  
 
 
 

@@ -113,13 +113,16 @@ mappings = []
 # NOTE
 # NOTE reversed() to apply the transformations in reverse order
 
-if parserargs["reverse"]:
+if not parserargs["reverse"]:
     folders=parserargs["folders"]
 else:
     folders=reversed(parserargs["folders"])
 
+
 for idx, folder in enumerate(folders):
 # NOTE
+
+    print(idx, folder)    
 
     if parserargs["affineonly"]:
         print("-" * 80)
@@ -204,7 +207,7 @@ for meshname, meshobject in meshes.items():
     hdf.write(meshobject, "mesh")
     hdf.close()
 
-    if "boundary" not in data.input_meshfile:
+    if meshobject.topology().dim() != 2: # "boundary" not in data.input_meshfile:
         bmesh = BoundaryMesh(meshobject, "exterior")
         boundarymeshfile = xmlfile.replace(".xml", "_boundary.xml")
         File(boundarymeshfile) << bmesh

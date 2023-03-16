@@ -44,7 +44,8 @@ class Data():
 
         self.registration_lta = "/home/bastian/D1/registration/mri2fem-dataset/" + "normalized/registered/abbytoernie.lta"
         
-        self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/meshes/manually_registered_brain_mesh/output/abby_registered_brain_mesh.xml"
+        # self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/meshes/manually_registered_brain_mesh/output/abby_registered_brain_mesh.xml"
+        self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/meshes/lh_registered_verycoarse/lh.xml"
         # self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/meshes/reg-aqueduct/abby/ventricles.xml" # affreg-ventricle-aq-boundarymesh.xml"
         # self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/meshes/ventricles/abby/affreg-ventricle-boundarymesh.xml"
         self.original_input = "/home/bastian/D1/registration/mri2fem-dataset/normalized/registered/abbytoernie.mgz"
@@ -59,7 +60,7 @@ class Data():
 
         self.original_target = "/home/bastian/D1/registration/" + "mri2fem-dataset/normalized/input/ernie/" + "ernie_brain.mgz"
 
-
+        print_overloaded("Read meshfile", self.input_meshfile)
             
         self.vox2ras_input = nibabel.load(self.original_input).header.get_vox2ras_tkr()
         self.vox2ras_target = nibabel.load(self.original_target).header.get_vox2ras_tkr()
@@ -69,6 +70,8 @@ class Data():
             self.registration_affine = read_vox2vox_from_lta(self.registration_lta)
 
         self.inputmesh = Mesh(self.input_meshfile)
+
+        print("Mesh has", self.inputmesh.coordinates().shape, "shape")
 
         self.box = box
         self.space = space
