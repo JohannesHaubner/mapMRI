@@ -31,6 +31,7 @@ from dgregister.helpers import get_bounding_box_limits, cut_to_box # get_largest
 from dgregister.preconditioning_overloaded import preconditioning
 from dgregister.transformation_overloaded import transformation
 from dgregister.CGTransport import CGTransport
+from dgregister.DGTransport import DGTransport
 import dgregister
 import dgregister.helpers
 
@@ -281,6 +282,14 @@ def map_mesh(mappings: list, noaffine: bool,
 
 def make_mapping(cubemesh, control, M_lumped_inv, hyperparameters,):
 
+    import dgregister.preconditioning
+
+    if str(hyperparameters["slurmid"]) == "450276":
+        dgregister.preconditioning.omega = 0.5
+        dgregister.preconditioning.epsilon = 0.5
+    elif str(hyperparameters["slurmid"]) not in ["446152", "446600", "447918"]:
+        raise NotImplementedError("Check which omega, epsilon was used.")
+
     mappings = []
 
     control_L2 = transformation(control, M_lumped_inv)
@@ -299,12 +308,20 @@ def make_mapping(cubemesh, control, M_lumped_inv, hyperparameters,):
 
         assert norm(velocity) > 0
 
-        xout = CGTransport(Img=xin, Wind=-velocity, 
+        # print_overloaded("Using CGTransport")
+        # xout = CGTransport(Img=xin, Wind=-velocity, 
+        #                    DeltaT=hyperparameters["DeltaT"], 
+        #                    preconditioner="amg", 
+        #                 MaxIter=hyperparameters["max_timesteps"], timestepping=hyperparameters["timestepping"], 
+        #                 solver="krylov", MassConservation=hyperparameters["MassConservation"])
+        
+        print_overloaded("Using DGTransport")
+        xout = DGTransport(Img=xin, Wind=-velocity, 
                            DeltaT=hyperparameters["DeltaT"], 
                            preconditioner="amg", 
                         MaxIter=hyperparameters["max_timesteps"], timestepping=hyperparameters["timestepping"], 
                         solver="krylov", MassConservation=hyperparameters["MassConservation"])
-
+        
         mappings.append(xout)
 
     assert len(mappings) == 3

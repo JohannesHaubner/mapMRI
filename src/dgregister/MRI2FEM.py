@@ -1,5 +1,6 @@
 from fenics import *
 from fenics_adjoint import *
+from scipy import ndimage
 
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
@@ -102,6 +103,10 @@ def read_image(filename, name, mesh=None, printout=True, threshold=True, project
 
         data = np.expand_dims(data, -1)
 
+    if "smoothen_image" in hyperparameters.keys() and hyperparameters["hyperparameters"]:
+        sigma = 0.5
+        print_overloaded("Applying Gauss filter to image, sigma=", sigma)
+        data = ndimage.gaussian_filter(data, sigma=sigma)
 
     if hyperparameters is not None:
         hyperparameters[name + ".shape"] = list(data.shape)

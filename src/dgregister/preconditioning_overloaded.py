@@ -11,7 +11,7 @@ def print_overloaded(*args):
     else:
         pass
 
-from dgregister.preconditioning import preconditioning
+from dgregister.preconditioning import preconditioning, omega, epsilon
 
 
 backend_preconditioning = preconditioning
@@ -38,13 +38,16 @@ class PreconditioningBlock(Block):
         c = TrialFunction(C)
         psi = TestFunction(C)
         
-        omega = 0
-        epsilon = 1
+        # omega = 0
+        # epsilon = 1
         
-        omega = 0.5
-        epsilon = 0.5
-        print_overloaded("Using non-default omega=", omega, "epsilon=", epsilon, "in preconditioning_overloaded")
-
+        # omega = 0.5
+        # epsilon = 0.5
+        if omega != 0 and epsilon != 1:
+            print_overloaded("Using non-default omega=", omega, "epsilon=", epsilon, "in preconditioning_overloaded")
+        else:
+            print_overloaded("Using standard omega, epsilon", omega, epsilon, "in preconditioning_overloaded")
+            
         if not hasattr(self, "solver"):
             
             a = omega * inner(c, psi) * dx + epsilon * inner(grad(c), grad(psi)) * dx

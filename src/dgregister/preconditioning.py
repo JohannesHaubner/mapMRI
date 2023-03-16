@@ -8,6 +8,14 @@ def print_overloaded(*args):
         pass
 
 
+
+omega = 0.
+epsilon = 1.
+
+# omega = 0.5
+# epsilon = 0.5
+
+
 class Preconditioning():
 
     def __init__(self) -> None:
@@ -22,18 +30,24 @@ class Preconditioning():
         BC = DirichletBC(C, Constant((0.0,)*dim), "on_boundary")
         c = TrialFunction(C)
         psi = TestFunction(C)
-        
-        omega = 0
-        epsilon = 1
 
-        omega = 0.5
-        epsilon = 0.5
-        print_overloaded("Using non-default omega=", omega, "epsilon=", epsilon, "in preconditioning_overloaded")
+        global omega
+        global epsilon
 
+        if omega != 0 and epsilon != 1:
+            print_overloaded("Using non-default omega=", omega, "epsilon=", epsilon, "in preconditioning")
 
+        else:
+            print_overloaded("Using standard omega, epsilon", omega, epsilon, "in preconditioning")
+
+        if isinstance(omega, float):
+
+            omega = Constant(omega)
+            epsilon = Constant(epsilon)
+ 
         if not hasattr(self, "solver"):
 
-            a = omega * inner(c, psi) * dx + epsilon * inner(grad(c), grad(psi)) * dx
+            a = omega * (inner(c, psi) * dx) + epsilon * (inner(grad(c), grad(psi)) * dx)
 
             if self.A is None:
 
