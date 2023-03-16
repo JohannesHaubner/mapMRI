@@ -16,48 +16,48 @@ class Data():
 
     def __init__(self, input, target) -> None:
 
-        if (not "abby" in input) and (not "ernie" in target):  # "ventricle" in input or "hydrocephalus" in input:
+        # if (not "abby" in input) and (not "ernie" in target):  # "ventricle" in input or "hydrocephalus" in input:
 
-            box = np.load("/home/bastian/D1/registration/hydrocephalus/freesurfer/021/testouts/box_all.npy")
-            space = 2
-            pad = 2
+        #     box = np.load("/home/bastian/D1/registration/hydrocephalus/freesurfer/021/testouts/box_all.npy")
+        #     space = 2
+        #     pad = 2
 
-            aff3 = nibabel.load("/home/bastian/D1/registration/hydrocephalus/normalized/registered/021to068.mgz").affine
-            # self.input_meshfile = "/home/bastian/D1/registration/hydrocephalus/meshes/ventricle_boundary.xml"
-            # self.input_meshfile = "/home/bastian/D1/registration/hydrocephalus/mymeshes/021ventricles_boundary.xml"
-            # self.input_meshfile = "/home/bastian/D1/registration/hydrocephalus/meshes/ventricles.xml"
-            self.input_meshfile = "/home/bastian/D1/registration/hydrocephalus/meshes/ventricles_boundaryinvFalse.xml"
+        #     aff3 = nibabel.load("/home/bastian/D1/registration/hydrocephalus/normalized/registered/021to068.mgz").affine
+        #     # self.input_meshfile = "/home/bastian/D1/registration/hydrocephalus/meshes/ventricle_boundary.xml"
+        #     # self.input_meshfile = "/home/bastian/D1/registration/hydrocephalus/mymeshes/021ventricles_boundary.xml"
+        #     # self.input_meshfile = "/home/bastian/D1/registration/hydrocephalus/meshes/ventricles.xml"
+        #     self.input_meshfile = "/home/bastian/D1/registration/hydrocephalus/meshes/ventricles_boundaryinvFalse.xml"
             
-            self.original_target = "/home/bastian/D1/registration/hydrocephalus/" + "normalized/input/068/068_brain.mgz"
-            self.original_input = "/home/bastian/D1/registration/hydrocephalus/" + "normalized/input/021/021_brain.mgz"
-            self.registration_lta = "/home/bastian/D1/registration/hydrocephalus/" + "normalized/registered/021to068.lta" 
+        #     self.original_target = "/home/bastian/D1/registration/hydrocephalus/" + "normalized/input/068/068_brain.mgz"
+        #     self.original_input = "/home/bastian/D1/registration/hydrocephalus/" + "normalized/input/021/021_brain.mgz"
+        #     self.registration_lta = "/home/bastian/D1/registration/hydrocephalus/" + "normalized/registered/021to068.lta" 
 
 
-        else:
-            assert "abby" in input
-            assert "ernie" in target
-            box = np.load("/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/box.npy")
-            space = 0
-            pad = 2
+        # else:
+        assert "abby" in input
+        assert "ernie" in target
+        box = np.load("/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/box.npy")
+        space = 0
+        pad = 2
 
-            aff3 = nibabel.load("/home/bastian/D1/registration/mri2fem-dataset/normalized/registered/abbytoernie.mgz").affine
+        aff3 = nibabel.load("/home/bastian/D1/registration/mri2fem-dataset/normalized/registered/abbytoernie.mgz").affine
 
-            # self.registration_lta = "/home/bastian/D1/registration/mri2fem-dataset/" + "normalized/registered/abbytoernie.lta"
-            
-            self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/meshes/manually_registered_brain_mesh/output/abby_registered_brain_mesh.xml"
-            # self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/meshes/reg-aqueduct/abby/ventricles.xml" # affreg-ventricle-aq-boundarymesh.xml"
-            # self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/meshes/ventricles/abby/affreg-ventricle-boundarymesh.xml"
-            self.original_input = "/home/bastian/D1/registration/mri2fem-dataset/normalized/registered/abbytoernie.mgz"
-            ##  Alternative:
-            ## Use the registration affine in meshtransport.
-            ## TODO FIXME make sure the conversion from vox2vox is correct.
-            ## (Be careful: freesurfer-RAS vs freesurfer-surface-RAS coordinates!!!)
-            # self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/chp4/outs/abby/abby16.xml"
-            # self.original_input = "/home/bastian/D1/registration/" + "mri2fem-dataset/normalized/input/abby/" + "abby_brain.mgz"
-            ## this should then be needed / accessed:
-            # self.target_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/chp4/outs/ernie/ernie16.xml"
+        self.registration_lta = "/home/bastian/D1/registration/mri2fem-dataset/" + "normalized/registered/abbytoernie.lta"
+        
+        self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/meshes/manually_registered_brain_mesh/output/abby_registered_brain_mesh.xml"
+        # self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/meshes/reg-aqueduct/abby/ventricles.xml" # affreg-ventricle-aq-boundarymesh.xml"
+        # self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/meshes/ventricles/abby/affreg-ventricle-boundarymesh.xml"
+        self.original_input = "/home/bastian/D1/registration/mri2fem-dataset/normalized/registered/abbytoernie.mgz"
+        ##  Alternative:
+        ## Use the registration affine in meshtransport.
+        ## TODO FIXME make sure the conversion from vox2vox is correct.
+        ## (Be careful: freesurfer-RAS vs freesurfer-surface-RAS coordinates!!!)
+        # self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/chp4/outs/abby/abby16.xml"
+        # self.original_input = "/home/bastian/D1/registration/" + "mri2fem-dataset/normalized/input/abby/" + "abby_brain.mgz"
+        ## this should then be needed / accessed:
+        # self.target_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/chp4/outs/ernie/ernie16.xml"
 
-            self.original_target = "/home/bastian/D1/registration/" + "mri2fem-dataset/normalized/input/ernie/" + "ernie_brain.mgz"
+        self.original_target = "/home/bastian/D1/registration/" + "mri2fem-dataset/normalized/input/ernie/" + "ernie_brain.mgz"
 
 
             

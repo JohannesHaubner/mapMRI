@@ -103,7 +103,7 @@ def read_image(filename, name, mesh=None, printout=True, threshold=True, project
 
         data = np.expand_dims(data, -1)
 
-    if "smoothen_image" in hyperparameters.keys() and hyperparameters["hyperparameters"]:
+    if "smoothen_image" in hyperparameters.keys() and hyperparameters["smoothen_image"]:
         sigma = 0.5
         print_overloaded("Applying Gauss filter to image, sigma=", sigma)
         data = ndimage.gaussian_filter(data, sigma=sigma)

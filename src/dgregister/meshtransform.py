@@ -308,19 +308,21 @@ def make_mapping(cubemesh, control, M_lumped_inv, hyperparameters,):
 
         assert norm(velocity) > 0
 
-        # print_overloaded("Using CGTransport")
-        # xout = CGTransport(Img=xin, Wind=-velocity, 
+        print_overloaded("Using CGTransport")
+        xout = CGTransport(Img=xin, Wind=-velocity, 
+                           DeltaT=hyperparameters["DeltaT"], 
+                           preconditioner="amg", 
+                        MaxIter=hyperparameters["max_timesteps"], timestepping=hyperparameters["timestepping"], 
+                        solver="krylov", MassConservation=hyperparameters["MassConservation"])
+        
+        # print_overloaded("Using DGTransport")
+        # xout = DGTransport(Img=xin, Wind=-velocity, 
         #                    DeltaT=hyperparameters["DeltaT"], 
         #                    preconditioner="amg", 
         #                 MaxIter=hyperparameters["max_timesteps"], timestepping=hyperparameters["timestepping"], 
         #                 solver="krylov", MassConservation=hyperparameters["MassConservation"])
         
-        print_overloaded("Using DGTransport")
-        xout = DGTransport(Img=xin, Wind=-velocity, 
-                           DeltaT=hyperparameters["DeltaT"], 
-                           preconditioner="amg", 
-                        MaxIter=hyperparameters["max_timesteps"], timestepping=hyperparameters["timestepping"], 
-                        solver="krylov", MassConservation=hyperparameters["MassConservation"])
+        
         
         mappings.append(xout)
 

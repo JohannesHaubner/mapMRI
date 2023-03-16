@@ -9,8 +9,8 @@ def print_overloaded(*args):
 
 
 
-omega = 0.
-epsilon = 1.
+# omega = 0.
+# epsilon = 1.
 
 # omega = 0.5
 # epsilon = 0.5
@@ -31,10 +31,14 @@ class Preconditioning():
         c = TrialFunction(C)
         psi = TestFunction(C)
 
-        global omega
-        global epsilon
+        # global omega
+        # global epsilon
+
+        omega = 0.5
+        epsilon = 0.5
 
         if omega != 0 and epsilon != 1:
+            # raise NotImplementedError("Change also in preconditioning")
             print_overloaded("Using non-default omega=", omega, "epsilon=", epsilon, "in preconditioning")
 
         else:

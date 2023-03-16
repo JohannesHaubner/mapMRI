@@ -3,6 +3,7 @@ from dolfin_adjoint import *
 
 from pyadjoint import Block
 from pyadjoint.overloaded_function import overload_function
+import dolfin.fem as df
 
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
@@ -11,7 +12,7 @@ def print_overloaded(*args):
     else:
         pass
 
-from dgregister.preconditioning import preconditioning, omega, epsilon
+from dgregister.preconditioning import preconditioning # , omega, epsilon
 
 
 backend_preconditioning = preconditioning
@@ -38,16 +39,26 @@ class PreconditioningBlock(Block):
         c = TrialFunction(C)
         psi = TestFunction(C)
         
-        # omega = 0
-        # epsilon = 1
+        omega = 0
+        epsilon = 1
         
-        # omega = 0.5
-        # epsilon = 0.5
+        omega = 0.5
+        epsilon = 0.5
+        
+        dx = df.form.ufl.dx(C.mesh())
+        # # omega = 0.5
+        # # epsilon = 0.5
+
         if omega != 0 and epsilon != 1:
             print_overloaded("Using non-default omega=", omega, "epsilon=", epsilon, "in preconditioning_overloaded")
         else:
             print_overloaded("Using standard omega, epsilon", omega, epsilon, "in preconditioning_overloaded")
-            
+        
+        if isinstance(omega, float):
+
+            omega = Constant(omega)
+            epsilon = Constant(epsilon)
+
         if not hasattr(self, "solver"):
             
             a = omega * inner(c, psi) * dx + epsilon * inner(grad(c), grad(psi)) * dx

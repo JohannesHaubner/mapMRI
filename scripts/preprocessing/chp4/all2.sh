@@ -24,7 +24,7 @@ else
    exit
 fi
 
-IDNAME=ernie
+IDNAME=abby
 
 OUTDIR=./outs/$IDNAME
 mkdir -pv $OUTDIR
@@ -70,6 +70,7 @@ ${SCRIPTDIR}/extract-ventricles.sh
 # Use scripts from chp3 to remesh and smoothen.
 # Rename stl files rh.pial.stl and rh.white.stl again
 RES=32
+
 python3 ${SCRIPTDIR}/fullbrain-five-domain.py --resolution ${RES} --name ${IDNAME}
 
 outname=${IDNAME}${RES}
