@@ -12,9 +12,9 @@ from dgregister.helpers import crop_to_original, Data
 parser = argparse.ArgumentParser()
 parser.add_argument("path")
 # parser.add_argument("--recompute", action="store_true", default=False)
-parser.add_argument("--statename", type=str, default="CurrentState", choices=["CurrentState", "Finalstate"])
-parser.add_argument("--readname", type=str, default="CurrentState", choices=["CurrentState", "Finalstate"])
-parser.add_argument("--xdmffile", type=str, default="State_checkpoint.xdmf", choices=["State_checkpoint.xdmf", "Finalstate.xdmf"])
+parser.add_argument("--statename", type=str, default="CurrentState", choices=["CurrentState", "Finalstate", "Img"])
+parser.add_argument("--readname", type=str, default="CurrentState", choices=["CurrentState", "Finalstate", "Img"])
+parser.add_argument("--xdmffile", type=str, default="State_checkpoint.xdmf", choices=["State_checkpoint.xdmf", "Finalstate.xdmf", "Input.xdmf"])
 
 
 parserargs = vars(parser.parse_args())
@@ -32,26 +32,26 @@ h = json.load(open("hyperparameters.json"))
 
 
 
-if (not os.path.isfile(statename + ".npy")) or parserargs["recompute"]:
-    print("Initializing mesh")
-    mesh = BoxMesh(MPI.comm_world, Point(0.0, 0.0, 0.0), Point(nx, ny, nz), nx, ny, nz)
+#  if (not os.path.isfile(statename + ".npy")) or parserargs["recompute"]:
+print("Initializing mesh")
+mesh = BoxMesh(MPI.comm_world, Point(0.0, 0.0, 0.0), Point(nx, ny, nz), nx, ny, nz)
 
-    print("Initializing FunctionSpace")
-    V = FunctionSpace(mesh, "DG", 1)
+print("Initializing FunctionSpace")
+V = FunctionSpace(mesh, "DG", 1)
 
-    u = Function(V)
+u = Function(V)
 
-    with XDMFFile(parserargs["xdmffile"]) as xdmf:
-        xdmf.read_checkpoint(u, parserargs["readname"])
+with XDMFFile(parserargs["xdmffile"]) as xdmf:
+    xdmf.read_checkpoint(u, parserargs["readname"])
 
-    print("Read State_checkpoint, calling fem2mri")
-    retimage = fem2mri(function=u, shape=[nx, ny, nz])
+print("Read ", parserargs["readname"],  ", calling fem2mri")
+retimage = fem2mri(function=u, shape=[nx, ny, nz])
 
-    np.save(statename+".npy", retimage)
-    print("Stored " + statename + ".npy")
+np.save(statename+".npy", retimage)
+print("Stored " + statename + ".npy")
 
-else:
-    retimage =  np.load(statename+ ".npy")
+# else:
+#     retimage =  np.load(statename+ ".npy")
 
 data =  Data(input=h["input"], target=h["target"])
 

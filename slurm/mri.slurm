@@ -12,7 +12,7 @@
 ## SBATCH --partition=fpgaq
 ## fpgaq has 96 cpus per onde
 #
-#SBATCH --partition=defq
+#SBATCH --partition=defq,milanq
 ## SBATCH --partition=defq,milanq
 ## has 128 cpus per node
 ## SBATCH --partition=habanaq
@@ -63,7 +63,11 @@ srun -n ${NP} --cpu-bind=rank python3 -u ${SPATH}/Optimize3d.py \
 --input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
 --smoothen_image --huber_delta 1 --timestepping RungeKutta --huber --memdebug --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 
+# --starting_state /home/bastian/D1/registration/smoothened-outputs/454565/RK100A0.01LBFGS200/State_checkpoint.xdmf --readname CurrentState \
+
+
 # --starting_state /home/bastian/D1/registration/normalized-outputs/447918/RK100A0.01LBFGS150/State_checkpoint.xdmf --readname CurrentState \
+
 # --starting_state /home/bastian/D1/registration/normalized-forward/446152/RK100A0.01LBFGS0/Finalstate.xdmf --statename Finalstate \
 # --starting_guess /home/bastian/D1/registration/normalized-outputs/446600/RK100A0.01LBFGS200/Control_checkpoint.xdmf --readname CurrentV \
 # --forward \

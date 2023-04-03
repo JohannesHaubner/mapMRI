@@ -39,11 +39,17 @@ class PreconditioningBlock(Block):
         c = TrialFunction(C)
         psi = TestFunction(C)
         
-        omega = 0
+        # omega = 0
+        # epsilon = 1
+        
+        # omega = 0
+        # epsilon = 1
+
+        # omega = 0.5
+        # epsilon = 0.5
+        omega = 0.2
         epsilon = 1
         
-        omega = 0.5
-        epsilon = 0.5
         
         dx = df.form.ufl.dx(C.mesh())
         # # omega = 0.5

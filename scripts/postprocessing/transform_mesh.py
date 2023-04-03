@@ -29,7 +29,8 @@ parser.add_argument("--noaffine", action="store_true", default=False)
 
 parserargs = vars(parser.parse_args())
 
-parserargs["reverse"] = True
+parserargs["reverse"] = False # True
+print("""parserargs["reverse"]""", parserargs["reverse"])
 parserargs["folders"] = sorted(parserargs["folders"])
 
 

@@ -33,9 +33,14 @@ class Preconditioning():
 
         # global omega
         # global epsilon
+        
+        # omega = 0
+        # epsilon = 1
 
-        omega = 0.5
-        epsilon = 0.5
+        omega = 0.2
+        epsilon = 1
+
+
 
         if omega != 0 and epsilon != 1:
             # raise NotImplementedError("Change also in preconditioning")

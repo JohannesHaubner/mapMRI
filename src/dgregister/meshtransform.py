@@ -237,7 +237,7 @@ def map_mesh(mappings: list, noaffine: bool,
             surface = svmtk.Surface(stlfile)
 
             # Remesh surface
-            surface.isotropic_remeshing(1, 3, False)
+            surface.isotropic_remeshing(3, 3, False)
 
             surface.smooth_taubin(5)
 
@@ -337,11 +337,11 @@ def make_mapping(cubemesh, control, M_lumped_inv, hyperparameters,):
 
     import dgregister.preconditioning
 
-    if str(hyperparameters["slurmid"]) == "450276":
-        dgregister.preconditioning.omega = 0.5
-        dgregister.preconditioning.epsilon = 0.5
-    elif str(hyperparameters["slurmid"]) not in ["446152", "446600", "447918"]:
-        raise NotImplementedError("Check which omega, epsilon was used.")
+    # if str(hyperparameters["slurmid"]) == "450276":
+    #     dgregister.preconditioning.omega = 0.5
+    #     dgregister.preconditioning.epsilon = 0.5
+    # elif str(hyperparameters["slurmid"]) not in ["446152", "446600", "447918"]:
+    #     raise NotImplementedError("Check which omega, epsilon was used.")
 
     mappings = []
 
