@@ -13,6 +13,7 @@ parser.add_argument("--only", type=int, default=None)
 parser.add_argument("--omit", type=int, default=None)
 parser.add_argument("-v", "--vent", action="store_true", default=False)
 parser.add_argument("-f", "--full", action="store_true", default=False)
+parser.add_argument("-s", "--smooth", action="store_true", default=False)
 parser.add_argument("--hundred", action="store_true", default=False)
 
 parsersargs = vars(parser.parse_args())
@@ -184,8 +185,10 @@ if parsersargs["vent"]:
     foldernames = ["ventricle-outputs"]
 elif parsersargs["full"]:
     foldernames = ["normalized-outputs"]
+elif parsersargs["smooth"]:
+    foldernames = ["smoothened-outputs"]
 else:
-    foldernames = [ "normalized-outputs","ventricle-outputs"]
+    foldernames = ["smoothened-outputs"] #  "normalized-outputs","ventricle-outputs"]
 
 if parsersargs["resync"]:
 

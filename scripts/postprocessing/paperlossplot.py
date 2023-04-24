@@ -17,7 +17,7 @@ parser.add_argument("--hundred", action="store_true", default=False)
 
 parsersargs = vars(parser.parse_args())
 parsersargs["full"] = True
-labels = iter([r"$\Phi_1$", r"$\Phi_2$", r"$\Phi_3$", r"$\Phi_4$"])
+labels = iter([r"$\phi_1$", r"$\phi_2$", r"$\phi_3$", r"$\phi_4$"])
 
 
 def make_loss_history(hyperparameters, expath, expath2, localpath, loss, runname=None):
@@ -170,8 +170,8 @@ def read_loss_from_log(file1, hyperparameters):
     return history, line_searches
 
 
-dpi = None
-figsize= None
+dpi = 400
+figsize= None # (12, 12)
 
 subj1 = "abby"
 res = 8
@@ -283,6 +283,7 @@ def slurmid(runname, localpath):
     hyperparameterfile = localpath / runname / "hyperparameters.json"
     hyperparameters = json.load(open(hyperparameterfile))
     return hyperparameters["slurmid"]
+
 
 
 for foldername in foldernames:
@@ -414,7 +415,10 @@ for foldername in foldernames:
 
         if int(hyperparameters["slurmid"]) == 449047:
             loss = loss[150:]
-
+        if int(hyperparameters["slurmid"]) == 450276:
+            # breakpoint()
+            loss = loss[:500, :]
+            
 
         running = "Jd_final" not in hyperparameters.keys()
 
@@ -438,17 +442,21 @@ for foldername in foldernames:
         loss[:, 1:] /= domain_size
 
         p = ax1.plot(loss[:, 0], loss[:, 2], linestyle=linestlyle, label=label, 
-                    marker="o", #linewidth=0,
+                    # marker="o", #linewidth=0,
                     )        
 
         if len(loss[:,0]) > 1:
-            ax3.plot(loss[:, 0], loss[:, 1] / startloss , color=p[0].get_color(), linestyle=linestlyle, label=label, 
+            ax3.plot(loss[:, 0], loss[:, 1] / (0 + 1 * startloss) , color=p[0].get_color(), linestyle=linestlyle, label=label, 
                     # marker=marker, markevery=markevery
                 )
 
-    ax1.set_ylabel(r"$L^2$-loss   $\frac{1}{|\Omega|}\int_{\Omega}(\mathrm{State}-\mathrm{Target})^2\, dx$")
-    ax3.set_ylabel(r"Reduction in Discrepancy Deformed-Target")
-
+    ax1.set_ylabel("Mismatch deformed-target  \n " + r" $\frac{1}{|\Omega|}\int(\phi_i-\phi_e)^2\, dx$")
+    # ax3.set_ylabel(r"$\frac{||\phi_e-\phi_i||}{||\mathcal{A}\phi_a||}$", rotation=0)
+    ax3.set_title("Relative reduction in mismatch to target")
+    # ax3.set_ylabel(r"$L^2$-loss   $\frac{1}{|\Omega|}\int_{\Omega}(\mathrm{State}-\mathrm{Target})^2\, dx$")
+    # ax3.set_yticks([0.25, 0.5, 0.75, 1])
+    ax3.set_xticks([100, 200, 300, 400, 500])
+    ax1.set_xticks([100, 200, 300, 400, 500])
 
     print(hyperparameters["slurmid"], foldername, runname)
 
