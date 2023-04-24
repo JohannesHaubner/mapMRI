@@ -6,8 +6,7 @@ from fenics import *
 from fenics_adjoint import *
 import meshio
 import pathlib
-from dgregister.meshtransform import map_mesh, make_mapping
-from dgregister.helpers import get_lumped_mass_matrices, Data
+
 
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
@@ -28,6 +27,20 @@ parser.add_argument("--affineonly", action="store_true", default=False, help="Ap
 parser.add_argument("--noaffine", action="store_true", default=False)
 
 parserargs = vars(parser.parse_args())
+
+if len(parserargs["folders"]) > 1:
+    raise NotImplementedError("Setting omega, epsilon for several deformations not yet implemented")
+else:
+
+    deformation_hyperparameter = json.load(open(parserargs["folders"][0] + "hyperparameters.json"))
+
+import dgregister.config as config
+
+config.EPSILON = deformation_hyperparameter["epsilon"]
+config.OMEGA = deformation_hyperparameter["omega"]
+
+from dgregister.meshtransform import map_mesh, make_mapping
+from dgregister.helpers import get_lumped_mass_matrices, Data
 
 parserargs["reverse"] = False # True
 print("""parserargs["reverse"]""", parserargs["reverse"])

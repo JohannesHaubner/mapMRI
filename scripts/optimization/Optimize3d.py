@@ -24,7 +24,6 @@ parameters['ghost_mode'] = 'shared_facet'
 
 from dgregister.helpers import get_lumped_mass_matrices
 from dgregister.MRI2FEM import read_image, fem2mri
-from dgregister.find_velocity import find_velocity
 from dgregister.MRI2FEM import fem2mri
 from dgregister.helpers import crop_to_original, Data
 
@@ -53,6 +52,8 @@ parser.add_argument("--forward", default=False, action="store_true", help="Only 
 
 # Optimization
 parser.add_argument("--alpha", type=float, default=1e-4)
+parser.add_argument("--omega", type=float, default=0)
+parser.add_argument("--epsilon", type=float, default=1)
 parser.add_argument("--lbfgs_max_iterations", type=float, default=400)
 parser.add_argument("--maxcor", default=10, type=int)
 parser.add_argument("--taylortest", default=False, action="store_true", help="Taylor test")
@@ -64,6 +65,13 @@ parser.add_argument("--huber", default=False, action="store_true", help="Use Hub
 parser.add_argument("--huber_delta", type=int, default=1)
 
 hyperparameters = vars(parser.parse_args())
+
+import dgregister.config as config
+
+config.EPSILON = hyperparameters["epsilon"]
+config.OMEGA = hyperparameters["omega"]
+
+from dgregister.find_velocity import find_velocity
 
 if not hyperparameters["output_dir"].endswith("/"):
     hyperparameters["output_dir"] += "/"

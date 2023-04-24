@@ -52,11 +52,11 @@ cd $SPATH
 # FOLDER=/home/bastian/D1/registration/normalized-outputs/450276/RK100A0.01LBFGS150/ #alpha=0.5=beta
 # # # # not needed: FOLDER=/home/bastian/D1/registration/normalized-outputs/449047/RK100A0.01LBFGS150/ # alpha=0.1, beta=0.9
 
-OUTPUTFOLDER=cgmeshtransform
+OUTPUTFOLDER=469194
 
 
 # New folders:
-FOLDER=/home/bastian/D1/registration/smoothened-outputs/461235/RK100A0.01LBFGS200/
+FOLDER=/home/bastian/D1/registration/smoothened-outputs/${OUTPUTFOLDER}/RK100A0.01LBFGS200/
 srun -n 32 python3 -u transform_mesh.py --mapping_only --folders ${FOLDER} --recompute_mapping --outputfoldername ${OUTPUTFOLDER} > ${LOGOUTFILE}
 echo "Computed mapping, now running transform with only one core"
 
@@ -67,10 +67,9 @@ python -c "import SVMTK as svmtk"
 
 # /home/bastian/D1/registration/normalized-outputs/446600/RK100A0.01LBFGS200/ \
 srun -n 1 python3 -u transform_mesh.py --folders \
-/home/bastian/D1/registration/smoothened-outputs/454565/RK100A0.01LBFGS200/ \
-/home/bastian/D1/registration/smoothened-outputs/461235/RK100A0.01LBFGS200/ \
---noaffine --remesh \
---meshoutputfolder /home/bastian/D1/registration/transported-meshes/abby-lh-smoothened/${OUTPUTFOLDER}-2/ \
+/home/bastian/D1/registration/smoothened-outputs/${OUTPUTFOLDER}/RK100A0.01LBFGS200/ \
+--noaffine \
+--meshoutputfolder /home/bastian/D1/registration/transported-meshes/abby-lh-smoothened/${OUTPUTFOLDER}/ \
 --outputfoldername ${OUTPUTFOLDER} >> ${LOGOUTFILE}
 echo "success"
 #  /home/bastian/D1/registration/normalized-outputs/450276/RK100A0.01LBFGS150/ \

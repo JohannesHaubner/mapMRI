@@ -14,6 +14,8 @@ def print_overloaded(*args):
 
 from dgregister.preconditioning import preconditioning # , omega, epsilon
 
+from dgregister.config import OMEGA, EPSILON
+from copy import deepcopy
 
 backend_preconditioning = preconditioning
 
@@ -47,15 +49,18 @@ class PreconditioningBlock(Block):
 
         # omega = 0.5
         # epsilon = 0.5
-        omega = 0.2
-        epsilon = 1
+        # omega = 0.4
+        # epsilon = 1
+
+        omega = deepcopy(OMEGA)
+        epsilon = deepcopy(EPSILON)
         
         
         dx = df.form.ufl.dx(C.mesh())
         # # omega = 0.5
         # # epsilon = 0.5
 
-        if omega != 0 and epsilon != 1:
+        if omega != 0 or epsilon != 1:
             print_overloaded("Using non-default omega=", omega, "epsilon=", epsilon, "in preconditioning_overloaded")
         else:
             print_overloaded("Using standard omega, epsilon", omega, epsilon, "in preconditioning_overloaded")
