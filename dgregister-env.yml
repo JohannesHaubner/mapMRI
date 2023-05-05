@@ -1,4 +1,4 @@
-name: mri_inverse
+name: dgregister-env
 channels:
   - conda-forge
   - defaults

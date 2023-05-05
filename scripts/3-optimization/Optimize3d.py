@@ -24,7 +24,6 @@ parser = argparse.ArgumentParser()
 # I/O
 parser.add_argument("--logfile", type=str, default=None, help="path to log file if this should be stored")
 parser.add_argument("--output_dir", type=str, default=None, help="path where output is stored")
-parser.add_argument("--slurmid", type=str, required=True)
 parser.add_argument("--input", type=str, help="input image as mgz")
 parser.add_argument("--target", type=str, help="target image as mgz")
 parser.add_argument("--smoothen_image", default=False, action="store_true", help="Apply Gauss filter")
@@ -64,20 +63,7 @@ from dgregister.find_velocity import find_velocity
 if not hyperparameters["output_dir"].endswith("/"):
     hyperparameters["output_dir"] += "/"
 
-hyperparameters["outfoldername"] = ""
 
-if hyperparameters["timestepping"] == "RungeKutta":
-    hyperparameters["outfoldername"] = "RK"
-elif hyperparameters["timestepping"] == "CrankNicolson":
-    hyperparameters["outfoldername"] = "CN"
-elif hyperparameters["timestepping"] == "explicitEuler":
-    hyperparameters["outfoldername"] = "E"
-
-hyperparameters["outfoldername"] += format(hyperparameters["max_timesteps"], ".0f")
-hyperparameters["outfoldername"] += "A" + str(hyperparameters["alpha"])
-hyperparameters["outfoldername"] += "LBFGS" + str(int(hyperparameters["lbfgs_max_iterations"]))
-
-print_overloaded("Generated outfoldername", hyperparameters["outfoldername"])
 
 if hyperparameters["starting_state"] is not None:
     assert os.path.isfile(hyperparameters["starting_state"])
@@ -86,7 +72,7 @@ hyperparameters["normalize"] = False
 hyperparameters["smoothen"] = True
 hyperparameters["huber"] = True
 
-hyperparameters["outputfolder"] = hyperparameters["output_dir"] + hyperparameters["outfoldername"]
+hyperparameters["outputfolder"] = hyperparameters["output_dir"]
 hyperparameters["lbfgs_max_iterations"] = int(hyperparameters["lbfgs_max_iterations"])
 hyperparameters["MassConservation"] = False
 hyperparameters["velocity_functiondegree"] = 1

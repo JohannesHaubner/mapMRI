@@ -45,7 +45,7 @@ def upscale(points: np.ndarray, npad: np.ndarray, dxyz: np.ndarray) -> np.ndarra
 
 
 def map_mesh(mappings: list, noaffine: bool, 
-            data: dgregister.helpers.Data, update:bool = False, 
+            data, update:bool = False, 
             remesh: bool=False, tmpdir=None,):
 
     comm = MPI.comm_world

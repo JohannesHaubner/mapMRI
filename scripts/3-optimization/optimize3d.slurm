@@ -41,8 +41,7 @@ echo "IMG2=" ${IMG2}
 
 srun -n ${NP} python3 -u ${SPATH}/Optimize3d.py \
 --logfile ${LOGOUTFILE2} --output_dir ${OUTPUTDIR} \
---omega 0.1 \
 --input ${IMG1} --target ${IMG2} \
---smoothen_image --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+--slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 
 echo "success"
