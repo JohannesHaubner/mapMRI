@@ -6,25 +6,14 @@
 #SBATCH --nodes=3
 #SBATCH --ntasks-per-node=32
 #################################################################
-## SBATCH --partition=milanq
-## milanq has 256 cpus per node
-#
-## SBATCH --partition=fpgaq
-## fpgaq has 96 cpus per onde
-#
 #SBATCH --partition=defq,milanq
-## SBATCH --partition=defq,milanq
-## has 128 cpus per node
-## SBATCH --partition=habanaq
 #################################################################
 #SBATCH --time 6-23:00:0
-#SBATCH -o /global/D1/homes/bastian/registration/mrislurm/%j.out
+#SBATCH -o ./outputs/mrislurm/%j.out
 #SBATCH --export=ALL
-#SBATCH --mail-user=bastian@simula.no
 
 eval "$(conda shell.bash hook)"
-conda activate mri_inverse
-LOGOUTFILE2=/home/bastian/D1/registration/mrislurm/${SLURM_JOB_ID}_log_python_srun.txt
+conda activate dgregister-env
 
 
 set -o errexit # Exit the script on any error
@@ -32,26 +21,23 @@ set -o nounset # Treat any unset variables as an error
 
 echo "starting to run"
 
-#######################################################
-## EXECUTE AFTER ANOTHER JOB IS DONE:
-## sbatch --dependency=afterany: submit.slurm
-#######################################################
 
-GPATH=/home/bastian/Oscar-Image-Registration-via-Transport-Equation/
-SPATH=${GPATH}scripts/optimization
-LOGOUTFILE=/home/bastian/D1/registration/mrislurm/${SLURM_JOB_ID}_log_python_srun.txt
+GPATH=./
+SPATH=${GPATH}scripts/3-optimization
+LOGOUTFILE=./outputs/mrislurm/${SLURM_JOB_ID}_log_python_srun.txt
 
-OUTPUTDIR=/home/bastian/D1/registration/smoothened-outputs/${SLURM_JOB_ID}/
-IMG1=/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/cropped_abbytoernie_nyul.mgz
-IMG2=/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/cropped_ernie_brain_nyul.mgz
+OUTPUTDIR=./outputs/smoothened-outputs/${SLURM_JOB_ID}/
+IMG1=./data/normalized/cropped/cropped_abbytoernie_nyul.mgz
+IMG2=./data/normalized/cropped/cropped_ernie_brain_nyul.mgz
 LBFGS=200
 
+mkdir -pv $OUTPUTDIR
 
 NP=96
-ITERS=100
+TIMESTEPS=100
 
 echo "NP=" ${NP}
-echo "ITERS=" ${ITERS}
+echo "TIMESTEPS=" ${TIMESTEPS}
 echo "OUTPUTDIR=" $OUTPUTDIR
 echo "IMG1=" ${IMG1}
 echo "IMG2=" ${IMG2}
@@ -59,7 +45,7 @@ echo "IMG2=" ${IMG2}
 srun -n ${NP} python3 -u ${SPATH}/Optimize3d.py \
 --logfile ${LOGOUTFILE2} --output_dir ${OUTPUTDIR} \
 --omega 0.1 \
---input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --lbfgs_max_iterations ${LBFGS} \
+--input ${IMG1} --target ${IMG2} --max_timesteps ${TIMESTEPS} --lbfgs_max_iterations ${LBFGS} \
 --smoothen_image --timestepping RungeKutta --huber --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 
 echo "success"

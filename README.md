@@ -10,9 +10,9 @@ pip install -e .
 
 # Data
 
-Download the dataset from https://zenodo.org/communities/mri2fem and extract into
+Download the dataset from https://zenodo.org/communities/mri2fem and move the folder `freesurfer` to 
 ```
-Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset
+Oscar-Image-Registration-via-Transport-Equation/data/
 ```
 
 # Image pre-processing
@@ -32,15 +32,15 @@ $ bash scripts/1-image-preprocessing/preprocess.sh
 
 Requires FreeSurfer and SVMTK https://github.com/SVMTK/SVMTK.
 Meshes used in the paper can be downloaded from https://github.com/bzapf/meshes.
-Should be put under Oscar-Image-Registration-via-Transport-Equation/data/meshes/
+
+Locate the meshes under `Oscar-Image-Registration-via-Transport-Equation/data/meshes/`
 
 
 ## Ventricular system mesh
 
-Requires the manually edited freesurfer segmenation file. Download from https://github.com/bzapf/meshes
-and put
+Requires the manually edited freesurfer segmentation file for "Abby". 
+Download from https://github.com/bzapf/meshes and move to `Oscar-Image-Registration-via-Transport-Equation/data/freesurfer/abby/reg-ventricles-w-aq.mgz`.
 
-Oscar-Image-Registration-via-Transport-Equation/data/freesurfer/abby/reg-ventricles-w-aq.mgz
 
 To create the ventricular system surface files, run
 ```
@@ -62,13 +62,20 @@ The resulting meshes can be downloaded from https://github.com/bzapf/meshes.
 
 # Mesh registration
 
-We perform the affine registration of the mesh manually. This is useful to visualize the affine-registered meshes.
+
+## Affine mesh registration
+We perform the affine registration of the mesh manually. 
+This is useful to visualize the affine-registered meshes.
 
 ```
 $ python scripts/2-meshing/register_brain_mesh.py
 ```
 
+## Velocity-field mesh registration.
+
+Assuming you run on a server with SLURM, run
 
 ```
-
+$ mkdir -pv ./outputs/mrislurm/
+$ sbatch 4-postprocessing/optimize3d.slurm 
 ```
