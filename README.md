@@ -33,7 +33,7 @@ Assuming you run on a server with SLURM, run
 
 ```
 mkdir -pv ./outputs/mrislurm/
-sbatch scripts/4-postprocessing/optimize3d.slurm 
+sbatch scripts/3-optimization/optimize3d.slurm 
 ```
 
 Alternatively,
