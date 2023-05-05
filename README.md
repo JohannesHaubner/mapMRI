@@ -1,23 +1,29 @@
-# Setup
+# mapMRI 
+
+Code repository for the manuscript
+
+> Bastian Zapf, Johannes Haubner, Lukas Baumgärtner, Stephan Schmidt: Medical Image Registration using optimal control of a linear hyperbolic transport equation with a DG discretization, arXiv:2305.03020 (2023)
+
+## Setup
 
 ```
-git clone https://github.com/Baumi3004/Oscar-Image-Registration-via-Transport-Equation.git
+git clone https://github.com/JohannesHaubner/mapMRI.git
 cd Oscar-Image-Registration-via-Transport-Equation
 conda env create -f dgregister-env.yml
 conda activate dgregister-env
 pip install -e .
 ```
 
-### Note: All scripts are assumed to be run from the top level of this repository.
+#### Note: All scripts are assumed to be run from the top level of this repository.
 
-# Data
+## Data
 
 Download the dataset from https://zenodo.org/communities/mri2fem and move the folder `FreeSurfer` to 
 ```
 Oscar-Image-Registration-via-Transport-Equation/data/
 ```
 
-# Image pre-processing
+## Image pre-processing
 
 Requires FreeSurfer.
 run 
@@ -27,7 +33,7 @@ bash scripts/1-image-preprocessing/preprocess.sh
 
 This puts the pre-processed images to `Oscar-Image-Registration-via-Transport-Equation/data/normalized`
 
-# Image registration
+## Image registration
 
 Assuming you run on a server with SLURM, run
 
@@ -54,7 +60,7 @@ python3 -u ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_regi
 --input ${IMG1} --target ${IMG2}
 ```
 
-# Mesh generation
+## Mesh generation
 
 
 Requires FreeSurfer and SVMTK https://github.com/SVMTK/SVMTK. To install,
@@ -71,7 +77,7 @@ Meshes used in the paper can be downloaded from https://github.com/bzapf/meshes.
 Locate the meshes under `Oscar-Image-Registration-via-Transport-Equation/data/meshes/`
 
 
-## Ventricular system mesh
+### Ventricular system mesh
 
 Requires the manually edited FreeSurfer segmentation file for "Abby". 
 Download from https://github.com/bzapf/meshes and move to `Oscar-Image-Registration-via-Transport-Equation/data/FreeSurfer/abby/reg-ventricles-w-aq.mgz`.
@@ -89,16 +95,16 @@ python scripts/2-meshing/make_ventricle_mesh.py
 
 
 
-## Left hemisphere mesh
+### Left hemisphere mesh
 
 As described in Mardal et al. "Mathematical modeling of the human brain: from magnetic resonance images to finite element simulation" Springer 2022.
 The resulting meshes can be downloaded from https://github.com/bzapf/meshes.
 
 
-# Mesh registration
+## Mesh registration
 
 
-## Affine mesh registration
+### Affine mesh registration
 We perform the affine registration of the mesh manually. 
 This is useful to visualize the affine-registered meshes together with the target image.
 
@@ -106,7 +112,7 @@ This is useful to visualize the affine-registered meshes together with the targe
 python scripts/2-meshing/register_brain_mesh.py
 ```
 
-## Velocity-field mesh registration.
+### Velocity-field mesh registration.
 
 First, create the coordinate mapping as FEniCS files:
 ```
