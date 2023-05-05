@@ -18,8 +18,11 @@ nx, ny, nz = image.get_fdata().shape[0], image.get_fdata().shape[1], image.get_f
 
 mesh1 = BoxMesh(MPI.comm_world, Point(0.0, 0.0, 0.0), Point(nx, ny, nz), nx, ny, nz)
 
+hyperparameters = {"smoothen_image": False}
+
+
 _, u_data, _, _ = read_image(imagefile, name=None, mesh=mesh1, printout=True, threshold=False, projector=None,
-                                state_functionspace="DG", state_functiondegree=0, hyperparameters=None)
+                                state_functionspace="DG", state_functiondegree=0, hyperparameters=hyperparameters)
 
 vox2ras = image.header.get_vox2ras_tkr()
 

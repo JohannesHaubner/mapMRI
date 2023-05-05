@@ -108,7 +108,7 @@ def read_image(filename, name, mesh=None, printout=True, threshold=True, project
         print_overloaded("Applying Gauss filter to image, sigma=", sigma)
         data = ndimage.gaussian_filter(data, sigma=sigma)
 
-    if hyperparameters is not None:
+    if hyperparameters is not None and name is not None:
         hyperparameters[name + ".shape"] = list(data.shape)
     if printout:
         print_overloaded("dimension of image:", data.shape, "(", data.size, "voxels)")
