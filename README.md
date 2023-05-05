@@ -50,7 +50,7 @@ Improve upon the first registration by a second velocity based transform:
 $ export IMG1=./data/normalized/cropped/cropped_abbytoernie_nyul.mgz
 $ export IMG2=./data/normalized/cropped/cropped_ernie_brain_nyul.mgz
 $ python3 -u ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_registration_2 \
---starting_state my_registration_2/State_checkpoint.xdmf
+--starting_state my_registration_2/State_checkpoint.xdmf \
 --input ${IMG1} --target ${IMG2}
 ```
 
@@ -110,11 +110,13 @@ $ python scripts/2-meshing/register_brain_mesh.py
 
 First, create the coordinate mapping as FEniCS files:
 ```
-$ python3 -u scripts/4-postprocessing/transform_mesh.py --mapping_only --folders ./outputs/my_registration_1 ./outputs/my_registration_2
+$ python3 -u scripts/4-postprocessing/transform_mesh.py --mapping_only \
+--folders ./outputs/my_registration_1 ./outputs/my_registration_2
 ```
 
 Then, deform the mesh:
 ```
-$ python3 -u scripts/4-postprocessing/transform_mesh.py --folders ./outputs/my_registration_1 ./outputs/my_registration_2 \
+$ python3 -u scripts/4-postprocessing/transform_mesh.py \
+--folders ./outputs/my_registration_1 ./outputs/my_registration_2 \
 --meshoutputfolder  ./outputs/meshes/deformed_mesh/
 ```
