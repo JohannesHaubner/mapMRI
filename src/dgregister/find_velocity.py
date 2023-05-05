@@ -6,7 +6,6 @@ from dgregister.preconditioning_overloaded import preconditioning
 from dgregister.huber import huber
 import time, json
 import numpy as np
-import resource
 from dgregister.helpers import store_during_callback
 
 
@@ -43,7 +42,7 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
         assert norm(l2_controlfun) > 0
     
     control_L2 = transformation(l2_controlfun, M_lumped_inv)
-    print_overloaded("Preconditioning L2_controlfun, name=", control_L2)
+    print_overloaded("Preconditioning L2_controlfun")
     velocity = preconditioning(control_L2)
 
     l2_controlfun.rename("control_l2", "")
@@ -52,7 +51,8 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
 
     print_overloaded("Running Transport() with dt = ", hyperparameters["DeltaT"])
 
-    Img_deformed = DGTransport(starting_image, velocity, MaxIter=hyperparameters["max_timesteps"], DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
+    Img_deformed = DGTransport(starting_image, velocity, MaxIter=hyperparameters["max_timesteps"], 
+                            DeltaT=hyperparameters["DeltaT"], timestepping=hyperparameters["timestepping"], 
                             MassConservation=hyperparameters["MassConservation"], storage_info=storage_info)
 
     if hyperparameters["forward"]:
