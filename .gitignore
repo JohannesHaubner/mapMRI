@@ -28,7 +28,8 @@ data
 __pycache__/
 *.py[cod]
 *$py.class
-*log_python_srun*
+*log_python_srun
+*imageregistration_outputs/
 # C extensions
 *.so
 
