@@ -14,6 +14,7 @@ parser.add_argument("--omit", type=int, default=None)
 parser.add_argument("-v", "--vent", action="store_true", default=False)
 parser.add_argument("-f", "--full", action="store_true", default=False)
 parser.add_argument("-s", "--smooth", action="store_true", default=False)
+parser.add_argument("--pvd", action="store_true", default=False)
 parser.add_argument("--hundred", action="store_true", default=False)
 
 parsersargs = vars(parser.parse_args())
@@ -48,8 +49,7 @@ def make_loss_history(hyperparameters, expath, expath2, localpath, loss, runname
         startlogfiles = [x for x in os.listdir(starting_guess_dir) if x.endswith("_log_python_srun.txt")]
         assert len(startlogfiles) == 1
 
-        file2 = open(starting_guess_dir / startlogfiles[0], 'r')
-        startloss, _ = read_loss_from_log(file2, hyperparameters=starting_hyperparameters)
+        startloss, _ = read_loss_from_log(starting_guess_dir / startlogfiles[0], hyperparameters=starting_hyperparameters)
 
         s0 = startloss[0, 1]
 
@@ -101,7 +101,9 @@ def make_loss_history(hyperparameters, expath, expath2, localpath, loss, runname
 
 
 
-def read_loss_from_log(file1, hyperparameters):
+def read_loss_from_log(filename, hyperparameters):
+
+    file1 = open(filename, 'r')
 
     Lines = file1.readlines()
 
@@ -168,6 +170,42 @@ def read_loss_from_log(file1, hyperparameters):
 
     return history, line_searches
 
+
+def read_hyperparameters_from_log(filename):
+    file1 = open(filename, 'r')
+
+    Lines = file1.readlines()
+
+
+    for idx, line in enumerate(Lines):
+        # print(line)
+        if "Using non-default omega=" in line and "overloaded" not in line:
+            result = parse("Usingnon-defaultomega={}epsilon={}inpreconditioning\n", line.replace(" ", ""))
+            # breakpoint()
+            if result is None:
+                breakpoint()
+            omega = float(result[0])
+            epsilon = float(result[1])
+            # print("omega, epsilon=", omega, epsilon)
+        if "Using standard omega" in line and "overloaded" not in line:
+            result = parse("Using standard omega, epsilon {} {} in preconditioning\n", line) # , line.replace(" ", ""))
+            # breakpoint()
+            if result is None:
+                breakpoint()
+            omega = float(result[0])
+            epsilon = float(result[1])
+    # Using standard omega, epsilon 0.2 1 in preconditioning
+
+    try:
+        # print("omega, epsilon=", omega, epsilon)
+        return omega, epsilon
+    except NameError:
+        # print(file1)
+        print("-"*80)
+
+        return "", ""
+
+        
 
 dpi = None
 figsize= None
@@ -255,6 +293,15 @@ if parsersargs["resync"]:
             command += " "
             command += str(localpath / runname)
             subprocess.run(command, shell=True)
+
+
+            if parsersargs["pvd"]:
+                command = "rsync -r "
+                command += "ex:" + str(expath / runname / "State_checkpoint*")
+                command += " "
+                command += str(localpath / runname)
+                subprocess.run(command, shell=True)
+
 
             if "optimization_time_hours" in hyperparameters.keys():
 
@@ -361,12 +408,20 @@ for foldername in foldernames:
         assert len(logfiles) == 1
 
 
-        file1 = open(localpath / runname / logfiles[0], 'r')
-        loss, line_searches = read_loss_from_log(file1, hyperparameters=hyperparameters)
+        filename = localpath / runname / logfiles[0]
+        loss, line_searches = read_loss_from_log(filename, hyperparameters=hyperparameters)
+
+        l2loss_from_txt = np.genfromtxt(l2lossfile, delimiter=",")
+        l2loss_from_txt = l2loss_from_txt[~ np.isnan(l2loss_from_txt)]
+        # breakpoint()
 
         killed = False
         valueerror = False
         cancelled = False
+
+        omega, epsilon = read_hyperparameters_from_log(filename)
+        if str(hyperparameters["slurmid"]) == "454565":
+            omega, epsilon = 0, 1
 
         if (localpath / runname / (str(hyperparameters["slurmid"]) + ".out")).is_file():
             outfile = open(localpath / runname / (str(hyperparameters["slurmid"]) + ".out"), "r")
@@ -413,8 +468,8 @@ for foldername in foldernames:
             # continue
             pass
 
-        if int(hyperparameters["slurmid"]) == 449047:
-            loss = loss[150:]
+        # if int(hyperparameters["slurmid"]) == 449047:
+        #     loss = loss[150:]
 
 
         running = "Jd_final" not in hyperparameters.keys()
@@ -434,37 +489,43 @@ for foldername in foldernames:
 
         linestlyle="-"
 
-        label = r"$\alpha$=" + format(hyperparameters["alpha"], ".0e") + "," + format(hyperparameters["max_timesteps"], ".0f") + " time steps"
-        
-        if killed:
-            label += "\n(error)"
-        elif cancelled:
-            label += "\n(cancelled)"
-        elif running:
-            label += "\n(running)"
 
-        label += hyperparameters["slurmid"]
+        label = ""
+        # label = r"$\alpha$=" + format(hyperparameters["alpha"], ".0e") + "," + format(hyperparameters["max_timesteps"], ".0f") + " time steps"
+        
+        # if killed:
+        #     label += "\n(error)"
+        # elif cancelled:
+        #     label += "\n(cancelled)"
+        # elif running:
+        #     label += "\n(running)"
+
+        # label += hyperparameters["slurmid"]
 
         marker = None
         markevery= 1e14
 
-        if hyperparameters["tukey"]:
-            label += "(tukey, c=" + str(hyperparameters["tukey_c"]) + ")"
-            linestlyle = "--"
+        # if hyperparameters["tukey"]:
+        #     label += "(tukey, c=" + str(hyperparameters["tukey_c"]) + ")"
+        #     linestlyle = "--"
 
-        elif hyperparameters["huber"]:
-            label += "(huber, c=" + str(hyperparameters["huber_delta"]) + ")"
-            marker = "x"
+        # elif hyperparameters["huber"]:
+        #     label += "(huber, c=" + str(hyperparameters["huber_delta"]) + ")"
+        #     marker = "x"
         
-        if hyperparameters["starting_guess"] is not None:
-            label += "(restart)"
-            # linestlyle = "--"
+        # if hyperparameters["starting_guess"] is not None:
+        #     label += "(restart)"
+        #     # linestlyle = "--"
 
-        loss[:, 1:] /= domain_size
+        label += r" $\alpha=" +  str(omega) + r"$, $\beta=" + str(epsilon) + "$"
+
+        # loss[:, 1:] /= domain_size
 
         p = ax1.plot(loss[:, 0], loss[:, 2], linestyle=linestlyle, label=label, 
-                    marker="o", #linewidth=0,
-                    )        
+                    # marker="o", #linewidth=0,
+                    )
+
+        ax1.plot(l2loss_from_txt / domain_size, color=p[0].get_color(), marker="o", markevery=20)
 
         if len(loss[:,0]) > 1:
             ax3.plot(loss[:, 0], loss[:, 1] / startloss , color=p[0].get_color(), linestyle=linestlyle, label=label, 
@@ -473,6 +534,7 @@ for foldername in foldernames:
 
     ax1.set_ylabel(r"$L^2$-loss   $\frac{1}{|\Omega|}\int_{\Omega}(\mathrm{State}-\mathrm{Target})^2\, dx$")
     ax3.set_ylabel(r"Reduction in Discrepancy Deformed-Target")
+    ax3.set_ylabel(r"Discrepancy $\mathcal{J}$")
 
 
     print(hyperparameters["slurmid"], foldername, runname)
