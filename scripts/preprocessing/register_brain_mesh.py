@@ -39,13 +39,8 @@ xyz = mesh.coordinates()
 
 lta = read_vox2vox_from_lta(lta)
 
-## Can also try with 
-# /home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/normalized/registered_lta/abbytoernie_ras2ras.lta
-
-
 xyz_vox = apply_affine(aff=np.linalg.inv(abby_vox2ras), pts=xyz)
 
-# xyz_reg = xyz_vox
 xyz_reg = apply_affine(aff=lta, pts=xyz_vox)
 
 xyz_ras = apply_affine(aff=regabby_vox2ras, pts=xyz_reg)
@@ -59,5 +54,3 @@ meshio_command += str(outputpath / "abby_registered_brain_mesh.xml") + " "
 meshio_command += str(outputpath / "abby_registered_brain_mesh.xml").replace(".xml", ".xdmf")
 
 os.system(meshio_command)
-
-# np.matmul()

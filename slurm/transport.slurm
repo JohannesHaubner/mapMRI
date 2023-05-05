@@ -62,7 +62,7 @@ echo "Computed mapping, now running transform with only one core"
 
 
 
-
+# 
 python -c "import SVMTK as svmtk"
 
 # /home/bastian/D1/registration/normalized-outputs/446600/RK100A0.01LBFGS200/ \
@@ -81,32 +81,5 @@ echo "success"
 
 DPATH=/home/bastian/D1/registration/ventricle-outputs
 
-# srun -n 64 python3 -u transform_mesh.py --mapping_only \
-# --folders \
-# ${DPATH}/446719/RK100A0.01LBFGS100/ \
-# --recompute_mapping \
-# > ${LOGOUTFILE}
-
-# exit
-
-# ${DPATH}/446036/RKA0.01LBFGS50/ \
-# ${DPATH}/446180/RKA0.01LBFGS100/ \
-# ${DPATH}/446431/RK100A0.01LBFGS100/ \
-
-# echo "Computed mapping, now running meshtransform with only one core"
-
-# srun -n 1 python3 -u transform_mesh.py \
-# --folders \
-# ${DPATH}/446036/RKA0.01LBFGS50/ \
-# ${DPATH}/446180/RKA0.01LBFGS100/ \
-# ${DPATH}/446431/RK100A0.01LBFGS100/ \
-# ${DPATH}/446719/RK100A0.01LBFGS100/ \
-# --remesh \
-# --reverse \
-# --meshoutputfolder /home/bastian/D1/registration/transported-meshes/021-ventricle-mymesh-reversed/ >> ${LOGOUTFILE}
-
-
-
-#--affineonly \
 
 echo "success"

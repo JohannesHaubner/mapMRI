@@ -73,34 +73,7 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
     state = Control(Img_deformed)  # The Control type enables easy access to tape values after replays.
     cont = Control(l2_controlfun)
 
-
-    if hyperparameters["tukey"]:
-
-        def tukeyloss(x, y, hyperparameters):
-
-            tukey_c = hyperparameters["tukey_c"]
-
-            residual = x - y
-
-            with stop_annotating():
-                arrname = hyperparameters["outputfolder"] + "/normalized_residual" + str(MPI.rank(MPI.comm_world)) + ".npy"
-                resvec = x.vector()[:] - y.vector()[:] #  - mean_residual) / std_residual
-                np.save(arrname, resvec)
-
-                print_overloaded("Stored residuals")
-            
-            loss = tukey(x=residual, c=tukey_c)
-            
-            return loss
-
-        print_overloaded("Using tukey loss")
-        loss = tukeyloss(x=Img_deformed, y=Img_goal, hyperparameters=hyperparameters)
-        Jd = assemble(0.5 * loss * dx)
-
-        with stop_annotating():
-            l2loss = assemble(0.5 * (Img_deformed - Img_goal) ** 2 * dx)
-
-    elif hyperparameters["huber"]:
+    if hyperparameters["huber"]:
         def huberloss(x, y, hyperparameters):
 
             delta = hyperparameters["huber_delta"]
@@ -161,9 +134,6 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
     Jhat = ReducedFunctional(J, cont)
 
 
-    # files["stateFile"].write(Img_deformed, str(0))
-    # files["controlFile"].write(l2_controlfun, str(0))
-
     if hyperparameters["taylortest"]:
 
         print_overloaded("Running convergence test")
@@ -183,11 +153,6 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
         global current_iteration
         current_iteration += 1
         
-        if hyperparameters["memdebug"]:
-            mem = resource.getrusage(resource.RUSAGE_SELF)[2]
-            print("Memory (TB)", (mem/(1e6*1024)), "current_iteration", current_iteration, "process", str(MPI.rank(MPI.comm_world)))
-
-
         with stop_annotating():
             current_pde_solution = state.tape_value()
             current_pde_solution.rename("Img", "")
@@ -206,10 +171,8 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
             l2loss = (current_pde_solution - Img_goal) ** 2
             l2loss = assemble(0.5 * l2loss * dx)
 
-            if hyperparameters["tukey"]:
-                loss = tukeyloss(x=current_pde_solution, y=Img_goal, hyperparameters=hyperparameters)
-                Jd = assemble(0.5 * loss * dx)
-            elif hyperparameters["huber"]:
+
+            if hyperparameters["huber"]:
                 loss = huberloss(x=current_pde_solution, y=Img_goal, hyperparameters=hyperparameters)
                 Jd = assemble(loss * dx)
             else:
@@ -217,8 +180,7 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
 
             domainmesh = current_pde_solution.function_space().mesh()
 
-            # def store_during_callback(current_iteration, hyperparameters, files, Jd, l2loss,
-            #                domainmesh, current_pde_solution, control):
+
             store_during_callback(current_iteration, hyperparameters, files, Jd, l2loss,
                                         domainmesh, current_pde_solution, control=current_l2_control)
 
@@ -227,17 +189,8 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
 
     t0 = time.time()
 
-    if hyperparameters["memdebug"]:
-        tol = 1e-32
-    else:
-        tol = 1e-8
+    minimize(Jhat,  method = 'L-BFGS-B', options = {"iprint": 0, "disp": None, "maxiter": hyperparameters["lbfgs_max_iterations"]}, tol=1e-8, callback = cb)
 
-    minimize(Jhat,  method = 'L-BFGS-B', options = {"iprint": 0, "disp": None, "maxiter": hyperparameters["lbfgs_max_iterations"],
-                "maxcor": hyperparameters["maxcor"]}, tol=tol, callback = cb)
-
-
-    if hyperparameters["memdebug"]:
-        exit()
 
     dt0 = time.time() - t0
 

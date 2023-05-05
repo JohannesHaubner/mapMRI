@@ -20,10 +20,8 @@ parser.add_argument("--folders", nargs="+", type=str, default=[])
 parser.add_argument("--recompute_mapping", action="store_true", default=False)
 parser.add_argument("--outputfoldername", type=str, default="meshtransform/")
 parser.add_argument("--meshoutputfolder", type=str, help="Folder where all the transported meshes should be stored.")
-parser.add_argument("--update", action="store_true", default=False, help="Show progress over mesh iteration")
 parser.add_argument("--remesh", action="store_true", default=False, help="Remesh")
 parser.add_argument("--affineonly", action="store_true", default=False, help="Apply only registration affine to mesh ")
-# parser.add_argument("--reverse", action="store_true", default=False)
 parser.add_argument("--noaffine", action="store_true", default=False)
 
 parserargs = vars(parser.parse_args())
@@ -40,10 +38,9 @@ config.EPSILON = deformation_hyperparameter["epsilon"]
 config.OMEGA = deformation_hyperparameter["omega"]
 
 from dgregister.meshtransform import map_mesh, make_mapping
-from dgregister.helpers import get_lumped_mass_matrices, Data
+from dgregister.helpers import get_lumped_mass_matrices
 
-parserargs["reverse"] = False # True
-print("""parserargs["reverse"]""", parserargs["reverse"])
+
 parserargs["folders"] = sorted(parserargs["folders"])
 
 
@@ -99,7 +96,6 @@ for idx, folder in enumerate(parserargs["folders"]):
 
     mapfiles[folder] = outputfolder + "all" + ".hdf"
 
-# exit()
 
 
 mappingname = "coordinatemapping"
@@ -108,7 +104,6 @@ nx = hyperparameters[folder]["target.shape"][0]
 ny = hyperparameters[folder]["target.shape"][1]
 nz = hyperparameters[folder]["target.shape"][2]
 
-# breakpoint()
 
 state_space, state_degree = hyperparameters[folder]["state_functionspace"], hyperparameters[folder]["state_functiondegree"]
 
@@ -119,13 +114,11 @@ print_overloaded("cubemesh size", nx, ny, nz)
 V3 = VectorFunctionSpace(cubemesh, hyperparameters[folder]["velocity_functionspace"], hyperparameters[folder]["velocity_functiondegree"],)
 M_lumped_inv = None
 
-
-del folder
-
 mappings = []
 
 # NOTE
 # NOTE reversed() to apply the transformations in reverse order
+parserargs["reverse"] = False
 
 if not parserargs["reverse"]:
     folders=parserargs["folders"]
@@ -134,7 +127,6 @@ else:
 
 
 for idx, folder in enumerate(folders):
-# NOTE
 
     print(idx, folder)    
 
@@ -158,9 +150,7 @@ for idx, folder in enumerate(folders):
             _, M_lumped_inv = get_lumped_mass_matrices(vCG=V3)
 
         l2_control = Function(V3)
-        # hdf = HDF5File(cubemesh.mpi_comm(), filename, "r")
-        # hdf.read(v, readname)
-        # hdf.close()
+
         with XDMFFile(folder + "/Control_checkpoint.xdmf") as xdmf:
             xdmf.read_checkpoint(l2_control, "CurrentV")
 
@@ -180,7 +170,80 @@ if parserargs["mapping_only"]:
 if parserargs["affineonly"]:
     mappings = []
     
-data = Data(hyperparameters[folder]["input"], hyperparameters[folder]["target"])
+
+# class Data():
+
+#     def __init__(self, input, target) -> None:
+
+#         # if (not "abby" in input) and (not "ernie" in target):  # "ventricle" in input or "hydrocephalus" in input:
+
+#         #     box = np.load("/home/bastian/D1/registration/hydrocephalus/freesurfer/021/testouts/box_all.npy")
+#         #     space = 2
+#         #     pad = 2
+
+#         #     aff3 = nibabel.load("/home/bastian/D1/registration/hydrocephalus/normalized/registered/021to068.mgz").affine
+#         #     # self.input_meshfile = "/home/bastian/D1/registration/hydrocephalus/meshes/ventricle_boundary.xml"
+#         #     # self.input_meshfile = "/home/bastian/D1/registration/hydrocephalus/mymeshes/021ventricles_boundary.xml"
+#         #     # self.input_meshfile = "/home/bastian/D1/registration/hydrocephalus/meshes/ventricles.xml"
+#         #     self.input_meshfile = "/home/bastian/D1/registration/hydrocephalus/meshes/ventricles_boundaryinvFalse.xml"
+            
+#         #     self.original_target = "/home/bastian/D1/registration/hydrocephalus/" + "normalized/input/068/068_brain.mgz"
+#         #     self.original_input = "/home/bastian/D1/registration/hydrocephalus/" + "normalized/input/021/021_brain.mgz"
+#         #     self.registration_lta = "/home/bastian/D1/registration/hydrocephalus/" + "normalized/registered/021to068.lta" 
+
+
+#         # else:
+#         assert "abby" in input
+#         assert "ernie" in target
+#         box = np.load("/home/bastian/D1/registration/mri2fem-dataset/normalized/cropped/box.npy")
+#         space = 0
+#         pad = 2
+
+#         aff3 = nibabel.load("/home/bastian/D1/registration/mri2fem-dataset/normalized/registered/abbytoernie.mgz").affine
+
+#         self.registration_lta = "/home/bastian/D1/registration/mri2fem-dataset/" + "normalized/registered/abbytoernie.lta"
+        
+#         # self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/meshes/manually_registered_brain_mesh/output/abby_registered_brain_mesh.xml"
+#         self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/meshes/lh_registered_verycoarse/lh.xml"
+#         # self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/meshes/reg-aqueduct/abby/ventricles.xml" # affreg-ventricle-aq-boundarymesh.xml"
+#         # self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/meshes/ventricles/abby/affreg-ventricle-boundarymesh.xml"
+#         self.original_input = "/home/bastian/D1/registration/mri2fem-dataset/normalized/registered/abbytoernie.mgz"
+#         ##  Alternative:
+#         ## Use the registration affine in meshtransport.
+#         ## TODO FIXME make sure the conversion from vox2vox is correct.
+#         ## (Be careful: freesurfer-RAS vs freesurfer-surface-RAS coordinates!!!)
+#         # self.input_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/chp4/outs/abby/abby16.xml"
+#         # self.original_input = "/home/bastian/D1/registration/" + "mri2fem-dataset/normalized/input/abby/" + "abby_brain.mgz"
+#         ## this should then be needed / accessed:
+#         # self.target_meshfile = "/home/bastian/D1/registration/mri2fem-dataset/chp4/outs/ernie/ernie16.xml"
+
+#         self.original_target = "/home/bastian/D1/registration/" + "mri2fem-dataset/normalized/input/ernie/" + "ernie_brain.mgz"
+
+#         print_overloaded("Read meshfile", self.input_meshfile)
+            
+#         self.vox2ras_input = nibabel.load(self.original_input).header.get_vox2ras_tkr()
+#         self.vox2ras_target = nibabel.load(self.original_target).header.get_vox2ras_tkr()
+
+#         if hasattr(self, "registration_lta"):
+
+#             self.registration_affine = read_vox2vox_from_lta(self.registration_lta)
+
+#         self.inputmesh = Mesh(self.input_meshfile)
+
+#         print("Mesh has", self.inputmesh.coordinates().shape, "shape")
+
+#         self.box = box
+#         self.space = space
+#         self.pad = pad
+#         self.affine = aff3
+
+#         bounds = get_bounding_box_limits(self.box)
+#         self.dxyz = [bounds[x].start for x in range(3)]
+
+#     def meshcopy(self) -> Mesh:
+#         return Mesh(self.input_meshfile)
+
+# data = Data(hyperparameters[folder]["input"], hyperparameters[folder]["target"])
 
 os.makedirs(parserargs["meshoutputfolder"])
 

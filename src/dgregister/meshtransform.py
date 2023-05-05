@@ -2,17 +2,9 @@ import json
 import os
 import pathlib
 from tqdm import tqdm
-
-import numpy.linalg
-import nibabel
 import numpy
 import numpy as np
 from fenics import *
-try:
-    
-    import pymesh
-except:
-    print("Could not import pymesh")
 
 
 try:
@@ -28,53 +20,11 @@ def print_overloaded(*args):
 
 from fenics_adjoint import *
 from nibabel.affines import apply_affine
-from dgregister.helpers import get_bounding_box_limits, cut_to_box # get_largest_box, pad_with, cut_to_box, 
 from dgregister.preconditioning_overloaded import preconditioning
 from dgregister.transformation_overloaded import transformation
 from dgregister.CGTransport import CGTransport
-from dgregister.DGTransport import DGTransport
-import dgregister
 import dgregister.helpers
 
-
-def fix_mesh(mesh, detail="normal"):
-# This function is from
-# https://github.com/PyMesh/PyMesh/blob/main/scripts/fix_mesh.py
-    bbox_min, bbox_max = mesh.bbox
-    diag_len = numpy.linalg.norm(bbox_max - bbox_min)
-    if detail == "normal":
-        target_len = diag_len * 5e-3
-    elif detail == "high":
-        target_len = diag_len * 2.5e-3
-    elif detail == "low":
-        target_len = diag_len * 1e-2
-    print("Target resolution: {} mm".format(target_len))
-
-    count = 0
-    mesh, __ = pymesh.remove_degenerated_triangles(mesh, 100)
-    mesh, __ = pymesh.split_long_edges(mesh, target_len)
-    num_vertices = mesh.num_vertices
-    while True:
-        mesh, __ = pymesh.collapse_short_edges(mesh, 1e-6)
-        mesh, __ = pymesh.collapse_short_edges(mesh, target_len,
-                                               preserve_feature=True)
-        mesh, __ = pymesh.remove_obtuse_triangles(mesh, 150.0, 100)
-        if mesh.num_vertices == num_vertices:
-            break
-
-        num_vertices = mesh.num_vertices
-        print("#v: {}".format(num_vertices))
-        count += 1
-        if count > 10: break
-
-    mesh = pymesh.resolve_self_intersection(mesh)
-    mesh, __ = pymesh.remove_duplicated_faces(mesh)
-    mesh = pymesh.compute_outer_hull(mesh)
-    mesh, __ = pymesh.remove_duplicated_faces(mesh)
-    mesh, __ = pymesh.remove_obtuse_triangles(mesh, 179.0, 5)
-    mesh, __ = pymesh.remove_isolated_vertices(mesh)
-
-    return mesh
 
 
 
@@ -94,34 +44,15 @@ def upscale(points: np.ndarray, npad: np.ndarray, dxyz: np.ndarray) -> np.ndarra
 
 
 
-
-# def affine_transformation(affine: np.ndarray, xyz: np.ndarray,) -> np.ndarray:
-#     """
-#     """
-
-#     comm = MPI.comm_world
-#     nprocs = comm.Get_size()
-
-#     if nprocs != 1:
-#         raise NotImplementedError
-    
-#     mesh_xyz = np.copy(xyz)
-
-#     mesh_xyz = apply_affine(affine, mesh_xyz)
-
-#     return mesh_xyz
-
-
 def map_mesh(mappings: list, noaffine: bool, 
             data: dgregister.helpers.Data, update:bool = False, 
-            remesh: bool=False, tmpdir=None,
-            raise_errors=True):
+            remesh: bool=False, tmpdir=None,):
 
     comm = MPI.comm_world
     nprocs = comm.Get_size()
 
     if nprocs != 1:
-        raise NotImplementedError
+        raise NotImplementedError("This function needs to be run sequentially")
 
     input_mesh_xyz_ras = data.meshcopy().coordinates()
 
@@ -129,7 +60,6 @@ def map_mesh(mappings: list, noaffine: bool,
 
     assert np.min(input_mesh_xyz_vox) >= 0
     assert np.max(input_mesh_xyz_vox) <= 256
-    # breakpoint()
 
     input_mesh_xyz_vox = downscale(input_mesh_xyz_vox, npad=data.pad, dxyz=data.dxyz)
 
@@ -151,19 +81,13 @@ def map_mesh(mappings: list, noaffine: bool,
     assert np.min(input_mesh_xyz_vox) >= 0
     if len(mappings) > 0:
         assert np.max(input_mesh_xyz_vox) <= np.max(mappings[0].function_space().mesh().coordinates())
-    # breakpoint()
 
     print("Downscaled brain mesh vox coordinates to cube mesh coordinate system")
 
-    # TODO FIXME why was this 4 ? Does it make sense?
     if data.pad not in [0, 2]:
-        # TODO FIXME why was this 4 ? Does it make sense?
         raise ValueError
 
     
-    # NOTE
-    # before the registration affine was applied first.
-
     target_mesh_xyz_vox = np.copy(input_mesh_xyz_vox)
     reuse_mesh = True
 
@@ -232,8 +156,6 @@ def map_mesh(mappings: list, noaffine: bool,
 
             fixed_surfacemesh_file = stlfile.replace(".stl", "_fixed.stl")
 
-            # raise NotImplementedError("Register lh mesh manually first")
-
             surface = svmtk.Surface(stlfile)
 
             # Remesh surface
@@ -249,16 +171,6 @@ def map_mesh(mappings: list, noaffine: bool,
 
 
             surface.save(fixed_surfacemesh_file)
-
-
-            # # Load, fix and store using pymesh:
-            # pymesh_mesh = pymesh.meshio.load_mesh(tmpfile.replace(".xml", ".stl"))
-            # print("Loaded mesh to pymesh")
-            # fixed_pymesh_surface_mesh = fix_mesh(pymesh_mesh, detail="normal")
-            # print("Fixed surface mesh with pymesh")
-            # fixed_surfacemesh_file = tmpfile.replace(".xml", "_fixed.stl")
-            # pymesh.meshio.save_mesh(fixed_surfacemesh_file, fixed_pymesh_surface_mesh)
-            # print("wrote fixed mesh with pymesh")
 
             # Load stl and convert back to xml with  meshio:
             fixed_meshio_mesh = meshio.read(fixed_surfacemesh_file)
@@ -297,7 +209,7 @@ def map_mesh(mappings: list, noaffine: bool,
         target_mesh_xyz_vox = deformed_mesh_ijk
         
     # Now scale back up
-    # breakpoint()
+
 
     target_mesh_xyz_vox = upscale(target_mesh_xyz_vox, npad=data.pad, dxyz=data.dxyz)
     print("Upscaled from cube mesh coordinate system to image voxel coordinates")
@@ -322,26 +234,11 @@ def map_mesh(mappings: list, noaffine: bool,
     
     targetmesh1.coordinates()[:] = target_mesh_xyz_ras1
 
-    # target_mesh_xyz_vox2 =  np.copy(target_mesh_xyz_vox)
-    # target_mesh_xyz_vox2 = apply_affine(np.linalg.inv(data.registration_affine), np.copy(target_mesh_xyz_vox2))
-    # target_mesh_xyz_ras2 = apply_affine(data.vox2ras_target, target_mesh_xyz_vox2)
-    # targetmesh2 = data.meshcopy()
-    # targetmesh2.coordinates()[:] = target_mesh_xyz_ras2
-
-
-    return targetmesh1 # , targetmesh2
+    return targetmesh1
 
 
 
 def make_mapping(cubemesh, control, M_lumped_inv, hyperparameters,):
-
-    import dgregister.preconditioning
-
-    # if str(hyperparameters["slurmid"]) == "450276":
-    #     dgregister.preconditioning.omega = 0.5
-    #     dgregister.preconditioning.epsilon = 0.5
-    # elif str(hyperparameters["slurmid"]) not in ["446152", "446600", "447918"]:
-    #     raise NotImplementedError("Check which omega, epsilon was used.")
 
     mappings = []
 
@@ -361,20 +258,12 @@ def make_mapping(cubemesh, control, M_lumped_inv, hyperparameters,):
 
         assert norm(velocity) > 0
 
-        print_overloaded("Using CGTransport")
+        print_overloaded("Using CGTransport to transport coordinates")
         xout = CGTransport(Img=xin, Wind=-velocity, 
                            DeltaT=hyperparameters["DeltaT"], 
                            preconditioner="amg", 
                         MaxIter=hyperparameters["max_timesteps"], timestepping=hyperparameters["timestepping"], 
                         solver="krylov", MassConservation=hyperparameters["MassConservation"])
-        
-        # print_overloaded("Using DGTransport")
-        # xout = DGTransport(Img=xin, Wind=-velocity, 
-        #                    DeltaT=hyperparameters["DeltaT"], 
-        #                    preconditioner="amg", 
-        #                 MaxIter=hyperparameters["max_timesteps"], timestepping=hyperparameters["timestepping"], 
-        #                 solver="krylov", MassConservation=hyperparameters["MassConservation"])
-        
         
         
         mappings.append(xout)

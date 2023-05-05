@@ -5,13 +5,7 @@ import json
 import time
 import argparse
 import numpy as np
-import nibabel
-import pathlib
 
-
-PETScOptions.set("mat_mumps_icntl_4", 3)   # verbosity
-
-# set_log_level(LogLevel.CRITICAL)
 
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
@@ -23,51 +17,45 @@ print_overloaded("Setting parameters parameters['ghost_mode'] = 'shared_facet'")
 parameters['ghost_mode'] = 'shared_facet'
 
 from dgregister.helpers import get_lumped_mass_matrices
-from dgregister.MRI2FEM import read_image, fem2mri
-from dgregister.MRI2FEM import fem2mri
-from dgregister.helpers import crop_to_original, Data
+from dgregister.MRI2FEM import read_image
 
 parser = argparse.ArgumentParser()
 
 # I/O
-parser.add_argument("--logfile", type=str, default=None)
-parser.add_argument("--output_dir", type=str, default=None)
+parser.add_argument("--logfile", type=str, default=None, help="path to log file if this should be stored")
+parser.add_argument("--output_dir", type=str, default=None, help="path where output is stored")
 parser.add_argument("--slurmid", type=str, required=True)
-parser.add_argument("--input", type=str)
-parser.add_argument("--target", type=str)
-parser.add_argument("--memdebug", default=False, action="store_true", help="Print memory usage")
+parser.add_argument("--input", type=str, help="input image as mgz")
+parser.add_argument("--target", type=str, help="target image as mgz")
 parser.add_argument("--smoothen_image", default=False, action="store_true", help="Apply Gauss filter")
 # Starting guesses
-parser.add_argument("--readname", type=str, default="-1")
-parser.add_argument("--starting_guess", type=str, default=None)
-parser.add_argument("--starting_state", type=str, default=None)
-parser.add_argument("--statename", type=str, default="CurrentState")
+parser.add_argument("--readname", type=str, default="-1", help="Name of the FEniCS function for --starting_guess")
+parser.add_argument("--starting_guess", type=str, default=None, help="Initialize the optimization with this control")
+parser.add_argument("--starting_state", type=str, default=None, help="Start with this image, given as a FEniCS function")
+parser.add_argument("--statename", type=str, default="CurrentState",  help="Name of the FEniCS function for --starting_state")
 
 
 # Forward pass 
 parser.add_argument("--timestepping", default="RungeKutta", choices=["RungeKutta", "CrankNicolson", "explicitEuler"])
 parser.add_argument("--max_timesteps", type=float, default=None)
-parser.add_argument("--storeto", type=str, help="Folder with results.Store npy and mgz files to folder during forward pass")
 parser.add_argument("--forward", default=False, action="store_true", help="Only transport an image forward.")
 
 # Optimization
-parser.add_argument("--alpha", type=float, default=1e-4)
+parser.add_argument("--alpha", type=float, default=1e-2)
 parser.add_argument("--omega", type=float, default=0)
 parser.add_argument("--epsilon", type=float, default=1)
 parser.add_argument("--lbfgs_max_iterations", type=float, default=400)
-parser.add_argument("--maxcor", default=10, type=int)
 parser.add_argument("--taylortest", default=False, action="store_true", help="Taylor test")
 
 # Losses
-parser.add_argument("--tukey", default=False, action="store_true", help="Use tukey loss function")
-parser.add_argument("--tukey_c", type=int, default=1)
-parser.add_argument("--huber", default=False, action="store_true", help="Use Huber loss function")
+parser.add_argument("--huber", default=False, action="store_true", help="Use Huber loss function instead of L2")
 parser.add_argument("--huber_delta", type=int, default=1)
 
 hyperparameters = vars(parser.parse_args())
 
 import dgregister.config as config
 
+# Set the velocity smoothening parameters
 config.EPSILON = hyperparameters["epsilon"]
 config.OMEGA = hyperparameters["omega"]
 
@@ -116,94 +104,12 @@ if not os.path.isdir(hyperparameters["outputfolder"]):
 (domainmesh, Img, input_max, projector) = read_image(filename=hyperparameters["input"], name="input", mesh=None, hyperparameters=hyperparameters,
             state_functionspace=hyperparameters["state_functionspace"], state_functiondegree=hyperparameters["state_functiondegree"])
 
-
-
-
-if hyperparameters["storeto"] is not None:
-
-    if MPI.rank(MPI.comm_world) > 0:
-        raise NotImplementedError
-
-    original_hyperparameters = json.load(open(pathlib.Path(hyperparameters["storeto"]) / "hyperparameters.json"))
-
-    assert hyperparameters["max_timesteps"] == original_hyperparameters["max_timesteps"]
-
-    # old path: "/home/bastian/D1/registration/mri2fem-dataset/hydrocephalus/068_brain_nyul_ventriclemasked.mgz"
-    # new path: /home/bastian/D1/registration/hydrocephalus/ventricles/021to068_nyul_ventriclemasked.mgz
-
-    if not os.path.isfile(original_hyperparameters["input"]):
-
-        assert hyperparameters["input"] == original_hyperparameters["input"].replace("mri2fem-dataset/hydrocephalus", "hydrocephalus/ventricles")
-        assert hyperparameters["target"] == original_hyperparameters["target"].replace("mri2fem-dataset/hydrocephalus", "hydrocephalus/ventricles")
-
-    assert hyperparameters["timestepping"] == original_hyperparameters["timestepping"]
-
-    if hyperparameters["starting_guess"] is not None or hyperparameters["starting_state"] is not None:
-        raise NotImplementedError
-    
-    MPI.barrier(MPI.comm_world)
-
-    hyperparameters["starting_guess"] = str(pathlib.Path(hyperparameters["storeto"]) / "Control_checkpoint.xdmf")
-    assert os.path.isfile(hyperparameters["starting_guess"])
-    hyperparameters["readname"] = "CurrentV"
-    # Control_checkpoint.xdmf --readname CurrentV \
-
-    data = Data(input=hyperparameters["input"], target=hyperparameters["target"])
-
-    all_file = File(hyperparameters["storeto"] + "states.pvd")
-    Img.rename("state", "state")
-    all_file << Img
-
-    storage_info = {"shape": hyperparameters["input.shape"], 
-                   "store_states_to": hyperparameters["storeto"], 
-                   "pad": data.pad, "space": data.space, 
-                   "box": data.box, "aff": data.registration_affine, 
-                   "pvdfile": all_file,
-                   }
-    
-    # box, aff = np.ndarray
-
-    store_states_to = pathlib.Path(hyperparameters["storeto"]) / "states"
-
-    storage_info["store_states_to"] = str(store_states_to)
-
-    os.makedirs(store_states_to, exist_ok=True)
-
-    MPI.barrier(MPI.comm_world)
-
-    assert os.path.isdir(store_states_to)
-
-else:
-    storage_info = None
-
-
-
-if hyperparameters["storeto"] is not None:
-
-    retimage = fem2mri(function=Img, shape=storage_info["shape"])
-
-    MPI.barrier(MPI.comm_world)
-
-    print(storage_info)
-
-    storepath = store_states_to / ("state" + format(0, ".0f") + ".npy")
-
-    np.save(storepath, retimage)
-
-    filled_image = crop_to_original(orig_image=np.zeros((256, 256, 256)), 
-                                    cropped_image=retimage, box=storage_info["box"], 
-                                    space=storage_info["space"], pad=storage_info["pad"])
-
-    nii = nibabel.Nifti1Image(filled_image, storage_info["aff"])
-    nibabel.save(nii, str(storepath).replace(".npy", ".mgz"))
-
-    print_overloaded("-- stored", str(storepath))
-
-
 vCG = VectorFunctionSpace(domainmesh, hyperparameters["velocity_functionspace"], hyperparameters["velocity_functiondegree"])
 
 if hyperparameters["starting_guess"] is not None:
 
+    """Start the optimization with a velocity field given as FEniCS function
+    """
     if not hyperparameters["forward"]:
         assert hyperparameters["starting_state"] is None
     assert "CurrentV.hdf" not in hyperparameters["starting_guess"]
@@ -262,23 +168,6 @@ if hyperparameters["starting_state"] is not None:
         hyperparameters=hyperparameters, state_functionspace=hyperparameters["state_functionspace"], state_functiondegree=hyperparameters["state_functiondegree"])
 
 
-if hyperparameters["storeto"] is not None:
-
-    retimage = fem2mri(function=Img_goal, shape=storage_info["shape"])
-
-    storepath = store_states_to / ("state" + format(10000, ".0f") + ".npy")
-
-    np.save(storepath, retimage)
-
-    filled_image = crop_to_original(orig_image=np.zeros((256, 256, 256)), 
-                                    cropped_image=retimage, box=storage_info["box"], 
-                                    space=storage_info["space"], pad=storage_info["pad"])
-
-    nii = nibabel.Nifti1Image(filled_image, storage_info["aff"])
-    nibabel.save(nii, str(storepath).replace(".npy", ".mgz"))
-
-    print_overloaded("-- stored", str(storepath))
-
 hyperparameters["max_voxel_intensity"] = max(input_max, target_max)
 
 print_overloaded("check:norms:", assemble(Img*dx(domainmesh)), assemble(Img_goal*dx(domainmesh)))
@@ -326,25 +215,18 @@ files["l2lossfile"] = hyperparameters["outputfolder"] + '/l2loss.txt'
 
 # find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, files, starting_guess=None)
 return_values = find_velocity(starting_image=Img, Img_goal=Img_goal, vCG=vCG, M_lumped_inv=M_lumped_inv, 
-    hyperparameters=hyperparameters, files=files, starting_guess=starting_guess, storage_info=storage_info)
+    hyperparameters=hyperparameters, files=files, starting_guess=starting_guess, storage_info=None)
 
-# TODO FIXME
-# Something weird was happening here. 
-print(return_values, len(return_values))
+
 
 if not len(return_values) == 3:
-
+    # TODO FIXME
+    # Something weird was happening here. MPI-related?
+    print(return_values, len(return_values))
     return_values = return_values[0]
-    # print("return_values:", type(return_values))
-    # print("return_values:", len(return_values))
-    # print("return_values:", type(return_values[0]))
-    # print("return_values:", len(return_values[0]))
     print("Len of return values is NOT 3")
-
 else:
-    
-    print("Len of return values is 3")
-
+    pass
 
 FinalImg, FinalVelocity, FinalControl  = return_values[0], return_values[1], return_values[2]
 

@@ -1,3 +1,7 @@
+"""
+Store an MRI as DG0 function in pvd format for visualization in paraview
+"""
+
 from fenics import *
 from nibabel.affines import apply_affine
 import os
@@ -11,7 +15,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("imagefile")
 parserargs = vars(parser.parse_args())
 
-imagefile = parserargs["imagefile"] # "/home/bastian/D1/registration/" + "mri2fem-dataset/normalized/input/ernie/" + "ernie_brain.mgz"
+imagefile = parserargs["imagefile"]
 
 image = nibabel.load(imagefile)
 nx, ny, nz = image.get_fdata().shape[0], image.get_fdata().shape[1], image.get_fdata().shape[2]

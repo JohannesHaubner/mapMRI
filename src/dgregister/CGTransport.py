@@ -2,7 +2,6 @@
 from fenics import *
 from fenics_adjoint import *
 import numpy as np
-from dgregister.MRI2FEM import fem2mri
 
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
@@ -81,20 +80,7 @@ def CGTransport(Img, Wind, MaxIter, DeltaT, preconditioner="amg", MassConservati
     btmp = None
 
     for i in range(MaxIter):
-        # #solve(a==0, Img_next)
 
-        # print_overloaded("Iteration ", i + 1, "/", MaxIter, "in Transport()")
-
-        # system_rhs = rhs(a)
-
-        # b = assemble(system_rhs)
-        # b.apply("")
-        
-        # #solver.solve(Img_deformed.vector(), b)
-        # solver.solve(Img.vector(), b)
-        # Img_deformed.assign(Img)
-
-        # assert norm(Img_deformed) > 0
 
         if timestepping == "RungeKutta":
             

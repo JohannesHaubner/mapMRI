@@ -12,8 +12,7 @@ hyperparameters["solver"] = "krylov"
 
 config.hyperparameters = hyperparameters
 
-from dgregister.MRI2FEM import read_image, fem2mri
-from dgregister.DGTransport import DGTransport
+
 from dgregister.meshtransform import make_mapping, map_mesh
 
 
@@ -98,7 +97,6 @@ xmlfile3 =  "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equa
 
 File(xmlfile3) << brainmesh2
 
-# os.system("conda activate mri_inverse ; meshio-convert " + xmlfile3 + " " + xmlfile3.replace(".xml", ".xdmf"))
 
 transormed_xmlmesh = meshio.read(xmlfile3)
 transormed_xmlmesh.write(xmlfile3.replace(".xml", ".xdmf"))

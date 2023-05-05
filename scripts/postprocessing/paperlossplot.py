@@ -309,10 +309,6 @@ for foldername in foldernames:
         hyperparameters = json.load(open(hyperparameterfile))
         domain_size = np.product(hyperparameters["target.shape"])
 
-        if parsersargs["hundred"]:
-            if hyperparameters["max_timesteps"] != 100:
-                continue
-            # pass
 
         inputfile = hyperparameters["input"].replace("/d1/", "/D1/").replace(str(expath.parent), str(localpath.parent))
         targetfile = hyperparameters["target"].replace("/d1/", "/D1/").replace(str(expath.parent), str(localpath.parent))
@@ -321,37 +317,6 @@ for foldername in foldernames:
             
             continue
 
-        # if (localpath / runname / "Finalstate.mgz").is_file():
-        #     print()
-        #     print(hyperparameters["slurmid"])
-        #     print()
-        #     viewcommmand = "freeview "
-        #     viewcommmand += inputfile + " "
-        #     viewcommmand += targetfile + " "
-        #     viewcommmand += str(localpath / runname / "Finalstate.mgz")
-        #     print(viewcommmand)
-        #     print()
-
-        # if (localpath / runname / "CurrentState.mgz").is_file():
-
-        #     # assert nibabel.load(str(localpath / runname / "CurrentState.mgz")).get_fdata().shape == nibabel.load(targetfile).get_fdata().shape
-        #     # assert np.allclose(nibabel.load(str(localpath / runname / "CurrentState.mgz")).affine, nibabel.load(targetfile).affine)
-        #     # assert max(nibabel.load(str(localpath / runname / "CurrentState.mgz")).get_fdata().shape) < 200
-
-        #     print()
-        #     print(hyperparameters["slurmid"])
-        #     print()
-        #     viewcommmand = "freeview "
-
-        #     if "normalized-outputs" in foldername:
-        #         inputfile = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/normalized/registered/abbytoernie.mgz"
-        #         targetfile = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/normalized/input/ernie/ernie_brain.mgz"
-
-        #     viewcommmand += inputfile + " "
-        #     viewcommmand += targetfile + " "
-        #     viewcommmand += str(localpath / runname / "CurrentState.mgz")
-        #     print(viewcommmand)
-        #     print()
 
         if not hyperparameters["slurmid"] in ["445806", "445807", "447918", "449047"]:
             assert foldername in hyperparameters["output_dir"]

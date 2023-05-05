@@ -15,13 +15,10 @@ fi
 
 CODEDIR=/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation
 
-# MRI2FEMDATA=${CODEDIR}/registration/mri2fem-dataset
-# subj1=abby
-# subj2=ernie
+MRI2FEMDATA=${CODEDIR}/registration/mri2fem-dataset
+subj1=abby
+subj2=ernie
 
-MRI2FEMDATA=${CODEDIR}/registration/hydrocephalus
-subj1=021
-subj2=068
 
 TARGETDIR=${MRI2FEMDATA}/normalized
 normdir=${TARGETDIR}/nyul_normalized
@@ -142,10 +139,5 @@ CROPDIR=${TARGETDIR}/cropped
 mkdir -vp ${CROPDIR}
 
 python ${CODEDIR}/scripts/preprocessing/mask_mri.py --images ${files} --targetfolder ${CROPDIR} --crop
-
-COARSECROPDIR=${TARGETDIR}/coarsecropped
-mkdir -vp ${COARSECROPDIR}
-
-python ${CODEDIR}/scripts/preprocessing/mask_mri.py --images ${files} --targetfolder ${COARSECROPDIR} --crop --coarsen
 
 python ${CODEDIR}/scripts/imageinfo.py --imagedir ${CROPDIR}

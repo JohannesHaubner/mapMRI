@@ -33,11 +33,9 @@ q_degree = 6
 def DGTransport(Img, Wind, MaxIter, DeltaT, timestepping, solver="krylov", preconditioner="amg", MassConservation=False, 
                 storage_info=None):
     
-    # storage_info ={"shape": None, "store_states_to": None}
     print_overloaded("......................................")
     print_overloaded("Settings in Transport()")
     print_overloaded("--- timestepping =", timestepping)
-    # print_overloaded("--- store_states_to =", storage_info)
     print_overloaded("......................................")
 
     print_overloaded("parameters['ghost_mode']", parameters['ghost_mode'])
@@ -47,14 +45,6 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, timestepping, solver="krylov", preco
     v = TestFunction(Space)
 
     mesh = Space.mesh()
-    #compute CFL number
-
-
-    # h = CellDiameter(mesh)
-    # CFL = project(sqrt(inner(Wind, Wind))*Constant(DeltaT)/h, FunctionSpace(mesh, "DG", 0))
-    
-    # if(CFL.vector().max() > 1.0):
-    #     raise ValueError("DGTransport: WARNING: CFL = %le", CFL)
 
     #Make form:
     n = FacetNormal(mesh)
@@ -179,10 +169,9 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, timestepping, solver="krylov", preco
         Img_deformed.assign(Img)
 
         if storage_info is not None:
-            
-            # storage_info ={"shape": None, "store_states_to": None, "pad": None, "space": None, "box": None, "aff": None}
-            # box, aff = np.ndarray
-
+            """
+            Useful for storing state during transport for visualization
+            """
             store_states_to = pathlib.Path(storage_info["store_states_to"])
 
             assert os.path.isdir(store_states_to)

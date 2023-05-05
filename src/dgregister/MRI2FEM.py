@@ -132,9 +132,7 @@ def read_image(filename, name, mesh=None, printout=True, threshold=True, project
 
     xyz = space.tabulate_dof_coordinates()
     
-    # xyz = xyz.transpose()
-    # if nz == 1:
-    #     xyz = np.stack((xyz[0, :], xyz[1, :], np.zeros_like(xyz[0, :])), axis=0)
+
     # # The dof coordinates for DG0 are in the middle of the cell. 
     # # Shift everything by -0.5 so that the rounded dof coordinate corresponds to the voxel idx.
     # i, j, k = np.rint(xyz - dxyz).astype("int")
@@ -187,7 +185,7 @@ def read_image(filename, name, mesh=None, printout=True, threshold=True, project
 
 if __name__ == "__main__":
 
-    testimg = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/testdata_3d/input.mgz"
+    testimg = "./testdata_3d/input.mgz"
     
     read_image(testimg)
 

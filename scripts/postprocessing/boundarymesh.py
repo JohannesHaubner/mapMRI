@@ -1,7 +1,11 @@
+"""
+Store boundary of FEniCS mesh
+"""
+
+
 import argparse
 from fenics import *
 import os
-import SVMTK as svmtk
 import meshio
 
 parser = argparse.ArgumentParser()
@@ -28,6 +32,9 @@ if (not parserargs["noredo"]):
     os.system("meshio-convert " + outfile + " " + outfile.replace(".xml", ".stl"))
 
 if parserargs["fix"]:
+
+    import SVMTK as svmtk
+
 
     stlfile = outfile.replace(".xml", ".stl")
 

@@ -49,11 +49,9 @@ LBFGS=200
 
 NP=96
 ITERS=100
-ALPHA=1e-2
 
 echo "NP=" ${NP}
 echo "ITERS=" ${ITERS}
-echo "ALPHA=" ${ALPHA}
 echo "OUTPUTDIR=" $OUTPUTDIR
 echo "IMG1=" ${IMG1}
 echo "IMG2=" ${IMG2}
@@ -61,7 +59,7 @@ echo "IMG2=" ${IMG2}
 srun -n ${NP} python3 -u ${SPATH}/Optimize3d.py \
 --logfile ${LOGOUTFILE2} --output_dir ${OUTPUTDIR} \
 --omega 0.1 \
---input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --alpha ${ALPHA} --lbfgs_max_iterations ${LBFGS} \
---smoothen_image --huber_delta 1 --timestepping RungeKutta --huber --memdebug --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+--input ${IMG1} --target ${IMG2} --max_timesteps ${ITERS} --lbfgs_max_iterations ${LBFGS} \
+--smoothen_image --timestepping RungeKutta --huber --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 
 echo "success"

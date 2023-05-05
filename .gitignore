@@ -23,6 +23,8 @@ data_generation/
 *.tar.gz
 *.tar.gz
 imageregistration_outputs/
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -30,10 +32,7 @@ __pycache__/
 *log_python_srun*
 # C extensions
 *.so
-#cudedebugging/
-cubedebugging/
-cudedebugging2/
-cubedebugging2/
+
 
 # Distribution / packaging
 .Python

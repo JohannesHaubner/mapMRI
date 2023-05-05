@@ -1,3 +1,8 @@
+"""
+Crop a series of brain-masked MRI to largest bounding box containing all images.
+Needed in the image-preprocessing.
+"""
+
 import nibabel
 import numpy as np
 import os
@@ -41,8 +46,6 @@ if __name__ == "__main__":
 
         print("--", imagefile)
 
-        if not os.path.isfile(imagefile):
-            raise ValueError(imagefile + " does not exist")
 
     if parserargs["box"] is not None:
         largest_box = np.load(parserargs["box"])
@@ -64,17 +67,11 @@ if __name__ == "__main__":
 
         image = nibabel.load(imgfile)
 
-        # afffile = str(targetfolder / ("affine_" + pathlib.Path(imgfile).name))
-        
-        # np.save(afffile, image.affine)
 
         image = image.get_fdata()
 
         if parserargs["crop"]:
-            
 
-            # largest_box = get_bounding_box_limits(x=np.where(image>0, True, False))
-            #  cut_to_box(image, box_bounds, inverse=False, cropped_image=None)
             image = cut_to_box(image, box_bounds=box_bounds)
             
 
