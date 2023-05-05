@@ -37,18 +37,18 @@ parser.add_argument("--statename", type=str, default="CurrentState",  help="Name
 
 # Forward pass 
 parser.add_argument("--timestepping", default="RungeKutta", choices=["RungeKutta", "CrankNicolson", "explicitEuler"])
-parser.add_argument("--max_timesteps", type=float, default=None)
+parser.add_argument("--max_timesteps", type=float, default=100)
 parser.add_argument("--forward", default=False, action="store_true", help="Only transport an image forward.")
 
 # Optimization
 parser.add_argument("--alpha", type=float, default=1e-2)
 parser.add_argument("--omega", type=float, default=0)
 parser.add_argument("--epsilon", type=float, default=1)
-parser.add_argument("--lbfgs_max_iterations", type=float, default=400)
+parser.add_argument("--lbfgs_max_iterations", type=float, default=200)
 parser.add_argument("--taylortest", default=False, action="store_true", help="Taylor test")
 
 # Losses
-parser.add_argument("--huber", default=False, action="store_true", help="Use Huber loss function instead of L2")
+# parser.add_argument("--huber", default=False, action="store_true", help="Use Huber loss function instead of L2")
 parser.add_argument("--huber_delta", type=int, default=1)
 
 hyperparameters = vars(parser.parse_args())
@@ -84,6 +84,7 @@ if hyperparameters["starting_state"] is not None:
 
 hyperparameters["normalize"] = False
 hyperparameters["smoothen"] = True
+hyperparameters["huber"] = True
 
 hyperparameters["outputfolder"] = hyperparameters["output_dir"] + hyperparameters["outfoldername"]
 hyperparameters["lbfgs_max_iterations"] = int(hyperparameters["lbfgs_max_iterations"])

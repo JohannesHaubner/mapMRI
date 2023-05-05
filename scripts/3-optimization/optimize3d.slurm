@@ -29,15 +29,12 @@ LOGOUTFILE=./outputs/mrislurm/${SLURM_JOB_ID}_log_python_srun.txt
 OUTPUTDIR=./outputs/smoothened-outputs/${SLURM_JOB_ID}/
 IMG1=./data/normalized/cropped/cropped_abbytoernie_nyul.mgz
 IMG2=./data/normalized/cropped/cropped_ernie_brain_nyul.mgz
-LBFGS=200
 
 mkdir -pv $OUTPUTDIR
 
 NP=96
-TIMESTEPS=100
 
 echo "NP=" ${NP}
-echo "TIMESTEPS=" ${TIMESTEPS}
 echo "OUTPUTDIR=" $OUTPUTDIR
 echo "IMG1=" ${IMG1}
 echo "IMG2=" ${IMG2}
@@ -45,7 +42,7 @@ echo "IMG2=" ${IMG2}
 srun -n ${NP} python3 -u ${SPATH}/Optimize3d.py \
 --logfile ${LOGOUTFILE2} --output_dir ${OUTPUTDIR} \
 --omega 0.1 \
---input ${IMG1} --target ${IMG2} --max_timesteps ${TIMESTEPS} --lbfgs_max_iterations ${LBFGS} \
---smoothen_image --timestepping RungeKutta --huber --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+--input ${IMG1} --target ${IMG2} \
+--smoothen_image --slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
 
 echo "success"

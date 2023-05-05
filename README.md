@@ -23,6 +23,8 @@ run
 $ bash scripts/1-image-preprocessing/preprocess.sh
 ```
 
+This puts the pre-processed images to `Oscar-Image-Registration-via-Transport-Equation/data/normalized`
+
 # Image registration
 
 
@@ -65,7 +67,7 @@ The resulting meshes can be downloaded from https://github.com/bzapf/meshes.
 
 ## Affine mesh registration
 We perform the affine registration of the mesh manually. 
-This is useful to visualize the affine-registered meshes.
+This is useful to visualize the affine-registered meshes together with the target image.
 
 ```
 $ python scripts/2-meshing/register_brain_mesh.py
@@ -78,4 +80,12 @@ Assuming you run on a server with SLURM, run
 ```
 $ mkdir -pv ./outputs/mrislurm/
 $ sbatch 4-postprocessing/optimize3d.slurm 
+```
+
+Alternatively,
+```
+$ export IMG1=./data/normalized/cropped/cropped_abbytoernie_nyul.mgz
+$ export IMG2=./data/normalized/cropped/cropped_ernie_brain_nyul.mgz
+python3 -u ./scripts/3-optimization/Optimize3d.py --output_dir my_registration \
+--input ${IMG1} --target ${IMG2}
 ```
