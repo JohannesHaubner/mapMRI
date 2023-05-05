@@ -3,7 +3,6 @@ from fenics_adjoint import *
 from dgregister.DGTransport import DGTransport
 from dgregister.transformation_overloaded import transformation
 from dgregister.preconditioning_overloaded import preconditioning
-from dgregister.tukey import tukey
 from dgregister.huber import huber
 import time, json
 import numpy as np

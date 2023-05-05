@@ -7,12 +7,11 @@ import dolfin.fem as df
 
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
-        # set_log_level(PROGRESS)
         print(*args)
     else:
         pass
 
-from dgregister.preconditioning import preconditioning # , omega, epsilon
+from dgregister.preconditioning import preconditioning
 
 from dgregister.config import OMEGA, EPSILON
 from copy import deepcopy
@@ -41,24 +40,11 @@ class PreconditioningBlock(Block):
         c = TrialFunction(C)
         psi = TestFunction(C)
         
-        # omega = 0
-        # epsilon = 1
-        
-        # omega = 0
-        # epsilon = 1
-
-        # omega = 0.5
-        # epsilon = 0.5
-        # omega = 0.4
-        # epsilon = 1
-
         omega = deepcopy(OMEGA)
         epsilon = deepcopy(EPSILON)
         
         
         dx = df.form.ufl.dx(C.mesh())
-        # # omega = 0.5
-        # # epsilon = 0.5
 
         if omega != 0 or epsilon != 1:
             print_overloaded("Using non-default omega=", omega, "epsilon=", epsilon, "in preconditioning_overloaded")
@@ -73,7 +59,6 @@ class PreconditioningBlock(Block):
         if not hasattr(self, "solver"):
             
             a = omega * inner(c, psi) * dx + epsilon * inner(grad(c), grad(psi)) * dx
-            # a = inner(grad(c), grad(psi)) * dx
 
             if self.A is None:
                 self.A = assemble(a)

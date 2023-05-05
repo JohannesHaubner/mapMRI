@@ -10,11 +10,6 @@ def print_overloaded(*args):
 from dgregister.config import OMEGA, EPSILON
 from copy import deepcopy
 
-# omega = 0.
-# epsilon = 1.
-
-# omega = 0.5
-# epsilon = 0.5
 
 
 class Preconditioning():
@@ -32,20 +27,10 @@ class Preconditioning():
         c = TrialFunction(C)
         psi = TestFunction(C)
 
-        # global omega
-        # global epsilon
-        
-        # omega = 0
-        # epsilon = 1
-
-        # omega = 0.4
-        # epsilon = 1
-
         omega = deepcopy(OMEGA)
         epsilon = deepcopy(EPSILON)
 
         if omega != 0 or epsilon != 1:
-            # raise NotImplementedError("Change also in preconditioning")
             print_overloaded("Using non-default omega=", omega, "epsilon=", epsilon, "in preconditioning")
 
         else:
