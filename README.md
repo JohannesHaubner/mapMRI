@@ -22,7 +22,7 @@ Oscar-Image-Registration-via-Transport-Equation/data/
 Requires FreeSurfer.
 run 
 ```
-$ bash scripts/1-image-preprocessing/preprocess.sh
+bash scripts/1-image-preprocessing/preprocess.sh
 ```
 
 This puts the pre-processed images to `Oscar-Image-Registration-via-Transport-Equation/data/normalized`
@@ -32,24 +32,24 @@ This puts the pre-processed images to `Oscar-Image-Registration-via-Transport-Eq
 Assuming you run on a server with SLURM, run
 
 ```
-$ mkdir -pv ./outputs/mrislurm/
-$ sbatch scripts/4-postprocessing/optimize3d.slurm 
+mkdir -pv ./outputs/mrislurm/
+sbatch scripts/4-postprocessing/optimize3d.slurm 
 ```
 
 Alternatively,
 ```
-$ export IMG1=./data/normalized/cropped/cropped_abbytoernie_nyul.mgz
-$ export IMG2=./data/normalized/cropped/cropped_ernie_brain_nyul.mgz
-$ python3 -u ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_registration_1 \
+export IMG1=./data/normalized/cropped/cropped_abbytoernie_nyul.mgz
+export IMG2=./data/normalized/cropped/cropped_ernie_brain_nyul.mgz
+python3 -u ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_registration_1 \
 --input ${IMG1} --target ${IMG2}
 ```
 
 
 Improve upon the first registration by a second velocity based transform:
 ```
-$ export IMG1=./data/normalized/cropped/cropped_abbytoernie_nyul.mgz
-$ export IMG2=./data/normalized/cropped/cropped_ernie_brain_nyul.mgz
-$ python3 -u ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_registration_2 \
+export IMG1=./data/normalized/cropped/cropped_abbytoernie_nyul.mgz
+export IMG2=./data/normalized/cropped/cropped_ernie_brain_nyul.mgz
+python3 -u ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_registration_2 \
 --starting_state my_registration_2/State_checkpoint.xdmf \
 --input ${IMG1} --target ${IMG2}
 ```
@@ -79,12 +79,12 @@ Download from https://github.com/bzapf/meshes and move to `Oscar-Image-Registrat
 
 To create the ventricular system surface files, run
 ```
-$ bash scripts/2-meshing/exctract-ventricles.sh
+bash scripts/2-meshing/exctract-ventricles.sh
 ```
 Then, meshing using
 
 ```
-$ python scripts/2-meshing/make_ventricle_mesh.py
+python scripts/2-meshing/make_ventricle_mesh.py
 ```
 
 
@@ -103,20 +103,20 @@ We perform the affine registration of the mesh manually.
 This is useful to visualize the affine-registered meshes together with the target image.
 
 ```
-$ python scripts/2-meshing/register_brain_mesh.py
+python scripts/2-meshing/register_brain_mesh.py
 ```
 
 ## Velocity-field mesh registration.
 
 First, create the coordinate mapping as FEniCS files:
 ```
-$ python3 -u scripts/4-postprocessing/transform_mesh.py --mapping_only \
+python3 -u scripts/4-postprocessing/transform_mesh.py --mapping_only \
 --folders ./outputs/my_registration_1 ./outputs/my_registration_2
 ```
 
 Then, deform the mesh:
 ```
-$ python3 -u scripts/4-postprocessing/transform_mesh.py \
+python3 -u scripts/4-postprocessing/transform_mesh.py \
 --folders ./outputs/my_registration_1 ./outputs/my_registration_2 \
 --meshoutputfolder  ./outputs/meshes/deformed_mesh/
 ```
