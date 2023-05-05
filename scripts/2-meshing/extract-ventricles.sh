@@ -3,17 +3,16 @@
 # Input and output filenames
 
 # ABBY
-# input="/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/meshes/reg-aqueduct/abby/reg-ventricles-w-aq.mgz"
-# outputdir=/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/meshes/reg-aqueduct/abby/
+# input="./Oscar-Image-Registration-via-Transport-Equation/data/meshes/reg-aqueduct/abby/reg-ventricles-w-aq.mgz"
+# outputdir=./Oscar-Image-Registration-via-Transport-Equation/data/meshes/reg-aqueduct/abby/
 # output=${outputdir}ventricles.stl
-# output2="/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/meshes/reg-aqueduct/abby/ventricles_postproc.mgz"
-# wmparc=false
+# output2="./Oscar-Image-Registration-via-Transport-Equation/data/meshes/reg-aqueduct/abby/ventricles_postproc.mgz"
 
 # ERNIE
-input="/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/freesurfer/ernie/mri/wmparc.mgz"
-outputdir=/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/meshes/aqueduct/ernie/
+input="/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/data/freesurfer/ernie/mri/wmparc.mgz"
+outputdir=/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/data/meshes/aqueduct/ernie/
 output=${outputdir}ventricles.stl
-output2="/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/meshes/aqueduct/ernie/ventricles_postproc.mgz"
+output2="/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/data/meshes/aqueduct/ernie/ventricles_postproc.mgz"
 
 
 # Also match the 4th ventricle and aqueduct?
@@ -63,6 +62,7 @@ if [ "$postprocess" == true ]; then
 	         --match 1 \
 	         --surf-smooth $num_smoothing \
 	         --surf $output --o $output2
+
     # mri_binarize --i "tmp.mgz" \
 	#          --match 1 \
 	#          --surf-smooth $num_smoothing \

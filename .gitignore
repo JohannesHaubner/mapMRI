@@ -23,7 +23,7 @@ data_generation/
 *.tar.gz
 *.tar.gz
 imageregistration_outputs/
-
+data
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
