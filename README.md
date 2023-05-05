@@ -8,7 +8,7 @@ Code repository for the manuscript
 
 ```
 git clone https://github.com/JohannesHaubner/mapMRI.git
-cd Oscar-Image-Registration-via-Transport-Equation
+cd mapMRI
 conda env create -f dgregister-env.yml
 conda activate dgregister-env
 pip install -e .
@@ -20,7 +20,7 @@ pip install -e .
 
 Download the dataset from https://zenodo.org/communities/mri2fem and move the folder `FreeSurfer` to 
 ```
-Oscar-Image-Registration-via-Transport-Equation/data/
+mapMRI/data/
 ```
 
 ## Image pre-processing
@@ -31,7 +31,7 @@ run
 bash scripts/1-image-preprocessing/preprocess.sh
 ```
 
-This puts the pre-processed images to `Oscar-Image-Registration-via-Transport-Equation/data/normalized`
+This puts the pre-processed images to `mapMRI/data/normalized`
 
 ## Image registration
 
@@ -74,13 +74,13 @@ pip install -e .
 
 Meshes used in the paper can be downloaded from https://github.com/bzapf/meshes.
 
-Locate the meshes under `Oscar-Image-Registration-via-Transport-Equation/data/meshes/`
+Locate the meshes under `mapMRI/data/meshes/`
 
 
 ### Ventricular system mesh
 
 Requires the manually edited FreeSurfer segmentation file for "Abby". 
-Download from https://github.com/bzapf/meshes and move to `Oscar-Image-Registration-via-Transport-Equation/data/FreeSurfer/abby/reg-ventricles-w-aq.mgz`.
+Download from https://github.com/bzapf/meshes and move to `mapMRI/data/FreeSurfer/abby/reg-ventricles-w-aq.mgz`.
 
 
 To create the ventricular system surface files, run
