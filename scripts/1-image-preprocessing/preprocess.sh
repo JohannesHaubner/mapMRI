@@ -2,7 +2,7 @@
 set -o errexit # Exit the script on any error
 set -o nounset # Treat any unset variables as an error
 
-cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd 
+python -c "import dgregister"
 
 echo "FreeSurfer configuration is required to run this script" 
 if [ ! -z "${FREESURFER_HOME}" ];
@@ -13,9 +13,9 @@ else
    exit 
 fi
 
-CODEDIR=/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation
+CODEDIR=.
 
-MRI2FEMDATA=${CODEDIR}/registration/mri2fem-dataset
+MRI2FEMDATA=${CODEDIR}/data
 subj1=abby
 subj2=ernie
 
@@ -138,6 +138,4 @@ files=$(find ${normdir} -type f)
 CROPDIR=${TARGETDIR}/cropped
 mkdir -vp ${CROPDIR}
 
-python ${CODEDIR}/scripts/preprocessing/mask_mri.py --images ${files} --targetfolder ${CROPDIR} --crop
-
-python ${CODEDIR}/scripts/imageinfo.py --imagedir ${CROPDIR}
+python ${CODEDIR}/scripts/1-image-preprocessing/mask_mri.py --images ${files} --targetfolder ${CROPDIR} --crop

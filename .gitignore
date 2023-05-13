@@ -22,7 +22,17 @@ data_generation/
 *.tar.gz
 *.tar.gz
 imageregistration_outputs/
-data
+# data
+data/freesurfer/ernie/
+data/normalized/
+data/meshes/ernie/
+data/meshes/abby/brain/*
+!data/meshes/abby/brain/abby8.xml
+
+data/freesurfer/abby/*
+!data/freesurfer/abby/mri
+data/freesurfer/abby/mri/*
+!data/freesurfer/abby/mri/reg-ventricles-w-aq.mgz
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

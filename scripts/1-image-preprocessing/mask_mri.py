@@ -6,7 +6,6 @@ Needed in the image-preprocessing.
 import nibabel
 import numpy as np
 import os
-# import matplotlib.pyplot as plt
 import pathlib
 import argparse
 import json

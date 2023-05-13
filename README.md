@@ -25,7 +25,8 @@ mapMRI/data/
 
 ## Image pre-processing
 
-Requires FreeSurfer.
+Requires FreeSurfer and https://github.com/jcreinhold/intensity-normalization (`pip install intensity-normalization`).
+
 run 
 ```
 bash scripts/1-image-preprocessing/preprocess.sh

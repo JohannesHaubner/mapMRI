@@ -1,29 +1,28 @@
+from fenics import *
 import os, pathlib
 import numpy as np
 import nibabel
-from dgregister.helpers import view, read_vox2vox_from_lta
-from fenics import *
-
+from dgregister.helpers import read_vox2vox_from_lta
 from nibabel.affines import apply_affine
 
 
-path = pathlib.Path("/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/meshes/manually_registered_brain_mesh/")
+path = pathlib.Path("./data/meshes/manually_registered_brain_mesh/")
 
-regimagepath = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/normalized/registered/abbytoernie.mgz"
+regimagepath = "./data/normalized/registered/abbytoernie.mgz"
 
-in_imagepath = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/normalized/input/abby/abby_brain.mgz"
+in_imagepath = "./data/normalized/input/abby/abby_brain.mgz"
 
+lta = "./data/normalized/registered/abbytoernie.lta"
 
-lta = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration/mri2fem-dataset/normalized/registered/abbytoernie.lta"
+inputmesh = "./data/meshes/abby/brain/abby8.xml"
 
-inputpath = path / "input"
+assert os.path.isfile(inputmesh)
 
-outputpath =path / "output"
+mesh = Mesh(inputmesh)
+
+outputpath = path / "output"
 
 os.makedirs(outputpath, exist_ok=True)
-
-mesh = Mesh(str(inputpath / "abby16.xml"))
-
 
 abby_image = nibabel.load(in_imagepath)
 reg_abby_image= nibabel.load(regimagepath)
