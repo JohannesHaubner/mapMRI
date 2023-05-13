@@ -18,8 +18,9 @@ pip install -e .
 
 ## Data
 
-
-The masked MRI, edited segmentation files, and meshes reported upon in the manuscript can be found in this repository under
+We use the publicly available dataset from https://zenodo.org/communities/mri2fem.
+From this dataset, we manually edit a segmentation file and create meshes as outlined in the manuscript.
+For convenience, the masked MRI, edited segmentation files, and meshes reported upon in the manuscript can be found in this repository under
 ```
 mapMRI/data/
 ```

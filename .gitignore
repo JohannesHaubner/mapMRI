@@ -22,12 +22,6 @@ data_generation/
 *.tar.gz
 *.tar.gz
 imageregistration_outputs/
-# # data
-# data/freesurfer/ernie/
-# data/normalized/
-# data/meshes/ernie/
-# data/meshes/abby/brain/*
-# !data/meshes/abby/brain/abby8.xml
 
 
 data/*
@@ -40,6 +34,17 @@ data/freesurfer/abby/*
 !data/freesurfer/abby/mri
 data/freesurfer/abby/mri/*
 !data/freesurfer/abby/mri/reg-ventricles-w-aq.mgz
+!data/freesurfer/abby/mri/brain.mgz
+!data/freesurfer/abby/mri/wmparc.mgz
+
+
+!data/freesurfer/ernie
+data/freesurfer/ernie/*
+
+!data/freesurfer/ernie/mri
+data/freesurfer/ernie/mri/*
+!data/freesurfer/ernie/mri/brain.mgz
+!data/freesurfer/ernie/mri/wmparc.mgz
 
 
 # Byte-compiled / optimized / DLL files
