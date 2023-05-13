@@ -47,6 +47,29 @@ data/freesurfer/ernie/mri/*
 !data/freesurfer/ernie/mri/wmparc.mgz
 
 
+!data/normalized
+data/normalized/*
+
+!data/normalized/cropped
+data/normalized/cropped/files.json
+
+!data/meshes
+data/meshes/*
+
+!data/meshes/abby
+data/meshes/abby/*
+!data/meshes/abby/brain
+data/meshes/abby/brain/*
+!data/meshes/abby/brain/abby8.xml
+
+
+!data/meshes/ernie
+data/meshes/ernie/*
+!data/meshes/ernie/brain
+data/meshes/ernie/brain/*
+!data/meshes/ernie/brain/ernie16.xml
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
