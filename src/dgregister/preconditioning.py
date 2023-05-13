@@ -7,7 +7,7 @@ def print_overloaded(*args):
     else:
         pass
 
-from dgregister.config import OMEGA, EPSILON
+from dgregister.config import ALPHA, BETA
 from copy import deepcopy
 
 
@@ -27,23 +27,23 @@ class Preconditioning():
         c = TrialFunction(C)
         psi = TestFunction(C)
 
-        omega = deepcopy(OMEGA)
-        epsilon = deepcopy(EPSILON)
+        alpha = deepcopy(ALPHA)
+        beta = deepcopy(BETA)
 
-        if omega != 0 or epsilon != 1:
-            print_overloaded("Using non-default omega=", omega, "epsilon=", epsilon, "in preconditioning")
+        if alpha != 0 or beta != 1:
+            print_overloaded("Using non-default alpha=", alpha, "beta=", beta, "in preconditioning")
 
         else:
-            print_overloaded("Using standard omega, epsilon", omega, epsilon, "in preconditioning")
+            print_overloaded("Using standard alpha, beta", alpha, beta, "in preconditioning")
 
-        if isinstance(omega, float):
+        if isinstance(alpha, float):
 
-            omega = Constant(omega)
-            epsilon = Constant(epsilon)
+            alpha = Constant(alpha)
+            beta = Constant(beta)
  
         if not hasattr(self, "solver"):
 
-            a = omega * (inner(c, psi) * dx) + epsilon * (inner(grad(c), grad(psi)) * dx)
+            a = alpha * (inner(c, psi) * dx) + beta * (inner(grad(c), grad(psi)) * dx)
 
             if self.A is None:
 

@@ -48,7 +48,7 @@ mkdir -pv ./outputs/mrislurm/
 sbatch scripts/3-optimization/optimize3d.slurm 
 ```
 
-Alternatively,
+Alternatively, and to reproduce the image registration results reported in the manuscript, run the following commands
 ```
 export IMG1=./data/normalized/cropped/cropped_abbytoernie_nyul.mgz
 export IMG2=./data/normalized/cropped/cropped_ernie_brain_nyul.mgz
@@ -56,13 +56,29 @@ python3 -u ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_regi
 --input ${IMG1} --target ${IMG2}
 ```
 
-
 Improve upon the first registration by a second velocity based transform:
+
 ```
-export IMG1=./data/normalized/cropped/cropped_abbytoernie_nyul.mgz
-export IMG2=./data/normalized/cropped/cropped_ernie_brain_nyul.mgz
 python3 -u ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_registration_2 \
+--starting_state my_registration_1/State_checkpoint.xdmf \
+--input ${IMG1} --target ${IMG2}
+```
+
+Improve upon the second registration by a third velocity based transform:
+
+```
+python3 -u ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_registration_3 \
 --starting_state my_registration_2/State_checkpoint.xdmf \
+--input ${IMG1} --target ${IMG2}
+```
+
+
+Improve upon the registration by a less smooth velocity based transform by tweaking the velocity transform hyperparameters:
+
+```
+python3 -u ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_registration_4 \
+--starting_state my_registration_3/State_checkpoint.xdmf \
+--alpha 0.5 --beta 0.5 \ 
 --input ${IMG1} --target ${IMG2}
 ```
 
@@ -85,8 +101,7 @@ Locate the meshes under `mapMRI/data/meshes/`
 
 ### Ventricular system mesh
 
-Requires the manually edited FreeSurfer segmentation file for "Abby". 
-Download from https://github.com/bzapf/meshes and move to `mapMRI/data/FreeSurfer/abby/reg-ventricles-w-aq.mgz`.
+Requires the manually edited FreeSurfer segmentation file for "Abby" found under `mapMRI/data/freesurfer/abby/reg-ventricles-w-aq.mgz`.
 
 
 To create the ventricular system surface files, run

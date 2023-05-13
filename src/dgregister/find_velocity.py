@@ -69,7 +69,7 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
         print_overloaded("*" * 100)
         exit()
 
-    alpha = Constant(hyperparameters["alpha"]) # regularization
+    delta = Constant(hyperparameters["delta"]) # regularization
     state = Control(Img_deformed)  # The Control type enables easy access to tape values after replays.
     cont = Control(l2_controlfun)
 
@@ -109,7 +109,7 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
     print_overloaded("Assembled error between transported image and target, Jdata=", Jd)
     print_overloaded("L2 error between transported image and target, Jdata_L2=", l2loss)
 
-    Jreg = assemble(alpha*(control_L2)**2*dx)
+    Jreg = assemble(delta*(control_L2)**2*dx)
     
     print_overloaded("At init:")
     print_overloaded("Jd", Jd)

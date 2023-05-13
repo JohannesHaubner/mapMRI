@@ -40,9 +40,9 @@ parser.add_argument("--max_timesteps", type=float, default=100, help="Time steps
 parser.add_argument("--forward", default=False, action="store_true", help="Only transport an image forward.")
 
 # Optimization
-parser.add_argument("--alpha", type=float, default=1e-2)
-parser.add_argument("--omega", type=float, default=0)
-parser.add_argument("--epsilon", type=float, default=1)
+parser.add_argument("--delta", type=float, default=1e-2, help="regularization")
+parser.add_argument("--alpha", type=float, default=0, help="velocity preconditioning parameter")
+parser.add_argument("--beta", type=float, default=1, help="velocity preconditioning parameter")
 parser.add_argument("--lbfgs_max_iterations", type=float, default=200)
 parser.add_argument("--taylortest", default=False, action="store_true", help="Taylor test")
 
@@ -55,8 +55,8 @@ hyperparameters = vars(parser.parse_args())
 import dgregister.config as config
 
 # Set the velocity smoothening parameters
-config.EPSILON = hyperparameters["epsilon"]
-config.OMEGA = hyperparameters["omega"]
+config.BETA = hyperparameters["beta"]
+config.ALPHA = hyperparameters["alpha"]
 
 from dgregister.find_velocity import find_velocity
 
