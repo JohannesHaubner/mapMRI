@@ -18,13 +18,17 @@ pip install -e .
 
 ## Data
 
-Download the dataset from https://zenodo.org/communities/mri2fem and move the folder `FreeSurfer` to 
+
+The masked MRI, edited segmentation files, and meshes reported upon in the manuscript can be found in this repository under
 ```
 mapMRI/data/
 ```
+These files are sufficient to reproduce the reported results. 
+
 
 ## Image pre-processing
 
+If you want to start from scratch and perform the preprocessing steps, download the dataset from https://zenodo.org/communities/mri2fem and move the folder `FreeSurfer` to `mapMRI/data/`.
 Requires FreeSurfer and https://github.com/jcreinhold/intensity-normalization (`pip install intensity-normalization`).
 
 run 
@@ -34,7 +38,7 @@ bash scripts/1-image-preprocessing/preprocess.sh
 
 This puts the pre-processed images to `mapMRI/data/normalized`
 
-## Image registration
+# Image registration
 
 Assuming you run on a server with SLURM, run
 

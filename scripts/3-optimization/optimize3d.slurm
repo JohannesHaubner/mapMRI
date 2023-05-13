@@ -16,6 +16,7 @@ eval "$(conda shell.bash hook)"
 conda activate dgregister-env
 
 
+
 set -o errexit # Exit the script on any error
 set -o nounset # Treat any unset variables as an error
 
@@ -39,9 +40,7 @@ echo "OUTPUTDIR=" $OUTPUTDIR
 echo "IMG1=" ${IMG1}
 echo "IMG2=" ${IMG2}
 
-srun -n ${NP} python3 -u ${SPATH}/Optimize3d.py \
---logfile ${LOGOUTFILE2} --output_dir ${OUTPUTDIR} \
---input ${IMG1} --target ${IMG2} \
---slurmid ${SLURM_JOB_ID} > ${LOGOUTFILE}
+srun -n ${NP} python3 -u ${SPATH}/Optimize3d.py --output_dir ${OUTPUTDIR} \
+--input ${IMG1} --target ${IMG2} --max_timesteps 1 > ${LOGOUTFILE}
 
 echo "success"

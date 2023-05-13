@@ -36,7 +36,7 @@ parser.add_argument("--statename", type=str, default="CurrentState",  help="Name
 
 # Forward pass 
 parser.add_argument("--timestepping", default="RungeKutta", choices=["RungeKutta", "CrankNicolson", "explicitEuler"])
-parser.add_argument("--max_timesteps", type=float, default=100)
+parser.add_argument("--max_timesteps", type=float, default=100, help="Time steps for transport equation forward solve.")
 parser.add_argument("--forward", default=False, action="store_true", help="Only transport an image forward.")
 
 # Optimization
