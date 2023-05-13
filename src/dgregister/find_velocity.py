@@ -185,8 +185,6 @@ def find_velocity(starting_image, Img_goal, vCG, M_lumped_inv, hyperparameters, 
                                         domainmesh, current_pde_solution, control=current_l2_control)
 
 
-    print_overloaded("Using maxcor =", hyperparameters["maxcor"], "in LBFGS-B")
-
     t0 = time.time()
 
     minimize(Jhat,  method = 'L-BFGS-B', options = {"iprint": 0, "disp": None, "maxiter": hyperparameters["lbfgs_max_iterations"]}, tol=1e-8, callback = cb)

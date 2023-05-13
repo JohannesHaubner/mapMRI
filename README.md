@@ -84,20 +84,8 @@ python3 -u ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_regi
 
 ## Mesh generation
 
-
-Requires FreeSurfer and SVMTK https://github.com/SVMTK/SVMTK. To install,
-
-```
-conda env create -f meshregister-env.yml
-conda activate svmtk
-pip install -e .
-```
-
-
-Meshes used in the paper can be downloaded from https://github.com/bzapf/meshes.
-
-Locate the meshes under `mapMRI/data/meshes/`
-
+The meshes used in the paper are located under `mapMRI/data/meshes/`.
+Alternatively, they can be generated from MRI as described below.
 
 ### Ventricular system mesh
 
@@ -114,12 +102,10 @@ Then, meshing using
 python scripts/2-meshing/make_ventricle_mesh.py
 ```
 
-
-
 ### Left hemisphere mesh
 
 As described in Mardal et al. "Mathematical modeling of the human brain: from magnetic resonance images to finite element simulation" Springer 2022.
-The resulting meshes can be downloaded from https://github.com/bzapf/meshes.
+The scripts to generate these meshes are found at https://zenodo.org/communities/mri2fem.
 
 
 ## Mesh registration
@@ -132,6 +118,8 @@ This is useful to visualize the affine-registered meshes together with the targe
 ```
 python scripts/2-meshing/register_brain_mesh.py
 ```
+
+The aqueduct mesh for "Abby" was created from a registered ventricles file, so this mesh does not need to be manually pre-registered.
 
 ### Velocity-field mesh registration.
 
@@ -146,4 +134,24 @@ Then, deform the mesh:
 python3 -u scripts/4-postprocessing/transform_mesh.py \
 --folders ./outputs/my_registration_1 ./outputs/my_registration_2 \
 --meshoutputfolder  ./outputs/meshes/deformed_mesh/
+```
+
+
+
+# Visualization
+
+MR images can be viewed in freeview. 
+For visualization of images and meshes, we used paraview. 
+
+To create files that can be viewed in freeview from registration output, run 
+```
+python3 -u scripts/4-postprocessing/currentState_to_mgz.py \
+./outputs/my_registration_1
+```
+This creates the file CurrentState.mgz which can be viewed in freeview.
+
+After this, to convert the output such that it can be viewed in paraview (large file!) run
+```
+python3 -u scripts/4-postprocessing/image2pv.py \
+./outputs/my_registration_1/CurrentState.mgz
 ```
