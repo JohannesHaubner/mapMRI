@@ -2,6 +2,10 @@
 *.h5
 *.xdmf
 *.pvd
+*.npy
+*.mesh
+*.stl
+*:ref.xml
 output/*
 outputs/*
 *.out
@@ -54,20 +58,20 @@ data/normalized/*
 data/normalized/cropped/files.json
 
 !data/meshes
-data/meshes/*
+# data/meshes/*
 
-!data/meshes/abby
-data/meshes/abby/*
-!data/meshes/abby/brain
-data/meshes/abby/brain/*
-!data/meshes/abby/brain/abby8.xml
+# !data/meshes/abby
+# data/meshes/abby/*
+# !data/meshes/abby/brain
+# data/meshes/abby/brain/*
+# !data/meshes/abby/brain/abby8.xml
 
 
-!data/meshes/ernie
-data/meshes/ernie/*
-!data/meshes/ernie/brain
-data/meshes/ernie/brain/*
-!data/meshes/ernie/brain/ernie16.xml
+# !data/meshes/ernie
+# data/meshes/ernie/*
+# !data/meshes/ernie/brain
+# data/meshes/ernie/brain/*
+# !data/meshes/ernie/brain/ernie16.xml
 
 
 # Byte-compiled / optimized / DLL files
