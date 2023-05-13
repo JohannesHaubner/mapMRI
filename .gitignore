@@ -28,14 +28,19 @@ imageregistration_outputs/
 # data/meshes/ernie/
 # data/meshes/abby/brain/*
 # !data/meshes/abby/brain/abby8.xml
-data2
-# data/*
-# !data/freesurfer
-# data/freesurfer/ernie/*
-# data/freesurfer/abby/*
-# !data/freesurfer/abby/mri
-# data/freesurfer/abby/mri/*
-# !data/freesurfer/abby/mri/reg-ventricles-w-aq.mgz
+
+
+data/*
+!data/freesurfer
+data/freesurfer/*
+
+!data/freesurfer/abby
+data/freesurfer/abby/*
+
+!data/freesurfer/abby/mri
+data/freesurfer/abby/mri/*
+!data/freesurfer/abby/mri/reg-ventricles-w-aq.mgz
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
