@@ -57,6 +57,12 @@ data/normalized/*
 !data/normalized/cropped
 data/normalized/cropped/files.json
 
+!data/normalized/registered
+data/normalized/registered/*
+!data/normalized/registered/abbytoernie.mgz
+!data/normalized/registered/abbytoernie.lta
+
+
 !data/meshes
 # data/meshes/*
 
