@@ -5,10 +5,6 @@ import pytest
 
 from dgregister.transformation_overloaded import transformation
 
-@pytest.mark.parametrize(
-    "smoothen", [True]
-)
-
 def test_transformation():
     mesh = UnitSquareMesh(10, 10)
 
