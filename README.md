@@ -51,14 +51,14 @@ python3 ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_registr
 Improve upon the first registration by a second velocity based transform:
 
 ```
-python3 ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_registration_2 --input ${IMG1} --target ${IMG2} --lbfgs_max_iterations 150 
+python3 ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_registration_2 --input ${IMG1} --target ${IMG2} --lbfgs_max_iterations 151
 --starting_state my_registration_1/State_checkpoint.xdmf 
 ```
 
 Improve upon the second registration by a third velocity based transform:
 
 ```
-python3 ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_registration_3 --input ${IMG1} --target ${IMG2} --lbfgs_max_iterations 150 
+python3 ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_registration_3 --input ${IMG1} --target ${IMG2} --lbfgs_max_iterations 151 
 --starting_state my_registration_2/State_checkpoint.xdmf
 ```
 
@@ -152,6 +152,11 @@ After this, to convert the output such that it can be viewed in paraview (large 
 ```
 python3 scripts/5-utils/image2pv.py \
 ./outputs/my_registration_1/CurrentState.mgz
+```
+
+To create the plot showing the reduction of L2-error, see
+```
+python3 scripts/4-postprocessing-paperlossplot.py
 ```
 
 
