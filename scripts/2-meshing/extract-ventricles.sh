@@ -7,17 +7,17 @@ set -o nounset # Treat any unset variables as an error
 
 # # ABBY
 # input="./data/freesurfer/abby/mri/reg-ventricles-w-aq.mgz"
-# outputdir=./data/meshes/aqueduct/abby2ernie/
+# outputdir=./data/meshes/abby/affine_registered_ventricles/
 # output=${outputdir}ventricles.stl
-# output2="./data/meshes/aqueduct/abby2ernie/ventricles_postproc.mgz"
+# output2="./data/meshes/abby/affine_registered_ventricles/ventricles_postproc.mgz"
 # cp $input tmp.mgz
 
 
 # ERNIE
 input="./data/freesurfer/ernie/mri/wmparc.mgz"
-outputdir=./data/meshes/aqueduct/ernie/
+outputdir=./data/meshes/ernie/ventricles/
 output=${outputdir}ventricles.stl
-output2="./data/meshes/aqueduct/ernie/ventricles_postproc.mgz"
+output2="./data/meshes/ernie/ventricles/ventricles_postproc.mgz"
 mri_binarize --i $input --ventricles --match 15 --o "tmp.mgz"
 
 

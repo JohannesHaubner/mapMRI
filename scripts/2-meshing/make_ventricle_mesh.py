@@ -3,11 +3,11 @@ import nibabel
 import os
 import SVMTK as svm
 
-# Abby
-outputdir="./data/meshes/reg-aqueduct/abby/"
+# # Abby
+# outputdir="./data/meshes/abby/affine_registered_ventricles/"
 
 # Ernie
-outputdir="./data/meshes/aqueduct/ernie/"
+outputdir="./data/meshes/ernie/ventricles/"
 
 input=outputdir + "ventricles.stl"
 output= outputdir + "ventricles"
