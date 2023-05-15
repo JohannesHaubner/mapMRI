@@ -10,9 +10,6 @@ import pytest
 
 from dgregister.preconditioning_overloaded import preconditioning
 
-@pytest.mark.parametrize(
-    "smoothen", [True]
-)
 def test_preconditioning():
     mesh = UnitSquareMesh(10, 10)
 
