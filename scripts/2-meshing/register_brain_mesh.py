@@ -6,7 +6,7 @@ from dgregister.helpers import read_vox2vox_from_lta
 from nibabel.affines import apply_affine
 
 
-path = pathlib.Path("./data/meshes/manually_registered_brain_mesh/")
+path = pathlib.Path("./data/meshes/abby/manually_registered_brain_mesh/")
 
 regimagepath = "./data/normalized/registered/abbytoernie.mgz"
 

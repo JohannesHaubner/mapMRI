@@ -7,9 +7,9 @@ set -o nounset # Treat any unset variables as an error
 
 # # ABBY
 # input="./data/freesurfer/abby/mri/reg-ventricles-w-aq.mgz"
-# outputdir=./data/meshes/reg-aqueduct/abby/
+# outputdir=./data/meshes/aqueduct/abby2ernie/
 # output=${outputdir}ventricles.stl
-# output2="./data/meshes/reg-aqueduct/abby/ventricles_postproc.mgz"
+# output2="./data/meshes/aqueduct/abby2ernie/ventricles_postproc.mgz"
 # cp $input tmp.mgz
 
 

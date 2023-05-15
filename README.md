@@ -52,14 +52,14 @@ Alternatively, and to reproduce the image registration results reported in the m
 ```
 export IMG1=./data/normalized/cropped/cropped_abbytoernie_nyul.mgz
 export IMG2=./data/normalized/cropped/cropped_ernie_brain_nyul.mgz
-python3 -u ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_registration_1 \
+python3 ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_registration_1 \
 --input ${IMG1} --target ${IMG2}
 ```
 
 Improve upon the first registration by a second velocity based transform:
 
 ```
-python3 -u ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_registration_2 \
+python3 ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_registration_2 \
 --starting_state my_registration_1/State_checkpoint.xdmf \
 --input ${IMG1} --target ${IMG2}
 ```
@@ -67,7 +67,7 @@ python3 -u ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_regi
 Improve upon the second registration by a third velocity based transform:
 
 ```
-python3 -u ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_registration_3 \
+python3 ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_registration_3 \
 --starting_state my_registration_2/State_checkpoint.xdmf \
 --input ${IMG1} --target ${IMG2}
 ```
@@ -76,7 +76,7 @@ python3 -u ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_regi
 Improve upon the registration by a less smooth velocity based transform by tweaking the velocity transform hyperparameters:
 
 ```
-python3 -u ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_registration_4 \
+python3 ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_registration_4 \
 --starting_state my_registration_3/State_checkpoint.xdmf \
 --alpha 0.5 --beta 0.5 \ 
 --input ${IMG1} --target ${IMG2}
@@ -125,13 +125,13 @@ The aqueduct mesh for "Abby" was created from a registered ventricles file, so t
 
 First, create the coordinate mapping as FEniCS files:
 ```
-python3 -u scripts/4-postprocessing/transform_mesh.py --mapping_only \
+python3 scripts/4-postprocessing/transform_mesh.py --mapping_only \
 --folders ./outputs/my_registration_1 ./outputs/my_registration_2
 ```
 
 Then, deform the mesh:
 ```
-python3 -u scripts/4-postprocessing/transform_mesh.py \
+python3 scripts/4-postprocessing/transform_mesh.py \
 --folders ./outputs/my_registration_1 ./outputs/my_registration_2 \
 --meshoutputfolder  ./outputs/meshes/deformed_mesh/
 ```
@@ -145,13 +145,13 @@ For visualization of images and meshes, we used paraview.
 
 To create files that can be viewed in freeview from registration output, run 
 ```
-python3 -u scripts/4-postprocessing/currentState_to_mgz.py \
+python3 scripts/4-postprocessing/currentState_to_mgz.py \
 ./outputs/my_registration_1
 ```
 This creates the file CurrentState.mgz which can be viewed in freeview.
 
 After this, to convert the output such that it can be viewed in paraview (large file!) run
 ```
-python3 -u scripts/4-postprocessing/image2pv.py \
+python3 scripts/4-postprocessing/image2pv.py \
 ./outputs/my_registration_1/CurrentState.mgz
 ```
