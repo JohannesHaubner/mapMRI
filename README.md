@@ -41,14 +41,7 @@ This puts the pre-processed images to `mapMRI/data/normalized`
 
 # Image registration
 
-Assuming you run on a server with SLURM, run
-
-```
-mkdir -pv ./outputs/mrislurm/
-sbatch scripts/3-optimization/optimize3d.slurm 
-```
-
-Alternatively, and to reproduce the image registration results reported in the manuscript, run the following commands
+To reproduce the image registration results reported in the manuscript, run the following commands
 ```
 export IMG1=./data/normalized/cropped/cropped_abbytoernie_nyul.mgz
 export IMG2=./data/normalized/cropped/cropped_ernie_brain_nyul.mgz
@@ -77,6 +70,9 @@ python3 ./scripts/3-optimization/Optimize3d.py --output_dir ./outputs/my_registr
 --starting_state my_registration_3/State_checkpoint.xdmf \
 --alpha 0.5 --beta 0.5
 ```
+
+On a server with SLURM, you can use scripts/3-optimization/optimize3d.slurm.
+
 
 ## Mesh generation
 
@@ -119,7 +115,7 @@ The aqueduct mesh for "Abby" was created from a registered ventricles file, so t
 
 ### Velocity-field mesh registration.
 
-First, create the coordinate mapping as FEniCS files:
+First, create FEniCS files that describe how mesh coordinates should be mapped:
 ```
 python3 ./scripts/4-postprocessing/transform_coordinates.py --folder ./outputs/my_registration_1/
 python3 ./scripts/4-postprocessing/transform_coordinates.py --folder ./outputs/my_registration_2/
