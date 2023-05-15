@@ -1,7 +1,7 @@
 name: testing
-
+​
 on: [push]
-
+​
 jobs:
   build:
     runs-on: "ubuntu-latest"
@@ -14,10 +14,11 @@ jobs:
         uses: conda-incubator/setup-miniconda@v2.2.0
         with:
           activate-environment: anaconda-client-env
-          environment-file: environment.yml
+          environment-file: dgregister-env.yml
           python-version: 3.9
           auto-activate-base: false
       - name: Test with pytest
         run: |
           conda install pytest
+          pip install -e .
           pytest
