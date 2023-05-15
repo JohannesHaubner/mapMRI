@@ -3,12 +3,13 @@ from dolfin_adjoint import *
 import numpy as np
 import pytest
 
-from transformation_overloaded import transformation
+from dgregister.transformation_overloaded import transformation
 
 @pytest.mark.parametrize(
-    "smoothen", [True, False]
+    "smoothen", [True]
 )
-def test_transformation(smoothen):
+
+def test_transformation():
     mesh = UnitSquareMesh(10, 10)
 
     # initialize trafo

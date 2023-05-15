@@ -8,12 +8,12 @@ from dolfin_adjoint import *
 import numpy as np
 import pytest
 
-from preconditioning_overloaded import preconditioning
+from dgregister.preconditioning_overloaded import preconditioning
 
 @pytest.mark.parametrize(
-    "smoothen", [True, False]
+    "smoothen", [True]
 )
-def test_preconditioning(smoothen):
+def test_preconditioning():
     mesh = UnitSquareMesh(10, 10)
 
     # initialize trafo
@@ -23,7 +23,7 @@ def test_preconditioning(smoothen):
 
     # initialize control
     controlfun = interpolate(Constant((1., 1.)), vCG)
-    control = preconditioning(controlfun, smoothen)
+    control = preconditioning(controlfun)
 
     # objective
     J = assemble((control - Constant((1.0, 1.0)))**2*dx)
@@ -38,6 +38,6 @@ def test_preconditioning(smoothen):
 
 
 if __name__ == "__main__":
-    test_preconditioning(False)
+    test_preconditioning()
 
 
