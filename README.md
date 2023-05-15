@@ -1,3 +1,6 @@
+[![GNU LGPLv3 License](https://img.shields.io/github/license/JohannesHaubner/mapMRI)](https://choosealicense.com/licenses/lgpl-3.0/)
+[![Test mapMRI](https://github.com/JohannesHaubner/mapMRI/actions/workflows/test.yml/badge.svg?style=plastic)](https://github.com/JohannesHaubner/mapMRI/actions/workflows/test.yml)
+
 # mapMRI 
 
 Code repository for the manuscript
@@ -39,7 +42,7 @@ bash scripts/1-image-preprocessing/preprocess.sh
 
 This puts the pre-processed images to `mapMRI/data/normalized`
 
-# Image registration
+## Image registration
 
 To reproduce the image registration results reported in the manuscript, run the following commands
 ```
@@ -136,7 +139,7 @@ python3 ./scripts/4-postprocessing/transform_mesh.py \
 See also the SLURM scripts in ./scripts/4-postprocessing/.
 
 
-# Visualization
+## Visualization
 
 MR images can be viewed in freeview. 
 For visualization of images and meshes, we used paraview. 
