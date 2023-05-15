@@ -1,3 +1,6 @@
+"""
+Deform a mesh using a sequence of velocity fields-based mappings
+"""
 import os
 import argparse
 import json
@@ -15,82 +18,87 @@ def print_overloaded(*args):
         print(*args)
     else:
         pass
-parser = argparse.ArgumentParser()
 
+
+
+
+class Meshdata():
+    """
+    Convenience wrapper containing some files and parameters needed to transform the mesh.
+    """
+
+    def __init__(self, input_meshfile) -> None:
+
+
+        self.box = np.load("./data/normalized/cropped/box.npy")
+        self.pad = 2
+
+        self.affine = nibabel.load("./data/normalized/registered/abbytoernie.mgz").affine
+
+        self.registration_lta = "./data/" + "normalized/registered/abbytoernie.lta"
+        
+        self.input_meshfile = input_meshfile
+
+        self.original_input = "./data/normalized/registered/abbytoernie.mgz"
+        self.original_target = "./data/freesurfer/ernie/mri/brain.mgz"
+
+        print_overloaded("Read meshfile", self.input_meshfile)
+            
+        self.vox2ras_input = nibabel.load(self.original_input).header.get_vox2ras_tkr()
+        self.vox2ras_target = nibabel.load(self.original_target).header.get_vox2ras_tkr()
+
+        self.inputmesh = Mesh(self.input_meshfile)
+
+        print("Mesh.coordinates().shape=", self.inputmesh.coordinates().shape)
+
+        bounds = get_bounding_box_limits(self.box)
+        self.dxyz = [bounds[x].start for x in range(3)]
+
+    def meshcopy(self) -> Mesh:
+        return Mesh(self.input_meshfile)
+   
+
+
+
+
+
+
+
+parser = argparse.ArgumentParser()
 parser.add_argument("--folders", nargs="+", type=str, default=[])
-parser.add_argument("--recompute_mapping", action="store_true", default=False)
-parser.add_argument("--outputfoldername", type=str, default="meshtransform/")
-parser.add_argument("--meshoutputfolder", type=str, help="Folder where all the transported meshes should be stored.")
-parser.add_argument("--remesh", action="store_true", default=False, help="Remesh")
+parser.add_argument("--input_meshfile", required=True, type=str, help="Input mesh ")
+parser.add_argument("--meshoutputfolder", required=True, type=str, help="Folder where all the transported meshes should be stored.")
+parser.add_argument("--remesh", action="store_true", default=False, help="Remesh and fix surface mesh using SVMTK")
 parserargs = vars(parser.parse_args())
 
-if len(parserargs["folders"]) > 1:
-    raise NotImplementedError("Setting omega, epsilon for several deformations not yet implemented")
-else:
+deformation_hyperparameters = json.load(open(parserargs["folders"][0] + "hyperparameters.json"))
 
-    deformation_hyperparameter = json.load(open(parserargs["folders"][0] + "hyperparameters.json"))
-
-import dgregister.config as config
-
-config.EPSILON = deformation_hyperparameter["epsilon"]
-config.OMEGA = deformation_hyperparameter["omega"]
-
-from dgregister.meshtransform import map_mesh, make_mapping
-from dgregister.helpers import get_lumped_mass_matrices
-
+from dgregister.meshtransform import map_mesh
 
 parserargs["folders"] = sorted(parserargs["folders"])
-
-
-print_overloaded("*"*80)
-
-for key, item in parserargs.items():
-    print_overloaded(key, item)
-
-print_overloaded("*"*80)
-
-if not parserargs["outputfoldername"].endswith("/"):
-    parserargs["outputfoldername"] += "/"
-
-assert parserargs["outputfoldername"][0] != "/"
 
 mapfiles = {}
 hyperparameters = {}
 outputfolders = {}
 
-previous_slurmid = None
-
 for idx, folder in enumerate(parserargs["folders"]):
-    
 
-    deformation_hyperparameter = json.load(open(folder + "hyperparameters.json"))
-    if idx == 0:
-        if not parserargs["mapping_only"]:
-            ## FIXME
-            # FIXME why this assertion ? 
-            assert deformation_hyperparameter["starting_state"] is None
-        previous_slurmid = deformation_hyperparameter["slurmid"]
-    else:
-        assert str(previous_slurmid) in deformation_hyperparameter["starting_state"]
-        previous_slurmid = deformation_hyperparameter["slurmid"]
+    deformation_hyperparameters = json.load(open(folder + "hyperparameters.json"))
+
+    if idx == 0 and "slurmid" in deformation_hyperparameters.keys():
+        previous_slurmid = deformation_hyperparameters["slurmid"]
+    elif "slurmid" in deformation_hyperparameters.keys():
+        assert str(previous_slurmid) in deformation_hyperparameters["starting_state"]
+        previous_slurmid = deformation_hyperparameters["slurmid"]
 
     print_overloaded("Folder:        ", folder)
-    print_overloaded("Starting guess:", deformation_hyperparameter["starting_state"])
+    print_overloaded("Starting guess:", deformation_hyperparameters["starting_state"])
 
-    assert deformation_hyperparameter["starting_guess"] is None
+    assert deformation_hyperparameters["starting_guess"] is None
         
-    hyperparameters[folder] = deformation_hyperparameter
+    hyperparameters[folder] = deformation_hyperparameters
 
-    outputfolder = str(pathlib.Path(folder, parserargs["outputfoldername"]))
-
-    if not outputfolder.endswith("/"):
-        outputfolder += "/"
-
-    outputfolders[folder] = outputfolder
-
-    os.makedirs(outputfolder, exist_ok=True)
-
-    mapfiles[folder] = outputfolder + "all" + ".hdf"
+    mapfiles[folder] = folder + "all" + ".hdf"
 
 nx = hyperparameters[folder]["target.shape"][0]
 ny = hyperparameters[folder]["target.shape"][1]
@@ -100,25 +108,12 @@ nz = hyperparameters[folder]["target.shape"][2]
 state_space, state_degree = hyperparameters[folder]["state_functionspace"], hyperparameters[folder]["state_functiondegree"]
 
 cubemesh = BoxMesh(MPI.comm_world, Point(0.0, 0.0, 0.0), Point(nx, ny, nz), nx, ny, nz)
-
-print_overloaded("cubemesh size", nx, ny, nz)
-
 V3 = VectorFunctionSpace(cubemesh, hyperparameters[folder]["velocity_functionspace"], hyperparameters[folder]["velocity_functiondegree"],)
 
 mappings = []
 
-# NOTE
-# NOTE reversed()  can be used to apply the transformations in reverse order. 
-# reverse should be False for mesh
-parserargs["reverse"] = False
 
-if not parserargs["reverse"]:
-    folders=parserargs["folders"]
-else:
-    folders=reversed(parserargs["folders"])
-
-
-for idx, folder in enumerate(folders):
+for idx, folder in enumerate(parserargs["folders"]):
 
     print(idx, folder)    
 
@@ -136,70 +131,20 @@ for idx, folder in enumerate(folders):
 
 
 
+data = Meshdata(input_meshfile=parserargs["input_meshfile"])
 
-class Meshdata():
-    """Convenience wrapper containing some files and parameters needed to transform the mesh.
-    """
+if not parserargs["meshoutputfolder"].endswith("/"):
+    parserargs["meshoutputfolder"] += "/"
 
-    def __init__(self, input, target) -> None:
+os.makedirs(parserargs["meshoutputfolder"], exist_ok=True)
 
-        assert "abby" in input
-        assert "ernie" in target
-        box = np.load("./data/normalized/cropped/box.npy")
-        space = 0
-        pad = 2
+targetmesh1 = map_mesh(mappings=mappings, data=data, remesh=parserargs["remesh"], exportdir=parserargs["meshoutputfolder"])
 
-        aff3 = nibabel.load("./data/normalized/registered/abbytoernie.mgz").affine
-
-        self.registration_lta = "./data/" + "normalized/registered/abbytoernie.lta"
-        
-        self.input_meshfile = "./data/meshes/abby-lh-affineregistered.xml"
-        self.original_input = "./data/normalized/registered/abbytoernie.mgz"
-        self.original_target = "./data/normalized/input/ernie/" + "ernie_brain.mgz"
-
-        print_overloaded("Read meshfile", self.input_meshfile)
-            
-        self.vox2ras_input = nibabel.load(self.original_input).header.get_vox2ras_tkr()
-        self.vox2ras_target = nibabel.load(self.original_target).header.get_vox2ras_tkr()
-
-        self.inputmesh = Mesh(self.input_meshfile)
-
-        print("Mesh has", self.inputmesh.coordinates().shape, "shape")
-
-        self.box = box
-        self.space = space
-        self.pad = pad
-        self.affine = aff3
-
-        bounds = get_bounding_box_limits(self.box)
-        self.dxyz = [bounds[x].start for x in range(3)]
-
-    def meshcopy(self) -> Mesh:
-        return Mesh(self.input_meshfile)
-    
-
-
-data = Meshdata(hyperparameters[folder]["input"], hyperparameters[folder]["target"])
-
-os.makedirs(parserargs["meshoutputfolder"])
-
-targetmesh1 = map_mesh(mappings=mappings, data=data, raise_errors=True, noaffine=True,
-                                        remesh=parserargs["remesh"], tmpdir=parserargs["meshoutputfolder"],
-                                        update=parserargs["update"])
 
 print("map_mesh called succesfully, now storing meshes")
 
 meshes = {}
-meshes["transformed_regaff"] = targetmesh1
-
-
-if os.path.isdir(parserargs["meshoutputfolder"]) and "test" in parserargs["meshoutputfolder"]:
-    os.system("rm -r -v " + parserargs["meshoutputfolder"])
-
-
-
-
-
+meshes["transformed_mesh"] = targetmesh1
 
 for meshname, meshobject in meshes.items():
 
@@ -228,6 +173,7 @@ for meshname, meshobject in meshes.items():
         transormed_xmlmesh.write(xmlfile.replace(".xml", ".stl"))
 
     print("Stored ", meshname, "in all formats")
+
 if parserargs["meshoutputfolder"] is not None:
 
     with open(pathlib.Path(parserargs["meshoutputfolder"]) / "parserargs.json", 'w') as outfile:

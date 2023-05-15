@@ -32,7 +32,7 @@ parser.add_argument("--readname", type=str, default="-1", help="Name of the FEni
 parser.add_argument("--starting_guess", type=str, default=None, help="Initialize the optimization with this control")
 parser.add_argument("--starting_state", type=str, default=None, help="Start with this image, given as a FEniCS function")
 parser.add_argument("--statename", type=str, default="CurrentState",  help="Name of the FEniCS function for --starting_state")
-
+parser.add_argument("--slurmid", type=int, help="SLURM job id. Useful for loggin")
 
 # Forward pass 
 parser.add_argument("--timestepping", default="RungeKutta", choices=["RungeKutta", "CrankNicolson", "explicitEuler"])

@@ -21,58 +21,48 @@ def print_overloaded(*args):
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--folder", type=str, required=True)
-parser.add_argument("--outputfoldername", type=str, default="meshtransform/")
+parser.add_argument("--outputfilename", type=str, default="all.hdf")
 parserargs = vars(parser.parse_args())
 
 
-deformation_hyperparameter = json.load(open(parserargs["folder"] + "hyperparameters.json"))
+deformation_hyperparameters = json.load(open(parserargs["folder"] + "hyperparameters.json"))
 
 import dgregister.config as config
 
-config.ALPHA = deformation_hyperparameter["alpha"]
-config.BETA = deformation_hyperparameter["beta"]
+config.ALPHA = deformation_hyperparameters["alpha"]
+config.BETA = deformation_hyperparameters["beta"]
 
 from dgregister.meshtransform import make_mapping
 
 if not parserargs["folder"].endswith("/"):
     parserargs["folder"] += "/"
 
-if not parserargs["outputfoldername"].endswith("/"):
-    parserargs["outputfoldername"] += "/"
+assert deformation_hyperparameters["starting_guess"] is None
 
 
-assert parserargs["outputfoldername"][0] != "/"
-
-assert deformation_hyperparameter["starting_guess"] is None
-
-outputfolder = str(pathlib.Path(parserargs["folder"], parserargs["outputfoldername"]))
-
-if not outputfolder.endswith("/"):
-    outputfolder += "/"
-
-os.makedirs(outputfolder, exist_ok=True)
+os.makedirs(parserargs["folder"], exist_ok=True)
 
 
-nx = deformation_hyperparameter["target.shape"][0]
-ny = deformation_hyperparameter["target.shape"][1]
-nz = deformation_hyperparameter["target.shape"][2]
+nx = deformation_hyperparameters["target.shape"][0]
+ny = deformation_hyperparameters["target.shape"][1]
+nz = deformation_hyperparameters["target.shape"][2]
 
 cubemesh = BoxMesh(MPI.comm_world, Point(0.0, 0.0, 0.0), Point(nx, ny, nz), nx, ny, nz)
 
 print_overloaded("cubemesh size", nx, ny, nz)
 
-V3 = VectorFunctionSpace(cubemesh, deformation_hyperparameter["velocity_functionspace"], deformation_hyperparameter["velocity_functiondegree"],)
+V3 = VectorFunctionSpace(cubemesh, deformation_hyperparameters["velocity_functionspace"], deformation_hyperparameters["velocity_functiondegree"],)
 
 
 # Read the control field (note: This is not yet the velocity field. Preprocessing is applied in make_mapping)
 l2_control = Function(V3)
 
-with XDMFFile(parserargs["folder"] + "/Control_checkpoint.xdmf") as xdmf:
+with XDMFFile(parserargs["folder"] + "Control_checkpoint.xdmf") as xdmf:
     xdmf.read_checkpoint(l2_control, "CurrentV")
 
-mapping = make_mapping(cubemesh, control=l2_control, hyperparameters=deformation_hyperparameter)
+mapping = make_mapping(cubemesh, control=l2_control, hyperparameters=deformation_hyperparameters)
 
-hdf = HDF5File(cubemesh.mpi_comm(), outputfolder + "all" + ".hdf", "w")
+hdf = HDF5File(cubemesh.mpi_comm(), parserargs["folder"] + parserargs["outputfilename"], "w")
 hdf.write(mapping, "coordinatemapping")
 hdf.close()
 

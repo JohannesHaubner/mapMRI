@@ -125,17 +125,22 @@ The aqueduct mesh for "Abby" was created from a registered ventricles file, so t
 
 First, create the coordinate mapping as FEniCS files:
 ```
-python3 scripts/4-postprocessing/transform_mesh.py --mapping_only \
---folders ./outputs/my_registration_1 ./outputs/my_registration_2
+python3 ./scripts/4-postprocessing/transform_coordinates.py --folder ./outputs/my_registration_1/
+python3 ./scripts/4-postprocessing/transform_coordinates.py --folder ./outputs/my_registration_2/
+python3 ./scripts/4-postprocessing/transform_coordinates.py --folder ./outputs/my_registration_3/
+python3 ./scripts/4-postprocessing/transform_coordinates.py --folder ./outputs/my_registration_4/
+
 ```
 
 Then, deform the mesh:
 ```
-python3 scripts/4-postprocessing/transform_mesh.py \
---folders ./outputs/my_registration_1 ./outputs/my_registration_2 \
---meshoutputfolder  ./outputs/meshes/deformed_mesh/
+export MESHFILE=./data/meshes/abby/manually_registered_brain_mesh/output/abby_registered_brain_mesh.xml
+python3 ./scripts/4-postprocessing/transform_mesh.py \
+--folders ./outputs/my_registration_1 ./outputs/my_registration_2 ./outputs/my_registration_3 ./outputs/my_registration_4 \
+--meshoutputfolder  ./outputs/meshes/deformed_brain_mesh/
 ```
 
+See also the SLURM scripts in ./scripts/4-postprocessing/.
 
 
 # Visualization

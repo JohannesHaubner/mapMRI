@@ -1,15 +1,13 @@
 import json
 import os
 import pathlib
-from tqdm import tqdm
 import numpy
 import numpy as np
 from fenics import *
+from fenics_adjoint import *
 
-try:
-    import meshio
-except:
-    print("Could not import meshio")
+import SVMTK as svmtk
+import meshio
 
 def print_overloaded(*args):
     if MPI.rank(MPI.comm_world) == 0:
@@ -17,7 +15,7 @@ def print_overloaded(*args):
     else:
         pass
 
-from fenics_adjoint import *
+
 from nibabel.affines import apply_affine
 from dgregister.preconditioning_overloaded import preconditioning
 from dgregister.transformation_overloaded import transformation
@@ -43,9 +41,8 @@ def upscale(points: np.ndarray, npad: np.ndarray, dxyz: np.ndarray) -> np.ndarra
 
 
 
-def map_mesh(mappings: list, noaffine: bool, 
-            data, update:bool = False, 
-            remesh: bool=False, tmpdir=None,):
+def map_mesh(mappings: list, data, 
+            remesh: bool=False, exportdir=None,):
 
     comm = MPI.comm_world
     nprocs = comm.Get_size()
@@ -67,7 +64,7 @@ def map_mesh(mappings: list, noaffine: bool,
         tempmesh = data.meshcopy()
         tempmesh.coordinates()[:] = input_mesh_xyz_vox
 
-        tmpfile = tmpdir + "inputmesh_downscaled.xml"
+        tmpfile = exportdir + "inputmesh_downscaled.xml"
 
         File(tmpfile) << tempmesh
 
@@ -98,9 +95,6 @@ def map_mesh(mappings: list, noaffine: bool,
 
         print_overloaded("Iterating over all mesh nodes, mapping", mapping_idx + 1, "/", len(mappings))
 
-        if update:
-         progress = tqdm(total=int(target_mesh_xyz_vox.shape[0]))
-
         print_at = [int(target_mesh_xyz_vox.shape[0] * (x + 1) / 10) for x in range(10)]
 
         for idx in range(target_mesh_xyz_vox.shape[0]):
@@ -116,13 +110,8 @@ def map_mesh(mappings: list, noaffine: bool,
             
             deformed_mesh_ijk[idx, :] = transformed_point
             
-            if update:
-                progress.update(1)
-
 
         if remesh:
-
-            import SVMTK as svmtk
 
             if reuse_mesh:
                 tempmesh = data.meshcopy()
@@ -138,7 +127,7 @@ def map_mesh(mappings: list, noaffine: bool,
             else:
                 surfacemesh = tempmesh
 
-            tmpfile = tmpdir + "boundary_trafo" + str(mapping_idx) + ".xml"
+            tmpfile = exportdir + "boundary_trafo" + str(mapping_idx) + ".xml"
             # Convert xml to stl with meshio:
             File(tmpfile) << surfacemesh
             print("Stored current mesh to xml")
@@ -192,7 +181,6 @@ def map_mesh(mappings: list, noaffine: bool,
 
             outcoords = apply_affine(data.registration_affine, outcoords)
             outcoords = apply_affine(data.vox2ras_target,  outcoords)
-            # outcoords = apply_affine(data.vox2ras_input,  outcoords)
             
             mesh_for_visual = Mesh(fixed_surfacemesh_file.replace(".stl", ".xml"))
             mesh_for_visual.coordinates()[:] = outcoords
@@ -213,16 +201,7 @@ def map_mesh(mappings: list, noaffine: bool,
     target_mesh_xyz_vox = upscale(target_mesh_xyz_vox, npad=data.pad, dxyz=data.dxyz)
     print("Upscaled from cube mesh coordinate system to image voxel coordinates")
 
-
     target_mesh_xyz_vox1 =  np.copy(target_mesh_xyz_vox)
-
-    if not noaffine:
-        print("Applying registration affine")
-        target_mesh_xyz_vox1 = apply_affine(data.registration_affine, np.copy(target_mesh_xyz_vox1))
-    else:
-        print("*"*80)
-        print("Not applying registration affine")
-        print("*"*80)
 
     target_mesh_xyz_ras1 = apply_affine(data.vox2ras_target,  target_mesh_xyz_vox1)
     
