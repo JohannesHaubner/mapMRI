@@ -28,12 +28,12 @@ FOLDER2=./outputs/my_registration_2/
 FOLDER3=./outputs/my_registration_3/
 FOLDER4=./outputs/my_registration_4/
 
-MESHFILE=./data/meshes/abby/manually_registered_brain_mesh/output/abby_registered_brain_mesh.xml
+MESHFILE=./data/meshes/abby/lh_affine_registered/lh.xml
 
 OUTFOLDER=./outputs/meshregistration_test-4/
 
 
 srun -n 1 python3 -u ./scripts/4-postprocessing/transform_mesh.py --remesh \
---folders ${FOLDER1} ${FOLDER2} ${FOLDER3} ${FOLDER4}\
+--folders ${FOLDER1} ${FOLDER2} ${FOLDER3} ${FOLDER4} \
 --input_meshfile ${MESHFILE} --meshoutputfolder ${OUTFOLDER} > ${LOGOUTFILE}
 echo "success"

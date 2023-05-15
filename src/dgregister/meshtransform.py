@@ -146,17 +146,24 @@ def map_mesh(mappings: list, data,
 
             surface = svmtk.Surface(stlfile)
 
-            # Remesh surface
-            surface.isotropic_remeshing(3, 3, False)
+            print("Loaded surface with SVMTK")
 
-            surface.smooth_taubin(5)
+            # Remesh surface
+            surface.isotropic_remeshing(1, 3, False)
+
+            print("Performed isotropic remeshing")
+
+            surface.smooth_taubin(2)
+
+            print("Performed taubin smoothing")
 
             surface.fill_holes()
+            print("Filled holes")
 
             # Separate narrow gaps
             # Default argument is -0.33. 
             surface.separate_narrow_gaps(-0.33)
-
+            print("separated gaps")
 
             surface.save(fixed_surfacemesh_file)
 
