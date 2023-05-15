@@ -1,16 +1,12 @@
-import os, pathlib
+import os
 import numpy as np
 import nibabel
 
-p = "/home/basti/programming/mapMRI/"
+inputimage = "./data/freesurfer/ernie/mri/brain.mgz"
 
-command = "freeview" 
-
-inputimage = p + "data/freesurfer/ernie/mri/brain.mgz"
-
-normalized_input = p + "data/normalized/nyul_normalized/ernie_brain_nyul.mgz"
-currentstate = p + "registration/normalized-outputs/447918/RK100A0.01LBFGS150/CurrentState.mgz"
-currentstate2 = p + "registration/normalized-outputs/450276/RK100A0.01LBFGS150/CurrentState.mgz"
+normalized_input = "./data/normalized/nyul_normalized/ernie_brain_nyul.mgz"
+currentstate = "./registration/normalized-outputs/447918/RK100A0.01LBFGS150/CurrentState.mgz"
+currentstate2 = "./registration/normalized-outputs/450276/RK100A0.01LBFGS150/CurrentState.mgz"
 
 inaff = nibabel.load(inputimage).affine
 
@@ -20,7 +16,7 @@ normnii = nibabel.Nifti1Image(norm_input, inaff)
 normalized_input_oriented = normalized_input.replace(".mgz", "_oriented.mgz")
 nibabel.save(normnii, normalized_input_oriented)
 
-diffaffine = nibabel.load(p + "data/normalized/registered/abbytoernie.mgz").affine
+diffaffine = nibabel.load("./data/normalized/registered/abbytoernie.mgz").affine
 
 inaff= diffaffine
 
@@ -43,8 +39,8 @@ nibabel.save(mydiffnii2, diffpath2)
 
 
 
-freesruferimage = p + "data/freesurfer/abby/cvs/final_CVSmorphed_toernie_norm.mgz" 
-normimage = p + "data/freesurfer/ernie/mri/norm.mgz"
+freesruferimage = "./data/freesurfer/abby/cvs/final_CVSmorphed_toernie_norm.mgz" 
+normimage = "./data/freesurfer/ernie/mri/norm.mgz"
 
 nom =nibabel.load(normimage).get_fdata()
 fsreg = nibabel.load(freesruferimage).get_fdata()
@@ -54,7 +50,7 @@ fsdiffnii = nibabel.Nifti1Image(freesurfer_difftonorm, nibabel.load(normimage).a
 fsdiffpath =  freesruferimage.replace(".mgz", "_diff.mgz")
 nibabel.save(fsdiffnii, fsdiffpath)
 
-
+command = "freeview"
 command += " "
 command += normalized_input_oriented
 command += " "
