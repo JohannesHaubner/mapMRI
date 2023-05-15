@@ -10,7 +10,6 @@ import nibabel
 parser = argparse.ArgumentParser()
 parser.add_argument("-r", "--resync", action="store_true", default=False)
 parser.add_argument("--only", type=int, default=None)
-parser.add_argument("--omit", type=int, default=449047)
 parser.add_argument("-v", "--vent", action="store_true", default=False)
 parser.add_argument("-f", "--full", action="store_true", default=False)
 parser.add_argument("--hundred", action="store_true", default=False)
@@ -173,14 +172,6 @@ def read_loss_from_log(file1, hyperparameters):
 dpi = 400
 figsize= None # (12, 12)
 
-subj1 = "abby"
-res = 8
-xmlfile1 = "/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/scripts/preprocessing/chp4/outs/abby/" + subj1 + str(res) + ".xml"
-deformed_mesh = Mesh(xmlfile1)
-quality = MeshQuality.radius_ratio_min_max(deformed_mesh)
-meshes={}
-meshes["input"] = {"min inner/outer radius" : quality[0], "Delta J = ": None}
-
 
 if parsersargs["vent"]:
     foldernames = ["ventricle-outputs"]
@@ -192,7 +183,7 @@ else:
 if parsersargs["resync"]:
 
     for foldername in foldernames:
-        localpath = pathlib.Path("/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration") / foldername
+        localpath = pathlib.Path("/home/basti/programming/mapMRI/registration") / foldername
         expath = pathlib.Path("/home/bastian/D1/registration") / foldername
         expath2 = pathlib.Path("/global/D1/homes/bastian/registration") / foldername
 
@@ -294,7 +285,7 @@ for foldername in foldernames:
 
 
 
-    localpath = pathlib.Path("/home/basti/programming/Oscar-Image-Registration-via-Transport-Equation/registration") / foldername
+    localpath = pathlib.Path("/home/basti/programming/mapMRI/registration") / foldername
     expath = pathlib.Path("/home/bastian/D1/registration") / foldername   
     expath2 = pathlib.Path("/global/D1/homes/bastian/registration") / foldername
 
@@ -312,11 +303,6 @@ for foldername in foldernames:
 
         inputfile = hyperparameters["input"].replace("/d1/", "/D1/").replace(str(expath.parent), str(localpath.parent))
         targetfile = hyperparameters["target"].replace("/d1/", "/D1/").replace(str(expath.parent), str(localpath.parent))
-
-        if str(parsersargs["omit"]) in runname:
-            
-            continue
-
 
         if not hyperparameters["slurmid"] in ["445806", "445807", "447918", "449047"]:
             assert foldername in hyperparameters["output_dir"]

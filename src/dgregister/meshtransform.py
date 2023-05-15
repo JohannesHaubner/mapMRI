@@ -6,7 +6,6 @@ import numpy
 import numpy as np
 from fenics import *
 
-
 try:
     import meshio
 except:
@@ -23,7 +22,7 @@ from nibabel.affines import apply_affine
 from dgregister.preconditioning_overloaded import preconditioning
 from dgregister.transformation_overloaded import transformation
 from dgregister.CGTransport import CGTransport
-import dgregister.helpers
+from dgregister.helpers import get_lumped_mass_matrices
 
 
 
@@ -238,7 +237,23 @@ def map_mesh(mappings: list, noaffine: bool,
 
 
 
-def make_mapping(cubemesh, control, M_lumped_inv, hyperparameters,):
+def make_mapping(cubemesh, control, hyperparameters):
+    """
+
+    Transports the field (x, y, z) defined on a cube mesh by solving the (vector-) transport equation with
+    the vector field (x, y, z) as initial condition.
+
+    Args:
+        cubemesh (dolfin.mesh): mesh
+        control (dolfin.VectorFunction): Control variable
+        hyperparameters (dict): numerical hyperparameters
+
+    Returns:
+        dolfin.VectorFunction: The transported coordinate field (X, Y, Z)
+    """
+
+
+    _, M_lumped_inv = get_lumped_mass_matrices(vCG=control.function_space())
 
     mappings = []
 
@@ -246,19 +261,19 @@ def make_mapping(cubemesh, control, M_lumped_inv, hyperparameters,):
     print_overloaded("Preconditioning L2_controlfun, name=", control_L2)
     velocity = preconditioning(control_L2)
 
+    # Sanity check
+    assert norm(velocity) > 0
+
     V1 = FunctionSpace(cubemesh, "CG", 1)
 
     for coordinate in ["x[0]", "x[1]", "x[2]"]:
 
         print_overloaded("Transporting, ", coordinate, "coordinate")     
 
-        xin = interpolate(Expression(coordinate, degree=1), V1) # cubeimg.function_space())
+        xin = interpolate(Expression(coordinate, degree=1), V1)
         
-        print_overloaded("Interpolated ", coordinate)
+        # "Using CGTransport to transport coordinates. This is useful since there are no jumps in the field (x, y, z)."
 
-        assert norm(velocity) > 0
-
-        print_overloaded("Using CGTransport to transport coordinates")
         xout = CGTransport(Img=xin, Wind=-velocity, 
                            DeltaT=hyperparameters["DeltaT"], 
                            preconditioner="amg", 
