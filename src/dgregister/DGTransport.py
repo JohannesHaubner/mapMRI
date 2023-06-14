@@ -79,6 +79,9 @@ def DGTransport(Img, Wind, MaxIter, DeltaT, timestepping, solver="krylov", preco
     def Form(f):   
         a = -inner(grad(v), outer(f, Wind)) * dx
         a += inner(jump(v), jump(Flux(f, Wind, n))) * dS(metadata={'quadrature_degree': q_degree})
+        
+        # The following term is 0 for the boundary condition v = 0
+        # included for general BC for v
         a += inner(v, FluxB(f, Wind, n)) * ds(metadata={'quadrature_degree': q_degree})
     
         if MassConservation == False:

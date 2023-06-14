@@ -14,7 +14,7 @@ in_imagepath = "./data/normalized/input/abby/abby_brain.mgz"
 
 lta = "./data/normalized/registered/abbytoernie.lta"
 
-inputmesh = "./data/meshes/abby/brain/abby8.xml"
+inputmesh = "./data/meshes/abby/brain/abby.xml"
 
 assert os.path.isfile(inputmesh)
 
