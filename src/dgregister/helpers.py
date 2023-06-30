@@ -10,6 +10,42 @@ import matplotlib.pyplot as plt
 
 from nibabel.affines import apply_affine
 
+class Meshdata():
+    """
+    Convenience wrapper containing some files and parameters needed to transform the mesh.
+    """
+
+    def __init__(self, input_meshfile) -> None:
+
+
+        self.box = np.load("./data/normalized/cropped/box.npy")
+        self.pad = 2
+
+        self.space = 0
+
+        self.affine = nibabel.load("./data/normalized/registered/abbytoernie.mgz").affine
+
+        self.registration_lta = "./data/" + "normalized/registered/abbytoernie.lta"
+        
+        self.input_meshfile = input_meshfile
+
+        self.original_input = "./data/normalized/registered/abbytoernie.mgz"
+        self.original_target = "./data/freesurfer/ernie/mri/brain.mgz"
+
+        print_overloaded("Read meshfile", self.input_meshfile)
+            
+        self.vox2ras_input = nibabel.load(self.original_input).header.get_vox2ras_tkr()
+        self.vox2ras_target = nibabel.load(self.original_target).header.get_vox2ras_tkr()
+
+        self.inputmesh = Mesh(self.input_meshfile)
+
+        print("Mesh.coordinates().shape=", self.inputmesh.coordinates().shape)
+
+        bounds = get_bounding_box_limits(self.box)
+        self.dxyz = [bounds[x].start for x in range(3)]
+
+    def meshcopy(self) -> Mesh:
+        return Mesh(self.input_meshfile)
 
 
 
