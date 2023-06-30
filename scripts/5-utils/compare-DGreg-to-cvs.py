@@ -61,6 +61,24 @@ print(np.mean((inputimage-myreg)**2))
 print("l2-difference between target and 4-velocity transform")
 print(np.mean((inputimage-myreg2)**2))
 
+# print(np.where(np.abs(myreg2) > 1e6, 1,0).sum())
+# exit()
+
+import matplotlib.pyplot as plt
+plt.figure()
+plt.title("Distribution of absolute voxel intensities,\n 4 velocity transform")
+plt.hist(np.abs(myreg2).flatten())
+plt.yscale("log")
+
+plt.figure()
+plt.title("Distribution of absolute voxel intensities,\n 3 velocity transform")
+plt.hist(np.abs(myreg).flatten())
+plt.yscale("log")
+
+plt.show()
+# exit()
+
+
 print("l2-difference between target and FreeSurfer cvs-transform")
 print(np.mean((inputimage-fsreg)**2))
 
