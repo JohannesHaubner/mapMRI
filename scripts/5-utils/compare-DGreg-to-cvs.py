@@ -2,13 +2,17 @@ import os
 import numpy as np
 import nibabel
 
-inputimage = "./data/freesurfer/ernie/mri/brain.mgz"
+# inputimage = "./data/freesurfer/ernie/mri/brain.mgz"
 
 normalized_input = "./data/normalized/nyul_normalized/ernie_brain_nyul.mgz"
-currentstate = "./registration/normalized-outputs/447918/RK100A0.01LBFGS150/CurrentState.mgz"
-currentstate2 = "./registration/normalized-outputs/450276/RK100A0.01LBFGS150/CurrentState.mgz"
+inputimage = "./data/freesurfer/ernie/mri/norm.mgz"
 
-inaff = nibabel.load(inputimage).affine
+currentstate = "./outputs/my_registration_3/norm_registered/CurrentState.mgz"
+currentstate2 = "./outputs/my_registration_4/norm_registered/CurrentState.mgz"
+
+inputimage = nibabel.load(inputimage)
+inaff = inputimage.affine
+inputimage = inputimage.get_fdata()
 
 norm_input = nibabel.load(normalized_input).get_fdata()
 
@@ -50,17 +54,27 @@ fsdiffnii = nibabel.Nifti1Image(freesurfer_difftonorm, nibabel.load(normimage).a
 fsdiffpath =  freesruferimage.replace(".mgz", "_diff.mgz")
 nibabel.save(fsdiffnii, fsdiffpath)
 
-command = "freeview"
+
+print("l2-difference between target and 3-velocity transform")
+print(np.mean((inputimage-myreg)**2))
+
+print("l2-difference between target and 4-velocity transform")
+print(np.mean((inputimage-myreg2)**2))
+
+print("l2-difference between target and FreeSurfer cvs-transform")
+print(np.mean((inputimage-fsreg)**2))
+
+command = "freeview --slice 125 110 111 --viewport axial"
+# command += " "
+# command += normalized_input_oriented
+# command += " "
+# command += currentstate
+command += " --colormap Heat:heatscale=10,30,50 -v " + diffpath
 command += " "
-command += normalized_input_oriented
-command += " "
-command += currentstate
-command += " --colormap Heat -v " + diffpath
-command += " "
-command += " --colormap Heat -v " + diffpath2 + " --colormap Grayscale "
+command += " --colormap Heat:heatscale=10,30,50 -v " + diffpath2 + " --colormap Grayscale "
 command += " "
 command += normimage
 command += " "
-command += freesruferimage
-command += " --colormap Heat -v " + fsdiffpath
+# command += freesruferimage
+command += " --colormap Heat:heatscale=10,30,50 -v " + fsdiffpath
 os.system(command)
