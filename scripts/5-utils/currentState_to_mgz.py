@@ -12,13 +12,13 @@ import os, pathlib
 import numpy as np
 import argparse
 from dgregister.helpers import cut_to_box, get_bounding_box_limits
-from dgregister.helpers import crop_to_original, Data
+from dgregister.helpers import crop_to_original, Meshdata
 
 parser = argparse.ArgumentParser()
 parser.add_argument("path")
 parser.add_argument("--statename", type=str, default="CurrentState", choices=["CurrentState", "Finalstate", "Img"])
 parser.add_argument("--readname", type=str, default="CurrentState", choices=["CurrentState", "Finalstate", "Img"])
-parser.add_argument("--xdmffile", type=str, default="State_checkpoint.xdmf", choices=["State_checkpoint.xdmf", "Finalstate.xdmf", "Input.xdmf"])
+parser.add_argument("--xdmffile", type=str, default="State_checkpoint.xdmf", choices=["CurrentState.xdmf" ,"State_checkpoint.xdmf", "Finalstate.xdmf", "Input.xdmf"])
 
 
 parserargs = vars(parser.parse_args())
@@ -26,9 +26,9 @@ parserargs = vars(parser.parse_args())
 parserargs["recompute"] = True
 
 statename = parserargs["statename"]
-os.chdir(parserargs["path"])
+# os.chdir(parserargs["path"])
 
-h = json.load(open("hyperparameters.json"))
+h = json.load(open(pathlib.Path(parserargs["path"]) / "hyperparameters.json"))
 
 [nx, ny, nz] = h["target.shape"]
 
@@ -41,7 +41,7 @@ V = FunctionSpace(mesh, "DG", 1)
 
 u = Function(V)
 
-with XDMFFile(parserargs["xdmffile"]) as xdmf:
+with XDMFFile(str(pathlib.Path(parserargs["path"]) / parserargs["xdmffile"])) as xdmf:
     xdmf.read_checkpoint(u, parserargs["readname"])
 
 print("Read ", parserargs["readname"],  ", calling fem2mri")
@@ -51,7 +51,7 @@ np.save(statename+".npy", retimage)
 print("Stored " + statename + ".npy")
 
 
-data =  Data(input=h["input"], target=h["target"])
+data =  Meshdata()
 
 aff3= data.affine
 box = data.box
@@ -65,5 +65,5 @@ print(np.round(aff3, decimals=0))
 filled_image = crop_to_original(orig_image=np.zeros((256, 256, 256)), cropped_image=cropped_image, box=box, space=space, pad=pad)
 
 nii = nibabel.Nifti1Image(filled_image, aff3)
-nibabel.save(nii, statename+".mgz")
+nibabel.save(nii,str(pathlib.Path(parserargs["path"]) / (statename+".mgz")))
 
