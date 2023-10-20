@@ -16,7 +16,7 @@ outs/
 mridata_3d/
 braindata*
 outputmask_only/
-testdata_3d/
+# testdata_3d/
 registration/
 testdata_2d/
 mri2fem-dataset/
@@ -27,6 +27,13 @@ data_generation/
 *.tar.gz
 imageregistration_outputs/
 
+paraview-states/
+
+testdata_3d/*
+!testdata_3d/input8*
+!testdata_3d/input.mgz
+!testdata_3d/target8*
+!testdata_3d/target.mgz
 
 data/*
 !data/freesurfer
