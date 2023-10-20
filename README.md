@@ -19,7 +19,12 @@ pip install -e .
 
 #### Note: All scripts are assumed to be run from the top level of this repository.
 
-## Data
+## Testdata (3-D)
+
+Under `/testdata_3d/` one may find synthetic input and target MRI with resolution `32 x 32 x 32` and corresponding meshes that describe the potato-like objects in the images (`input.mgz` and `target.mgz`).
+This data can be useful to test the code. 
+
+## MRI Data
 
 We use the publicly available dataset from https://zenodo.org/communities/mri2fem.
 From this dataset, we manually edit a segmentation file and create meshes as outlined in the manuscript.
