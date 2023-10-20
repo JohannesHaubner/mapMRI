@@ -23,6 +23,7 @@ pip install -e .
 
 Under `/testdata_3d/` one may find synthetic input and target MRI with resolution `32 x 32 x 32` and corresponding meshes that describe the potato-like objects in the images (`input.mgz` and `target.mgz`).
 This data can be useful to test the code. 
+Note that you can view both the MRI (`.mgz files`) as well as the mesh surfaces (`.stl files`) in freeview. The volume meshes as well as the deformation fields (`.xdmf` files) can be visualized in, e.g., paraview.
 
 ## MRI Data
 

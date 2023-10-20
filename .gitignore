@@ -34,6 +34,8 @@ testdata_3d/*
 !testdata_3d/input.mgz
 !testdata_3d/target8*
 !testdata_3d/target.mgz
+!testdata_3d/targetmeshsurface.stl
+!testdata_3d/inputmeshsurface.stl
 
 data/*
 !data/freesurfer
