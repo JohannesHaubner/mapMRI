@@ -26,8 +26,9 @@ data_generation/
 *.tar.gz
 *.tar.gz
 imageregistration_outputs/
-
+*.png
 paraview-states/
+mri-preprocessing-figures/
 
 testdata_3d/*
 !testdata_3d/input8*
