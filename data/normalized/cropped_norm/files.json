@@ -1,0 +1,11 @@
+{
+    "box": "./data/normalized/cropped/box.npy",
+    "coarsen": false,
+    "crop": true,
+    "images": [
+        "./data/normalized/registered/abby2ernie_norm.mgz"
+    ],
+    "npad": 2,
+    "targetfolder": "./data/normalized/cropped_norm",
+    "zoom": 0.5
+}
