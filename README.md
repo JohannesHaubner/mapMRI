@@ -5,7 +5,7 @@
 
 Code repository for the manuscript
 
-> Bastian Zapf, Johannes Haubner, Lukas Baumgärtner, Stephan Schmidt: Medical Image Registration using optimal control of a linear hyperbolic transport equation with a DG discretization, arXiv:2305.03020 (2023)
+> Bastian Zapf, Johannes Haubner, Lukas Baumgärtner, Stephan Schmidt: Medical Image Registration using optimal control of a linear hyperbolic transport equation with a DG discretization.
 
 ## Setup
 
